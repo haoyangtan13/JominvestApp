@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
@@ -31,8 +31,9 @@ const initialMessages: Message[] = [
 ];
 
 export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
-  const [messages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
   const texts = {
     ENG: {
@@ -49,16 +50,79 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
 
   const t = texts[language];
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const handleSendMessage = (text: string) => {
+    if (!text.trim()) return;
+
+    // Add User Message
+    const newUserMsg: Message = { role: 'user', content: text };
+    setMessages(prev => [...prev, newUserMsg]);
+    setInputValue('');
+    setIsTyping(true);
+
+    // Simulate AI Delay & Reply
+    setTimeout(() => {
+      let aiResponse = "";
+      const lowerText = text.toLowerCase();
+
+      // Specific Logic for Quick Replies
+      if (lowerText.includes('analyze') || lowerText.includes('analisis')) {
+        aiResponse = language === 'ENG'
+          ? "To analyze a stock, you can use the 'JomRingkas' tool in the Educational Hub or visit the Stock Details page for deep insights."
+          : "Untuk menganalisis saham, anda boleh menggunakan alat 'JomRingkas' di Hab Pendidikan atau melawat halaman Maklumat Saham.";
+      }
+      else if (lowerText.includes('dividend') || lowerText.includes('dividen')) {
+        aiResponse = language === 'ENG'
+          ? "A dividend is a portion of a company's profit paid to shareholders. It is usually paid quarterly. High yield stocks are great for passive income!"
+          : "Dividen adalah sebahagian daripada keuntungan syarikat yang dibayar kepada pemegang saham. Ia biasanya dibayar setiap suku tahun.";
+      }
+      else if (lowerText.includes('support') || lowerText.includes('sokongan')) {
+        aiResponse = language === 'ENG'
+          ? "You can reach our support team at support@jominvest.com or call 1-800-JOM-INVEST. We are here to help!"
+          : "Anda boleh menghubungi pasukan sokongan kami di support@jominvest.com atau hubungi 1-800-JOM-INVEST. Kami sedia membantu!";
+      }
+      else {
+        // Fallback to random responses
+        const responses = [
+          "That's an interesting question! Based on my data, the market is bullish.",
+          "I recommend checking the 'JomRingkas' tool for a detailed report.",
+          "Diversification is key to reducing risk. Have you looked at the sector breakdown?",
+          "Tenaga Nasional is showing strong dividend potential this year.",
+          "I'm just a demo AI for now, but I'm learning fast! 🚀",
+          "Could you clarify that? I want to make sure I give you the best investment advice."
+        ];
+        aiResponse = responses[Math.floor(Math.random() * responses.length)];
+      }
+
+      const newAiMsg: Message = { role: 'ai', content: aiResponse };
+      setMessages(prev => [...prev, newAiMsg]);
+      setIsTyping(false);
+    }, 1500);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSendMessage(inputValue);
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-end p-6">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/20"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <Card className="relative w-full max-w-md h-[600px] flex flex-col shadow-2xl">
         {/* Header */}
@@ -85,16 +149,23 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.role === 'user'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
+                className={`max-w-[80%] rounded-lg p-3 ${message.role === 'user'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-900'
+                  }`}
               >
                 <p className="text-sm">{message.content}</p>
               </div>
             </div>
           ))}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-gray-100 rounded-lg p-3 text-gray-500 text-xs italic">
+                JomAI is typing...
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Quick Replies */}
@@ -108,7 +179,8 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
                 key={index}
                 variant="outline"
                 size="sm"
-                className="text-xs"
+                className="text-xs hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition-colors"
+                onClick={() => handleSendMessage(reply)}
               >
                 {reply}
               </Button>
@@ -122,10 +194,16 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={t.placeholder}
+              onKeyDown={handleKeyDown}
+              placeholder={isTyping ? "JomAI is typing..." : t.placeholder}
               className="flex-1"
+              disabled={isTyping}
             />
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => handleSendMessage(inputValue)}
+              disabled={isTyping || !inputValue.trim()}
+            >
               <Send size={18} />
             </Button>
           </div>

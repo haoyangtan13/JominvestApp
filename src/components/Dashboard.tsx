@@ -14,9 +14,12 @@ interface DashboardProps {
   language: 'ENG' | 'BM';
   setSelectedStock: (stock: StockData) => void;
   portfolio: PortfolioItem[];
+  userXP: number;
+  userLevel: number;
+  watchlist: StockData[];
 }
 
-export function Dashboard({ navigateTo, userProfile, language, setSelectedStock, portfolio }: DashboardProps) {
+export function Dashboard({ navigateTo, userProfile, language, setSelectedStock, portfolio, userXP, userLevel, watchlist }: DashboardProps) {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,7 +37,7 @@ export function Dashboard({ navigateTo, userProfile, language, setSelectedStock,
       topGainers: 'Top Gainers',
       topLosers: 'Top Losers',
       myWatchlist: 'My Watchlist',
-      addToWatchlist: '+ Add to Watchlist',
+      addToWatchlist: 'Add to Watchlist',
       searchResults: 'Search Results',
       noResults: 'No stocks found.',
       portfolioValue: 'Total Value',
@@ -53,7 +56,7 @@ export function Dashboard({ navigateTo, userProfile, language, setSelectedStock,
       topGainers: 'Penaik Teratas',
       topLosers: 'Penurun Teratas',
       myWatchlist: 'Senarai Pantau Saya',
-      addToWatchlist: '+ Tambah ke Senarai Pantau',
+      addToWatchlist: 'Tambah ke Senarai Pantau',
       searchResults: 'Keputusan Carian',
       noResults: 'Tiada saham ditemui.',
       portfolioValue: 'Jumlah Nilai',
@@ -372,8 +375,8 @@ export function Dashboard({ navigateTo, userProfile, language, setSelectedStock,
                 <CardTitle>{t.myWatchlist}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {stocks.slice(0, 3).map((stock) => (
-                  <div key={stock.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onClick={() => handleStockClick(stock)}>
+                {watchlist.slice(0, 3).map((stock) => (
+                  <div key={stock.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onClick={() => { setSelectedStock(stock); navigateTo('stock-details'); }}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white text-xs">
                         {stock.ticker.slice(0, 3)}
@@ -389,7 +392,7 @@ export function Dashboard({ navigateTo, userProfile, language, setSelectedStock,
                     </div>
                   </div>
                 ))}
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => navigateTo('watchlist')}>
                   <Plus size={16} className="mr-2" />
                   {t.addToWatchlist}
                 </Button>

@@ -138,6 +138,7 @@ export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
 
   const wealthData = generateWealthData();
   const finalWealth = wealthData[wealthData.length - 1].wealth;
+  const finalInvested = wealthData[wealthData.length - 1].invested;
 
   // Logic 2: JomRingkas Scan
   const handleAnalyze = () => {
@@ -207,8 +208,8 @@ export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
 
             {/* 1. JomRingkas */}
             <section className="relative group">
-              {/* Background Glow */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+              {/* Background Glow - ALWAYS VISIBLE (opacity-30) */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-30 transition duration-1000"></div>
 
               <Card className="relative border-none shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500"></div>
@@ -239,7 +240,7 @@ export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
                         </div>
 
                         <Button
-                          className={`w-full h-12 text-lg font-bold shadow-lg shadow-purple-200 transition-all ${isScanning ? 'bg-gray-800' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-purple-300 hover:scale-[1.02]'}`}
+                          className="w-full h-12 text-lg font-bold !bg-purple-600 hover:!bg-purple-700 !text-white shadow-md transition-colors"
                           onClick={handleAnalyze}
                           disabled={isScanning}
                         >
@@ -304,8 +305,8 @@ export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
                               { icon: Zap, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", title: "Dividend Verdict", text: reportData[selectedReport].dividend }
                             ].map((item, idx) => (
                               <div key={idx} className={`p-4 ${item.bg} border ${item.border} rounded-xl group hover:shadow-md transition-all`}>
-                                <div className="flex gap-3">
-                                  <div className={`mt-0.5 p-1.5 bg-white rounded-lg shadow-sm h-fit ${item.color}`}>
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-1.5 bg-white rounded-lg shadow-sm h-fit ${item.color}`}>
                                     <item.icon size={18} />
                                   </div>
                                   <div>
@@ -344,19 +345,35 @@ export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
                   <CardDescription>Market Emotion Radar</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center pt-4">
-                  {/* Corrected Gauge Visual - No overlapping text */}
-                  <div className="relative w-64 h-32 mb-8">
-                    {/* Gauge Body */}
-                    <div className="w-full h-full rounded-t-full bg-gray-100 overflow-hidden relative">
-                      <div className="absolute inset-0 bg-[conic-gradient(from_0.5turn_at_50%_100%,_#ef4444_0deg,_#ef4444_45deg,_#eab308_45deg,_#eab308_135deg,_#22c55e_135deg,_#22c55e_180deg)] opacity-80 blur-[1px]"></div>
-                      <div className="absolute top-[20%] left-[20%] right-[20%] bottom-0 bg-white rounded-t-full z-10"></div>
-                    </div>
+                  {/* Corrected Gauge Visual - SVG Implementation */}
+                  <div className="relative w-64 h-32 mb-8 mx-auto">
+                    {/* SVG Gauge */}
+                    <svg viewBox="0 0 200 100" className="w-full h-full overflow-visible">
+                      {/* Background Arc */}
+                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#f3f4f6" strokeWidth="20" strokeLinecap="round" />
 
-                    {/* Needle */}
-                    <div className="absolute bottom-0 left-1/2 w-full h-2 z-20 flex items-center justify-center">
-                      <div className="w-1.5 h-[6.5rem] bg-slate-800 origin-bottom transform rotate-[45deg] rounded-full transition-all duration-1000 shadow-xl pb-6"></div>
-                      <div className="absolute w-4 h-4 bg-slate-900 rounded-full border-2 border-white shadow-lg"></div>
-                    </div>
+                      {/* Colored Segments */}
+                      {/* Fear (Red) */}
+                      <path d="M 20 100 A 80 80 0 0 1 65 35" fill="none" stroke="#ef4444" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
+                      {/* Neutral (Yellow) */}
+                      <path d="M 65 35 A 80 80 0 0 1 135 35" fill="none" stroke="#eab308" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
+                      {/* Greed (Green) */}
+                      <path d="M 135 35 A 80 80 0 0 1 180 100" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
+
+                      {/* Needle */}
+                      {/* Score 78 -> 50.4 degrees */}
+                      {/* Explicit transformOrigin ensures it rotates around 100,100 */}
+                      <g
+                        className="transition-all duration-1000 ease-out"
+                        style={{
+                          transform: `rotate(${(78 / 100 * 180) - 90}deg)`,
+                          transformOrigin: '100px 100px'
+                        }}
+                      >
+                        <path d="M 100 100 L 100 20" stroke="#1e293b" strokeWidth="4" />
+                        <circle cx="100" cy="100" r="6" fill="#1e293b" stroke="white" strokeWidth="2" />
+                      </g>
+                    </svg>
                   </div>
 
                   {/* Grid for labels below gauge */}
@@ -461,12 +478,26 @@ export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
                           </AreaChart>
                         </ResponsiveContainer>
                       </div>
-                      <div className="flex gap-6 justify-center mt-4">
-                        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide">
-                          <span className="w-2 h-2 rounded-full bg-blue-500"></span> Total Wealth
+                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 justify-center mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> Total Wealth
+                          </div>
+                          <span className="text-xl font-black text-blue-600">RM {finalWealth.toLocaleString()}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wide">
-                          <span className="w-2 h-2 rounded-full bg-gray-300"></span> Cash Invested
+                        <div className="hidden sm:block w-px bg-gray-300"></div>
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
+                            <span className="w-2 h-2 rounded-full bg-gray-400"></span> Cash Invested
+                          </div>
+                          <span className="text-xl font-black text-gray-600">RM {finalInvested.toLocaleString()}</span>
+                        </div>
+                        <div className="hidden sm:block w-px bg-gray-300"></div>
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-2 text-xs font-bold text-green-600 uppercase tracking-wide mb-1">
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span> Net Profit
+                          </div>
+                          <span className="text-xl font-black text-green-600">+ RM {(finalWealth - finalInvested).toLocaleString()}</span>
                         </div>
                       </div>
                     </div>

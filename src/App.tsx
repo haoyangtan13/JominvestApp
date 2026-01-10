@@ -7,10 +7,11 @@ import { StockDetails } from './components/StockDetails';
 import { EducationalHub } from './components/EducationalHub';
 import { ProfileSettings } from './components/ProfileSettings';
 import { PortfolioPage } from './components/PortfolioPage';
-import { StockData } from './data/stocks';
+import { WatchlistPage } from './components/WatchlistPage';
+import { StockData, stocks } from './data/stocks';
 import { toast, Toaster } from 'sonner';
 
-export type Screen = 'login' | 'questionnaire' | 'dashboard' | 'ai-recommendation' | 'stock-details' | 'educational-hub' | 'profile' | 'portfolio';
+export type Screen = 'login' | 'questionnaire' | 'dashboard' | 'ai-recommendation' | 'stock-details' | 'educational-hub' | 'profile' | 'portfolio' | 'watchlist';
 
 export interface PortfolioItem {
   stock: StockData;
@@ -23,7 +24,9 @@ export default function App() {
   const [language, setLanguage] = useState<'ENG' | 'BM'>('ENG');
   const [userProfile, setUserProfile] = useState<string>('');
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
+
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
+  const [watchlist, setWatchlist] = useState<StockData[]>(stocks.slice(0, 3)); // Initial dummy watchlist
 
   // Gamification State
   const [userXP, setUserXP] = useState(0);
@@ -94,6 +97,21 @@ export default function App() {
     addXP(30, `Sold ${stockToRemove.ticker}`); // XP Reward for selling
   };
 
+  // Watchlist Logic
+  const addToWatchlist = (stock: StockData) => {
+    if (!watchlist.some(s => s.id === stock.id)) {
+      setWatchlist([...watchlist, stock]);
+      toast.success(`${stock.ticker} added to watchlist!`);
+    } else {
+      toast.info(`${stock.ticker} is already in your watchlist.`);
+    }
+  };
+
+  const removeFromWatchlist = (stockId: number) => {
+    setWatchlist(watchlist.filter(s => s.id !== stockId));
+    toast.success('Removed from watchlist.');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -118,8 +136,18 @@ export default function App() {
           language={language}
           setSelectedStock={setSelectedStock}
           portfolio={portfolio}
+          watchlist={watchlist}
           userXP={userXP}
           userLevel={userLevel}
+        />
+      )}
+      {currentScreen === 'watchlist' && (
+        <WatchlistPage
+          navigateTo={navigateTo}
+          language={language}
+          watchlist={watchlist}
+          addToWatchlist={addToWatchlist}
+          removeFromWatchlist={removeFromWatchlist}
         />
       )}
       {currentScreen === 'ai-recommendation' && (
