@@ -117,8 +117,8 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
             {language === 'ENG' ? "What's Your Investor Profile?" : "Profil Pelabur Anda"}
           </CardTitle>
           <CardDescription>
-            {language === 'ENG' 
-              ? `Step ${currentQuestion + 1} of ${questions.length}` 
+            {language === 'ENG'
+              ? `Step ${currentQuestion + 1} of ${questions.length}`
               : `Langkah ${currentQuestion + 1} daripada ${questions.length}`}
           </CardDescription>
           <Progress value={progress} className="mt-4" />
@@ -130,7 +130,11 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
 
             <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
               {options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 cursor-pointer">
+                <div
+                  key={index}
+                  className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
+                  onClick={() => setSelectedAnswer(option)}
+                >
                   <RadioGroupItem value={option} id={`option-${index}`} />
                   <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
                     {option}
@@ -155,7 +159,7 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
               disabled={!selectedAnswer}
               className="bg-green-600 hover:bg-green-700"
             >
-              {currentQuestion === questions.length - 1 
+              {currentQuestion === questions.length - 1
                 ? (language === 'ENG' ? 'Finish' : 'Selesai')
                 : (language === 'ENG' ? 'Next' : 'Seterusnya')}
               <ArrowRight className="ml-2" size={16} />

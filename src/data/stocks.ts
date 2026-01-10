@@ -1,0 +1,448 @@
+export interface StockData {
+    id: string;
+    name: string;
+    ticker: string;
+    price: string;
+    change: string;
+    changePercent: string;
+    isPositive: boolean;
+    description: string;
+    sector: string;
+    peRatio: string;
+    dividendYield: string;
+    marketCap: string;
+    volume: string;
+    revenue: string;
+    netProfit: string;
+    debtEquity: string;
+    sparkline: number[];
+    history: { date: string; price: number }[];
+}
+
+// Helper to generate realistic history ending at current price
+const generateHistory = (currentPriceStr: string, days: number = 30) => {
+    const currentPrice = parseFloat(currentPriceStr);
+    const history = [];
+    let price = currentPrice;
+
+    // We start from today and go backwards to ensure the last point is exact
+    for (let i = 0; i < days; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+
+        // This is the price for this date
+        history.unshift({
+            date: date.toISOString().split('T')[0],
+            price: parseFloat(price.toFixed(2))
+        });
+
+        // "Reverse" the daily change to find yesterday's price
+        // change is random between -2% and +2%
+        const changePercent = (Math.random() * 0.04) - 0.02;
+        price = price / (1 + changePercent);
+    }
+    return history;
+};
+
+export const stocks: StockData[] = [
+    {
+        id: '1',
+        name: 'Malayan Banking Berhad',
+        ticker: 'MAYBANK',
+        price: '9.26',
+        change: '+0.06',
+        changePercent: '+0.65%',
+        isPositive: true,
+        description: 'Malayan Banking Berhad is a Malaysian universal bank, with key operating "home markets" of Malaysia, Singapore, and Indonesia.',
+        sector: 'Financial Services',
+        peRatio: '11.45',
+        dividendYield: '6.26%',
+        marketCap: '111.7B',
+        volume: '5.2M',
+        revenue: '26.4B',
+        netProfit: '9.3B',
+        debtEquity: 'N/A',
+        sparkline: [9.10, 9.15, 9.12, 9.18, 9.22, 9.20, 9.26],
+        history: generateHistory('9.26')
+    },
+    {
+        id: '2',
+        name: 'Public Bank Berhad',
+        ticker: 'PBBANK',
+        price: '4.24',
+        change: '+0.03',
+        changePercent: '+0.71%',
+        isPositive: true,
+        description: 'Public Bank Berhad is a major banking group in Malaysia known for its prudent management and strong consumer banking franchise.',
+        sector: 'Financial Services',
+        peRatio: '12.80',
+        dividendYield: '4.50%',
+        marketCap: '82.3B',
+        volume: '8.4M',
+        revenue: '20.1B',
+        netProfit: '6.6B',
+        debtEquity: 'N/A',
+        sparkline: [4.15, 4.18, 4.20, 4.19, 4.21, 4.22, 4.24],
+        history: generateHistory('4.24')
+    },
+    {
+        id: '3',
+        name: 'Tenaga Nasional Berhad',
+        ticker: 'TENAGA',
+        price: '13.60',
+        change: '-0.10',
+        changePercent: '-0.73%',
+        isPositive: false,
+        description: 'Tenaga Nasional Berhad is the largest electricity utility firm in Malaysia and has a presence in the UK, Kuwait, Turkey, Saudi Arabia, and India.',
+        sector: 'Utilities',
+        peRatio: '18.23',
+        dividendYield: '3.38%',
+        marketCap: '78.5B',
+        volume: '2.1M',
+        revenue: '53.1B',
+        netProfit: '2.8B',
+        debtEquity: '1.45',
+        sparkline: [13.80, 13.75, 13.70, 13.65, 13.68, 13.62, 13.60],
+        history: generateHistory('13.60')
+    },
+    {
+        id: '4',
+        name: 'CIMB Group Holdings',
+        ticker: 'CIMB',
+        price: '7.45',
+        change: '+0.12',
+        changePercent: '+1.64%',
+        isPositive: true,
+        description: 'CIMB Group is a leading ASEAN universal bank and one of the region\'s foremost corporate advisors.',
+        sector: 'Financial Services',
+        peRatio: '10.95',
+        dividendYield: '5.10%',
+        marketCap: '79.8B',
+        volume: '6.7M',
+        revenue: '19.8B',
+        netProfit: '6.9B',
+        debtEquity: 'N/A',
+        sparkline: [7.20, 7.25, 7.30, 7.28, 7.35, 7.40, 7.45],
+        history: generateHistory('7.45')
+    },
+    {
+        id: '5',
+        name: 'Petronas Chemicals Group',
+        ticker: 'PCHEM',
+        price: '5.45',
+        change: '-0.08',
+        changePercent: '-1.45%',
+        isPositive: false,
+        description: 'Petronas Chemicals Group Berhad is the integrated chemicals arm of the Petronas Group and one of the largest chemical producers in Southeast Asia.',
+        sector: 'Industrial Products',
+        peRatio: '16.50',
+        dividendYield: '2.80%',
+        marketCap: '43.6B',
+        volume: '3.3M',
+        revenue: '28.9B',
+        netProfit: '1.2B',
+        debtEquity: '0.15',
+        sparkline: [5.60, 5.58, 5.55, 5.50, 5.48, 5.46, 5.45],
+        history: generateHistory('5.45')
+    },
+    {
+        id: '6',
+        name: 'IHH Healthcare Berhad',
+        ticker: 'IHH',
+        price: '6.33',
+        change: '+0.05',
+        changePercent: '+0.80%',
+        isPositive: true,
+        description: 'IHH Healthcare is a leading international healthcare provider with a network of 80 hospitals in 10 countries.',
+        sector: 'Health Care',
+        peRatio: '32.40',
+        dividendYield: '1.20%',
+        marketCap: '55.7B',
+        volume: '1.8M',
+        revenue: '21.5B',
+        netProfit: '2.9B',
+        debtEquity: '0.62',
+        sparkline: [6.20, 6.22, 6.25, 6.24, 6.28, 6.30, 6.33],
+        history: generateHistory('6.33')
+    },
+    {
+        id: '7',
+        name: 'CelcomDigi Berhad',
+        ticker: 'CDB',
+        price: '3.65',
+        change: '-0.02',
+        changePercent: '-0.54%',
+        isPositive: false,
+        description: 'CelcomDigi is Malaysia\'s largest mobile network operator, formed by the merger of Celcom and Digi.',
+        sector: 'Telecommunications',
+        peRatio: '24.15',
+        dividendYield: '3.90%',
+        marketCap: '42.8B',
+        volume: '4.5M',
+        revenue: '12.7B',
+        netProfit: '1.6B',
+        debtEquity: '1.20',
+        sparkline: [3.70, 3.68, 3.67, 3.66, 3.65, 3.66, 3.65],
+        history: generateHistory('3.65')
+    },
+    {
+        id: '8',
+        name: 'Press Metal Aluminium',
+        ticker: 'PMETAL',
+        price: '5.10',
+        change: '+0.15',
+        changePercent: '+3.03%',
+        isPositive: true,
+        description: 'Press Metal is a Malaysian aluminium company. It is the largest integrated aluminium producer in South East Asia.',
+        sector: 'Industrial Products',
+        peRatio: '28.50',
+        dividendYield: '1.45%',
+        marketCap: '42.0B',
+        volume: '5.1M',
+        revenue: '14.5B',
+        netProfit: '1.2B',
+        debtEquity: '0.68',
+        sparkline: [4.90, 4.95, 4.98, 5.00, 5.05, 5.08, 5.10],
+        history: generateHistory('5.10')
+    },
+    {
+        id: '9',
+        name: 'Hong Leong Bank',
+        ticker: 'HLBANK',
+        price: '19.42',
+        change: '+0.00',
+        changePercent: '0.00%',
+        isPositive: true,
+        description: 'Hong Leong Bank Berhad is a major public listed banking group in Malaysia.',
+        sector: 'Financial Services',
+        peRatio: '10.50',
+        dividendYield: '3.10%',
+        marketCap: '42.1B',
+        volume: '0.8M',
+        revenue: '5.6B',
+        netProfit: '3.8B',
+        debtEquity: 'N/A',
+        sparkline: [19.40, 19.42, 19.42, 19.42, 19.42, 19.40, 19.42],
+        history: generateHistory('19.42')
+    },
+    {
+        id: '10',
+        name: 'Sime Darby Plantation',
+        ticker: 'SIMEPLT',
+        price: '4.52',
+        change: '+0.08',
+        changePercent: '+1.80%',
+        isPositive: true,
+        description: 'Sime Darby Plantation is the world\'s largest producer of certified sustainable palm oil.',
+        sector: 'Plantation',
+        peRatio: '14.20',
+        dividendYield: '2.60%',
+        marketCap: '31.2B',
+        volume: '2.5M',
+        revenue: '18.4B',
+        netProfit: '2.2B',
+        debtEquity: '0.35',
+        sparkline: [4.35, 4.40, 4.42, 4.45, 4.48, 4.50, 4.52],
+        history: generateHistory('4.52')
+    },
+    {
+        id: '11',
+        name: 'Maxis Berhad',
+        ticker: 'MAXIS',
+        price: '3.55',
+        change: '-0.04',
+        changePercent: '-1.11%',
+        isPositive: false,
+        description: 'Maxis Berhad is a leading communications and digital services company in Malaysia.',
+        sector: 'Telecommunications',
+        peRatio: '22.80',
+        dividendYield: '4.50%',
+        marketCap: '27.8B',
+        volume: '1.5M',
+        revenue: '10.2B',
+        netProfit: '1.1B',
+        debtEquity: '0.95',
+        sparkline: [3.62, 3.60, 3.58, 3.58, 3.56, 3.55, 3.55],
+        history: generateHistory('3.55')
+    },
+    {
+        id: '12',
+        name: 'MISC Berhad',
+        ticker: 'MISC',
+        price: '8.15',
+        change: '+0.09',
+        changePercent: '+1.12%',
+        isPositive: true,
+        description: 'MISC Berhad represents the shipping arm of Petronas and was formerly known as Malaysia International Shipping Corporation.',
+        sector: 'Transportation',
+        peRatio: '15.60',
+        dividendYield: '4.05%',
+        marketCap: '36.4B',
+        volume: '1.2M',
+        revenue: '12.8B',
+        netProfit: '2.1B',
+        debtEquity: '0.28',
+        sparkline: [8.00, 8.05, 8.08, 8.10, 8.12, 8.12, 8.15],
+        history: generateHistory('8.15')
+    },
+    {
+        id: '13',
+        name: 'Nestlé (Malaysia)',
+        ticker: 'NESTLE',
+        price: '118.50',
+        change: '-0.40',
+        changePercent: '-0.34%',
+        isPositive: false,
+        description: 'Nestlé Malaysia is the largest Halal producer in the Nestlé world and a leading nutrition, health and wellness company.',
+        sector: 'Consumer Products',
+        peRatio: '45.20',
+        dividendYield: '2.80%',
+        marketCap: '27.8B',
+        volume: '0.05M',
+        revenue: '6.5B',
+        netProfit: '0.7B',
+        debtEquity: '1.05',
+        sparkline: [119.5, 119.2, 119.0, 118.8, 118.6, 118.5, 118.5],
+        history: generateHistory('118.50')
+    },
+    {
+        id: '14',
+        name: 'RHB Bank Berhad',
+        ticker: 'RHBBANK',
+        price: '6.12',
+        change: '+0.02',
+        changePercent: '+0.33%',
+        isPositive: true,
+        description: 'RHB Bank is the fourth largest fully integrated financial services group in Malaysia.',
+        sector: 'Financial Services',
+        peRatio: '8.90',
+        dividendYield: '6.40%',
+        marketCap: '26.2B',
+        volume: '2.8M',
+        revenue: '13.2B',
+        netProfit: '2.9B',
+        debtEquity: 'N/A',
+        sparkline: [6.08, 6.10, 6.10, 6.12, 6.11, 6.11, 6.12],
+        history: generateHistory('6.12')
+    },
+    {
+        id: '15',
+        name: 'IOI Corporation',
+        ticker: 'IOICORP',
+        price: '3.98',
+        change: '+0.05',
+        changePercent: '+1.27%',
+        isPositive: true,
+        description: 'IOI Corporation is a leading global integrated palm oil player.',
+        sector: 'Plantation',
+        peRatio: '20.10',
+        dividendYield: '2.50%',
+        marketCap: '25.0B',
+        volume: '3.2M',
+        revenue: '11.5B',
+        netProfit: '1.2B',
+        debtEquity: '0.30',
+        sparkline: [3.90, 3.92, 3.94, 3.95, 3.96, 3.96, 3.98],
+        history: generateHistory('3.98')
+    },
+    {
+        id: '16',
+        name: 'Top Glove Corporation',
+        ticker: 'TOPGLOV',
+        price: '0.92',
+        change: '-0.01',
+        changePercent: '-1.08%',
+        isPositive: false,
+        description: 'Top Glove Corporation is the world\'s largest manufacturer of gloves.',
+        sector: 'Health Care',
+        peRatio: '78.50',
+        dividendYield: 'N/A',
+        marketCap: '7.5B',
+        volume: '15.6M',
+        revenue: '2.2B',
+        netProfit: '-0.05B',
+        debtEquity: '0.18',
+        sparkline: [0.95, 0.94, 0.93, 0.93, 0.92, 0.92, 0.92],
+        history: generateHistory('0.92')
+    },
+    {
+        id: '17',
+        name: 'Gamuda Berhad',
+        ticker: 'GAMUDA',
+        price: '7.85',
+        change: '+0.25',
+        changePercent: '+3.29%',
+        isPositive: true,
+        description: 'Gamuda Berhad is a global engineering, property and infrastructure company based in Malaysia.',
+        sector: 'Construction',
+        peRatio: '18.40',
+        dividendYield: '1.50%',
+        marketCap: '21.5B',
+        volume: '6.5M',
+        revenue: '8.4B',
+        netProfit: '1.2B',
+        debtEquity: '0.45',
+        sparkline: [7.50, 7.55, 7.60, 7.65, 7.70, 7.80, 7.85],
+        history: generateHistory('7.85')
+    },
+    {
+        id: '18',
+        name: 'Genting Malaysia',
+        ticker: 'GENM',
+        price: '2.55',
+        change: '-0.03',
+        changePercent: '-1.16%',
+        isPositive: false,
+        description: 'Genting Malaysia operates the resort business at Genting Highlands and other casinos worldwide.',
+        sector: 'Consumer Services',
+        peRatio: '14.80',
+        dividendYield: '5.80%',
+        marketCap: '14.5B',
+        volume: '5.8M',
+        revenue: '10.2B',
+        netProfit: '0.9B',
+        debtEquity: '0.86',
+        sparkline: [2.60, 2.58, 2.57, 2.56, 2.55, 2.55, 2.55],
+        history: generateHistory('2.55')
+    },
+    {
+        id: '19',
+        name: 'YTL Power International',
+        ticker: 'YTLPOWR',
+        price: '4.88',
+        change: '+0.18',
+        changePercent: '+3.83%',
+        isPositive: true,
+        description: 'YTL Power operates in power generation, water and sewerage services, and telecommunications.',
+        sector: 'Utilities',
+        peRatio: '12.50',
+        dividendYield: '1.80%',
+        marketCap: '39.8B',
+        volume: '12.4M',
+        revenue: '21.8B',
+        netProfit: '3.1B',
+        debtEquity: '1.60',
+        sparkline: [4.60, 4.65, 4.70, 4.75, 4.80, 4.85, 4.88],
+        history: generateHistory('4.88')
+    },
+    {
+        id: '20',
+        name: 'Sunway Berhad',
+        ticker: 'SUNWAY',
+        price: '3.88',
+        change: '+0.10',
+        changePercent: '+2.65%',
+        isPositive: true,
+        description: 'Sunway Berhad is a conglomerate with interests in property, construction, education, and healthcare.',
+        sector: 'Industrial Products',
+        peRatio: '20.60',
+        dividendYield: '2.10%',
+        marketCap: '20.5B',
+        volume: '4.2M',
+        revenue: '6.1B',
+        netProfit: '0.8B',
+        debtEquity: '0.65',
+        sparkline: [3.70, 3.75, 3.78, 3.80, 3.82, 3.85, 3.88],
+        history: generateHistory('3.88')
+    }
+];

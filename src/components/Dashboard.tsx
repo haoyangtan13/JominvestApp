@@ -3,43 +3,22 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { TrendingUp, TrendingDown, Search, Lightbulb, BookOpen, Menu, Plus, Sparkles, User } from 'lucide-react';
+import { TrendingUp, TrendingDown, Search, Lightbulb, BookOpen, User, Sparkles, Plus } from 'lucide-react';
 import { ChatbotModal } from './ChatbotModal';
-import type { Screen } from '../App';
+import type { Screen, PortfolioItem } from '../App';
+import { StockData, stocks } from '../data/stocks';
 
 interface DashboardProps {
   navigateTo: (screen: Screen) => void;
   userProfile: string;
   language: 'ENG' | 'BM';
+  setSelectedStock: (stock: StockData) => void;
+  portfolio: PortfolioItem[];
 }
 
-const topPicks = [
-  { name: 'Tenaga Nasional', ticker: 'TENAGA', price: 'RM 17.50', change: '+2.4%', positive: true },
-  { name: 'Public Bank', ticker: 'PBBANK', price: 'RM 4.21', change: '+1.8%', positive: true },
-  { name: 'Maybank', ticker: 'MAYBANK', price: 'RM 9.15', change: '+3.2%', positive: true },
-  { name: 'CIMB Group', ticker: 'CIMB', price: 'RM 6.88', change: '-0.5%', positive: false },
-];
-
-const topGainers = [
-  { name: 'Maybank', ticker: 'MAYBANK', change: '+4.1%' },
-  { name: 'Public Bank', ticker: 'PBBANK', change: '+3.8%' },
-  { name: 'Tenaga Nasional', ticker: 'TENAGA', change: '+2.4%' },
-];
-
-const topLosers = [
-  { name: 'AirAsia Group', ticker: 'AIRASIA', change: '-3.2%' },
-  { name: 'Genting Berhad', ticker: 'GENTING', change: '-2.7%' },
-  { name: 'Petronas Dagangan', ticker: 'PETDAG', change: '-1.9%' },
-];
-
-const watchlist = [
-  { name: 'Tenaga Nasional', ticker: 'TENAGA', price: 'RM 17.50', sparkline: [12, 15, 13, 17, 16, 18, 17.5] },
-  { name: 'Maybank', ticker: 'MAYBANK', price: 'RM 9.15', sparkline: [8, 8.5, 9, 8.8, 9.2, 9.1, 9.15] },
-  { name: 'Public Bank', ticker: 'PBBANK', price: 'RM 4.21', sparkline: [4, 4.1, 4.2, 4.15, 4.18, 4.2, 4.21] },
-];
-
-export function Dashboard({ navigateTo, userProfile, language }: DashboardProps) {
+export function Dashboard({ navigateTo, userProfile, language, setSelectedStock, portfolio }: DashboardProps) {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const texts = {
     ENG: {
@@ -56,6 +35,10 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
       topLosers: 'Top Losers',
       myWatchlist: 'My Watchlist',
       addToWatchlist: '+ Add to Watchlist',
+      searchResults: 'Search Results',
+      noResults: 'No stocks found.',
+      portfolioValue: 'Total Value',
+      portfolioCount: 'Stocks Held',
     },
     BM: {
       welcome: 'Selamat kembali, Tan!',
@@ -71,18 +54,43 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
       topLosers: 'Penurun Teratas',
       myWatchlist: 'Senarai Pantau Saya',
       addToWatchlist: '+ Tambah ke Senarai Pantau',
+      searchResults: 'Keputusan Carian',
+      noResults: 'Tiada saham ditemui.',
+      portfolioValue: 'Jumlah Nilai',
+      portfolioCount: 'Pegangan Saham',
     }
   };
 
   const t = texts[language];
 
+  // Derived Data
+  const filteredStocks = searchQuery
+    ? stocks.filter(s =>
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.ticker.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    : [];
+
+  const topPicks = stocks.filter(s => ['TENAGA', 'MAYBANK', 'PBBANK', 'CIMB'].includes(s.ticker));
+  const topGainers = [...stocks].sort((a, b) => parseFloat(b.change) - parseFloat(a.change)).slice(0, 5);
+  const topLosers = [...stocks].sort((a, b) => parseFloat(a.change) - parseFloat(b.change)).slice(0, 5);
+
+  // Calculate Portfolio
+  const portfolioValue = portfolio.reduce((acc, item) => acc + (parseFloat(item.stock.price) * item.quantity), 0).toFixed(2);
+
+  const handleStockClick = (stock: StockData) => {
+    setSelectedStock(stock);
+    navigateTo('stock-details');
+  };
+
   const renderSparkline = (data: number[]) => {
+    if (!data || data.length === 0) return null;
     const max = Math.max(...data);
     const min = Math.min(...data);
-    const range = max - min;
+    const range = max - min || 1;
     const width = 80;
     const height = 30;
-    
+
     const points = data.map((value, index) => {
       const x = (index / (data.length - 1)) * width;
       const y = height - ((value - min) / range) * height;
@@ -111,9 +119,12 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
             <TrendingUp size={28} strokeWidth={2.5} />
             <h1 className="text-2xl">JomINVEST</h1>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => navigateTo('profile')}>
-            <User />
-          </Button>
+
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigateTo('profile')}>
+              <User />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -129,19 +140,22 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
               </p>
             </div>
 
+            {/* XP Card REMOVED */}
+
             {/* Portfolio Card */}
-            <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white">
+            <Card
+              className="bg-gradient-to-br from-green-600 to-green-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => navigateTo('portfolio')}
+            >
               <CardHeader>
                 <CardTitle className="text-white">{t.portfolio}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="text-4xl">RM 105,243.50</div>
+                  <div className="text-4xl">RM {portfolioValue}</div>
                   <div className="flex items-center gap-2">
-                    <span className="text-green-100 text-xl">+5.2%</span>
-                    <TrendingUp className="text-green-100" size={20} />
+                    <span className="text-green-100 text-sm">{portfolio.length} {t.portfolioCount}</span>
                   </div>
-                  <p className="text-green-100 text-sm">vs. last month</p>
                 </div>
               </CardContent>
             </Card>
@@ -152,53 +166,129 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
               <Input
                 placeholder={t.searchPlaceholder}
                 className="pl-10"
-                onClick={() => navigateTo('stock-details')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            {/* Top AI Picks Section */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="text-green-600" size={24} />
-                <h3 className="text-xl">{t.topPicks}</h3>
-              </div>
-
-              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
-                {topPicks.map((stock, index) => (
-                  <Card 
-                    key={index} 
-                    className="min-w-[280px] snap-start cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigateTo('ai-recommendation')}
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{stock.name}</CardTitle>
-                          <p className="text-sm text-gray-500">{stock.ticker}</p>
-                        </div>
-                        <Lightbulb className="text-yellow-500" size={20} />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <div className="text-2xl">{stock.price}</div>
-                          <div className={`text-sm ${stock.positive ? 'text-green-600' : 'text-red-600'}`}>
-                            {stock.change}
+            {/* Search Results or Dashboard Content */}
+            {searchQuery ? (
+              <div>
+                <h3 className="text-xl mb-4">{t.searchResults}</h3>
+                {filteredStocks.length > 0 ? (
+                  <div className="grid gap-4">
+                    {filteredStocks.map((stock) => (
+                      <Card
+                        key={stock.id}
+                        className="cursor-pointer hover:shadow-md"
+                        onClick={() => handleStockClick(stock)}
+                      >
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div>
+                            <h4 className="font-bold">{stock.name}</h4>
+                            <p className="text-sm text-gray-500">{stock.ticker}</p>
                           </div>
-                        </div>
-                        <Button size="sm" variant="outline">
-                          {t.viewDetails}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                          <div className="text-right">
+                            <p className="font-medium">RM {stock.price}</p>
+                            <p className={`text-sm ${stock.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                              {stock.changePercent}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">{t.noResults}</p>
+                )}
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Top AI Picks Section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Lightbulb className="text-green-600" size={24} />
+                    <h3 className="text-xl">{t.topPicks}</h3>
+                  </div>
 
-            {/* Educational Hub Link */}
-            <Card 
+                  <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+                    {topPicks.map((stock) => (
+                      <Card
+                        key={stock.id}
+                        className="min-w-[280px] snap-start cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => handleStockClick(stock)}
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="text-lg">{stock.name}</CardTitle>
+                              <p className="text-sm text-gray-500">{stock.ticker}</p>
+                            </div>
+                            <Lightbulb className="text-yellow-500" size={20} />
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-end justify-between">
+                            <div>
+                              <div className="text-2xl">RM {stock.price}</div>
+                              <div className={`text-sm ${stock.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                                {stock.changePercent}
+                              </div>
+                            </div>
+                            <Button size="sm" variant="outline">
+                              {t.viewDetails}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* All Bursa Stocks Section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="text-green-600" size={24} />
+                    <h3 className="text-xl">All Bursa Stocks</h3>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {stocks.map((stock) => (
+                      <Card
+                        key={stock.id}
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => handleStockClick(stock)}
+                      >
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-600 text-xs">
+                              {stock.ticker.slice(0, 3)}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-sm">{stock.name}</h4>
+                              <p className="text-xs text-gray-500">{stock.ticker}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-sm">RM {stock.price}</p>
+                            <div className={`flex items-center justify-end gap-1 text-xs ${stock.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                              {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                              {stock.changePercent}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+              </>
+            )}
+          </div>
+
+          {/* Right Column - Market Movers & Watchlist */}
+          <div className="space-y-8">
+            {/* Educational Hub - Prominent Placement */}
+            <Card
               className="bg-blue-50 border-blue-200 cursor-pointer hover:shadow-lg transition-shadow"
               onClick={() => navigateTo('educational-hub')}
             >
@@ -209,9 +299,9 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
                       <BookOpen size={24} />
                     </div>
                     <div>
-                      <h3 className="text-lg">{t.education}</h3>
+                      <h3 className="text-lg font-bold">{t.education}</h3>
                       <p className="text-sm text-gray-600">
-                        {language === 'ENG' ? 'Learn investing basics' : 'Pelajari asas pelaburan'}
+                        {language === 'ENG' ? 'Master investing basics' : 'Kuasai asas pelaburan'}
                       </p>
                     </div>
                   </div>
@@ -219,10 +309,7 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Right Column - Market Movers & Watchlist */}
-          <div className="space-y-8">
             {/* Market Movers */}
             <Card>
               <CardHeader>
@@ -237,32 +324,40 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
                     <TabsTrigger value="gainers">{t.topGainers}</TabsTrigger>
                     <TabsTrigger value="losers">{t.topLosers}</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="gainers" className="space-y-3 mt-4">
-                    {topGainers.map((stock, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                    {topGainers.map((stock) => (
+                      <div
+                        key={stock.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                        onClick={() => handleStockClick(stock)}
+                      >
                         <div>
-                          <p className="text-sm">{stock.name}</p>
+                          <p className="text-sm font-medium">{stock.name}</p>
                           <p className="text-xs text-gray-500">{stock.ticker}</p>
                         </div>
                         <div className="flex items-center gap-1 text-green-600">
                           <TrendingUp size={16} />
-                          <span className="text-sm">{stock.change}</span>
+                          <span className="text-sm">{stock.changePercent}</span>
                         </div>
                       </div>
                     ))}
                   </TabsContent>
 
                   <TabsContent value="losers" className="space-y-3 mt-4">
-                    {topLosers.map((stock, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                    {topLosers.map((stock) => (
+                      <div
+                        key={stock.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                        onClick={() => handleStockClick(stock)}
+                      >
                         <div>
-                          <p className="text-sm">{stock.name}</p>
+                          <p className="text-sm font-medium">{stock.name}</p>
                           <p className="text-xs text-gray-500">{stock.ticker}</p>
                         </div>
                         <div className="flex items-center gap-1 text-red-600">
                           <TrendingDown size={16} />
-                          <span className="text-sm">{stock.change}</span>
+                          <span className="text-sm">{stock.changePercent}</span>
                         </div>
                       </div>
                     ))}
@@ -271,14 +366,14 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
               </CardContent>
             </Card>
 
-            {/* My Watchlist */}
+            {/* My Watchlist - Filtered from real stocks for demo */}
             <Card>
               <CardHeader>
                 <CardTitle>{t.myWatchlist}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {watchlist.map((stock, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                {stocks.slice(0, 3).map((stock) => (
+                  <div key={stock.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onClick={() => handleStockClick(stock)}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white text-xs">
                         {stock.ticker.slice(0, 3)}
@@ -313,7 +408,7 @@ export function Dashboard({ navigateTo, userProfile, language }: DashboardProps)
       </button>
 
       {/* Chatbot Modal */}
-      <ChatbotModal 
+      <ChatbotModal
         isOpen={isChatbotOpen}
         onClose={() => setIsChatbotOpen(false)}
         language={language}
