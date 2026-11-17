@@ -1,16 +1,16 @@
 /**
- * Serverless API endpoint (/api/gemini) so all JomINVEST users automatically
- * share the app owner's Gemini API key (process.env.GEMINI_API_KEY or process.env.VITE_GEMINI_API_KEY)
- * without requiring any Bring-Your-Own-Key UI or exposing the key in client bundles.
+ * Serverless API endpoint (/api/ai) so all JomINVEST users share the
+ * application's configured AI key (process.env.AI_API_KEY or process.env.VITE_AI_API_KEY)
+ * without requiring user-supplied keys or exposing credentials in client bundles.
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+  const apiKey = process.env.AI_API_KEY || process.env.VITE_AI_API_KEY || '';
   if (!apiKey) {
-    return res.status(503).json({ error: 'Server GEMINI_API_KEY not configured' });
+    return res.status(503).json({ error: 'Server AI_API_KEY not configured' });
   }
 
   try {
@@ -29,13 +29,13 @@ export default async function handler(req, res) {
     );
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: 'Upstream Gemini request failed' });
+      return res.status(response.status).json({ error: 'Upstream request failed' });
     }
 
     const data = await response.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     return res.status(200).json({ text });
-  } catch (err) {
-    return res.status(500).json({ error: 'Internal AI proxy error' });
+  } catch {
+    return res.status(500).json({ error: 'Internal proxy error' });
   }
 }

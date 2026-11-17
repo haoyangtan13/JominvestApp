@@ -331,7 +331,7 @@ interface LLMCallResult {
 }
 
 const AI_RESPONSE_CACHE_KEY = 'jominvest_ai_cache_v1';
-const AI_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours to conserve free Gemini 15 RPM quota
+const AI_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours to conserve 15 RPM quota
 
 function getCachedAIResponse(cacheKey: string): LLMCallResult | null {
   try {
@@ -370,11 +370,11 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<LLMCal
     return cached;
   }
 
-  // Tier 1A: Centralized Backend Gemini Endpoint (/api/gemini) so all users share the app's Gemini AI
+  // Tier 1A: Centralized Backend AI Endpoint (/api/ai) so all users share the app's AI key
   try {
     const proxyCtrl = new AbortController();
     const proxyTimeout = setTimeout(() => proxyCtrl.abort(), 7500);
-    const proxyRes = await fetch('/api/gemini', {
+    const proxyRes = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ systemPrompt, userPrompt }),
@@ -393,10 +393,10 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<LLMCal
       }
     }
   } catch {
-    // Fall through if /api/gemini serverless route is not running
+    // Fall through if /api/ai serverless route is not running
   }
 
-  // Tier 1B: App-level VITE_GEMINI_API_KEY configured in .env
+  // Tier 1B: App-level VITE_AI_API_KEY configured in .env
   const apiKey = getStoredAIApiKey();
   if (apiKey.length > 0) {
     try {
