@@ -1,9 +1,4 @@
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Progress } from './ui/progress';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Label } from './ui/label';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import type { Screen } from '../App';
 
@@ -24,43 +19,83 @@ interface Question {
 
 const questions: Question[] = [
   {
-    eng: "When you think about investing, you feel...",
-    bm: "Apabila anda berfikir tentang pelaburan, anda berasa...",
+    eng: 'When allocating capital to Malaysian equities, what is your primary objective?',
+    bm: 'Apabila memperuntukkan modal ke dalam ekuiti Malaysia, apakah objektif utama anda?',
     options: {
-      eng: ["A) Cautious - I prefer safety", "B) Balanced - I want some growth", "C) Adventurous - I seek high returns"],
-      bm: ["A) Berhati-hati - Saya utamakan keselamatan", "B) Seimbang - Saya mahukan pertumbuhan", "C) Berani - Saya cari pulangan tinggi"]
+      eng: [
+        'A) Capital Preservation — Prioritize stable FBM KLCI dividend payers',
+        'B) Balanced Compounding — Blend steady dividend income with mid-cap growth',
+        'C) Capital Appreciation — Target high-conviction growth and momentum leaders'
+      ],
+      bm: [
+        'A) Pemeliharaan Modal — Utamakan pembayar dividen FBM KLCI yang stabil',
+        'B) Pertumbuhan Seimbang — Gabungan pendapatan dividen dan pertumbuhan sederhana',
+        'C) Peningkatan Modal — Sasarkan saham pertumbuhan tinggi dan peneraju momentum'
+      ]
     }
   },
   {
-    eng: "If your investment drops 20% in value, you would...",
-    bm: "Jika pelaburan anda jatuh 20%, anda akan...",
+    eng: 'If your portfolio experiences a 20% market drawdown on Bursa Malaysia, how do you respond?',
+    bm: 'Jika portfolio anda mengalami penurunan pasaran sebanyak 20% di Bursa Malaysia, apakah tindakan anda?',
     options: {
-      eng: ["A) Sell immediately to cut losses", "B) Hold and wait for recovery", "C) Buy more at lower prices"],
-      bm: ["A) Jual segera untuk kurangkan kerugian", "B) Tunggu untuk pemulihan", "C) Beli lebih pada harga rendah"]
+      eng: [
+        'A) Reduce exposure immediately to preserve remaining principal',
+        'B) Maintain existing positions and wait for fundamental recovery',
+        'C) Accumulate additional board lots at discounted valuations'
+      ],
+      bm: [
+        'A) Kurangkan pendedahan segera untuk melindungi baki modal',
+        'B) Kekalkan pegangan sedia ada dan tunggu pemulihan asas',
+        'C) Tambah pegangan pada penilaian harga yang lebih rendah'
+      ]
     }
   },
   {
-    eng: "Your investment goal timeline is...",
-    bm: "Tempoh matlamat pelaburan anda adalah...",
+    eng: 'What is your intended investment horizon for this equity mandate?',
+    bm: 'Apakah tempoh ufuk pelaburan anda bagi mandat ekuiti ini?',
     options: {
-      eng: ["A) Short-term (1-3 years)", "B) Medium-term (3-7 years)", "C) Long-term (7+ years)"],
-      bm: ["A) Jangka pendek (1-3 tahun)", "B) Jangka sederhana (3-7 tahun)", "C) Jangka panjang (7+ tahun)"]
+      eng: [
+        'A) Short-Term Horizon (1 – 3 Years)',
+        'B) Medium-Term Horizon (3 – 7 Years)',
+        'C) Long-Term Institutional Horizon (7+ Years)'
+      ],
+      bm: [
+        'A) Jangka Pendek (1 – 3 Tahun)',
+        'B) Jangka Sederhana (3 – 7 Tahun)',
+        'C) Jangka Panjang (7+ Tahun)'
+      ]
     }
   },
   {
-    eng: "How much of your savings would you invest in stocks?",
-    bm: "Berapa banyak simpanan anda yang akan dilaburkan dalam saham?",
+    eng: 'What proportion of your liquid net worth would you allocate to listed equities?',
+    bm: 'Berapakah bahagian daripada aset cair anda yang akan diperuntukkan kepada ekuiti tersenarai?',
     options: {
-      eng: ["A) Less than 20%", "B) 20-50%", "C) More than 50%"],
-      bm: ["A) Kurang daripada 20%", "B) 20-50%", "C) Lebih daripada 50%"]
+      eng: [
+        'A) Conservative Allocation (Under 20%)',
+        'B) Core Allocation (20% – 50%)',
+        'C) High-Conviction Allocation (Over 50%)'
+      ],
+      bm: [
+        'A) Peruntukan Konservatif (Kurang daripada 20%)',
+        'B) Peruntukan Teras (20% – 50%)',
+        'C) Peruntukan Konviksi Tinggi (Lebih daripada 50%)'
+      ]
     }
   },
   {
-    eng: "What is your investment experience level?",
-    bm: "Apakah tahap pengalaman pelaburan anda?",
+    eng: 'How familiar are you with financial ratios, board lots, and SAC Shariah screening?',
+    bm: 'Sejauh manakah pengetahuan anda tentang nisbah kewangan, lot papan, dan saringan Syariah MPS?',
     options: {
-      eng: ["A) Beginner - New to investing", "B) Intermediate - Some experience", "C) Advanced - Experienced investor"],
-      bm: ["A) Pemula - Baru dalam pelaburan", "B) Pertengahan - Ada pengalaman", "C) Mahir - Pelabur berpengalaman"]
+      eng: [
+        'A) Foundational — New to reading financial statements and Bursa mechanics',
+        'B) Intermediate — Familiar with P/E ratios, dividend yields, and sector cycles',
+        'C) Advanced — Experienced with fundamental valuation and portfolio construction'
+      ],
+      bm: [
+        'A) Asas — Baharu dalam memahami penyata kewangan dan mekanik Bursa',
+        'B) Pertengahan — Biasa dengan nisbah P/E, hasil dividen, dan kitaran sektor',
+        'C) Mahir — Berpengalaman dalam penilaian asas dan pembinaan portfolio'
+      ]
     }
   }
 ];
@@ -71,6 +106,8 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const stepNum = String(currentQuestion + 1).padStart(2, '0');
+  const totalSteps = String(questions.length).padStart(2, '0');
 
   const handleNext = () => {
     const newAnswers = [...answers];
@@ -78,7 +115,6 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
     setAnswers(newAnswers);
 
     if (currentQuestion === questions.length - 1) {
-      // Calculate profile based on answers
       const score = newAnswers.reduce((sum, answer) => {
         if (answer.startsWith('A)')) return sum + 1;
         if (answer.startsWith('B)')) return sum + 2;
@@ -110,63 +146,118 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
   const options = language === 'ENG' ? question.options.eng : question.options.bm;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 to-blue-50">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle>
-            {language === 'ENG' ? "What's Your Investor Profile?" : "Profil Pelabur Anda"}
-          </CardTitle>
-          <CardDescription>
+    <div
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{ backgroundColor: 'var(--bg-canvas)' }}
+    >
+      <div className="jom-panel p-8 max-w-2xl w-full space-y-8">
+        {/* Top Metadata & 2px Progress Bar */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="jom-kicker">
+              {language === 'ENG'
+                ? `MANDATE ASSESSMENT · STEP ${stepNum} OF ${totalSteps}`
+                : `PENILAIAN MANDAT · LANGKAH ${stepNum} DARIPADA ${totalSteps}`}
+            </span>
+            <span className="jom-tag">JomINVEST · KLSE</span>
+          </div>
+
+          <div
+            className="w-full overflow-hidden rounded-full"
+            style={{ height: '2px', backgroundColor: 'var(--border-hairline)' }}
+          >
+            <div
+              className="h-full transition-all duration-300"
+              style={{ width: `${progress}%`, backgroundColor: 'var(--accent-brand)' }}
+            />
+          </div>
+        </div>
+
+        {/* Question Prompt */}
+        <div className="space-y-2">
+          <h2 className="font-editorial text-3xl leading-snug" style={{ color: 'var(--ink-primary)' }}>
+            {questionText}
+          </h2>
+          <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
             {language === 'ENG'
-              ? `Step ${currentQuestion + 1} of ${questions.length}`
-              : `Langkah ${currentQuestion + 1} daripada ${questions.length}`}
-          </CardDescription>
-          <Progress value={progress} className="mt-4" />
-        </CardHeader>
+              ? 'Your response calibrates equity screening weights and conviction ideas.'
+              : 'Jawapan anda menentukan pemberat saringan ekuiti dan cadangan konviksi.'}
+          </p>
+        </div>
 
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg">{questionText}</h3>
+        {/* Selectable Mandate Options */}
+        <div className="space-y-3">
+          {options.map((option, index) => {
+            const isSelected = selectedAnswer === option;
+            const codeLetter = option.slice(0, 2);
+            const labelBody = option.slice(3);
 
-            <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
-              {options.map((option, index) => (
-                <div
-                  key={index}
-                  className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
-                  onClick={() => setSelectedAnswer(option)}
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setSelectedAnswer(option)}
+                className="w-full text-left p-4 rounded-lg border transition-all flex items-start gap-3.5 cursor-pointer"
+                style={{
+                  borderColor: isSelected ? 'var(--ink-primary)' : 'var(--border-hairline)',
+                  backgroundColor: isSelected ? 'var(--bg-subtle)' : 'var(--bg-surface)'
+                }}
+              >
+                <span
+                  className="font-tabular text-xs font-semibold px-2 py-0.5 rounded border shrink-0 mt-0.5"
+                  style={{
+                    borderColor: isSelected ? 'var(--ink-primary)' : 'var(--border-hairline)',
+                    backgroundColor: isSelected ? 'var(--ink-primary)' : 'transparent',
+                    color: isSelected ? 'var(--ink-inverse)' : 'var(--ink-secondary)'
+                  }}
                 >
-                  <RadioGroupItem value={option} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+                  {codeLetter.replace(')', '')}
+                </span>
+                <span
+                  className="text-sm font-medium leading-relaxed"
+                  style={{ color: 'var(--ink-primary)' }}
+                >
+                  {labelBody}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-          <div className="flex justify-between pt-4">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentQuestion === 0}
-            >
-              <ArrowLeft className="mr-2" size={16} />
-              {language === 'ENG' ? 'Back' : 'Kembali'}
-            </Button>
+        {/* Footer Navigation */}
+        <div
+          className="flex items-center justify-between pt-6 border-t"
+          style={{ borderColor: 'var(--border-hairline)' }}
+        >
+          <button
+            type="button"
+            onClick={handleBack}
+            disabled={currentQuestion === 0}
+            className="jom-btn"
+          >
+            <ArrowLeft size={15} />
+            <span>{language === 'ENG' ? 'Previous' : 'Kembali'}</span>
+          </button>
 
-            <Button
-              onClick={handleNext}
-              disabled={!selectedAnswer}
-              className="bg-green-600 hover:bg-green-700"
-            >
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={!selectedAnswer}
+            className="jom-btn jom-btn-primary"
+          >
+            <span>
               {currentQuestion === questions.length - 1
-                ? (language === 'ENG' ? 'Finish' : 'Selesai')
-                : (language === 'ENG' ? 'Next' : 'Seterusnya')}
-              <ArrowRight className="ml-2" size={16} />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+                ? language === 'ENG'
+                  ? 'Confirm Investor Mandate'
+                  : 'Sahkan Mandat Pelabur'
+                : language === 'ENG'
+                ? 'Continue'
+                : 'Seterusnya'}
+            </span>
+            <ArrowRight size={15} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

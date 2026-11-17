@@ -8,9 +8,23 @@ import { EducationalHub } from './components/EducationalHub';
 import { ProfileSettings } from './components/ProfileSettings';
 import { PortfolioPage } from './components/PortfolioPage';
 import { WatchlistPage } from './components/WatchlistPage';
+import { ChatbotModal } from './components/ChatbotModal';
 import { StockData, stocks as defaultStocks, calculateBursaFees } from './data/stocks';
-import { getInitialStocks, fetchBursaStockQuote } from './services/bursaService';
+import { getInitialStocks, fetchBursaStockQuote, isBursaMarketOpen } from './services/bursaService';
 import { toast, Toaster } from 'sonner';
+import {
+  BarChart2,
+  Briefcase,
+  Bookmark,
+  BookOpen,
+  Compass,
+  Sliders,
+  RefreshCw,
+  MessageSquare,
+  Sun,
+  Moon,
+  TrendingUp
+} from 'lucide-react';
 
 export type { StockData };
 
@@ -98,11 +112,12 @@ export default function App() {
     return allStocks.slice(0, 3);
   });
 
-  // Gamification State
+  // Gamification & Copilot State
   const [userXP, setUserXP] = useState<number>(typeof saved.userXP === 'number' ? saved.userXP : 0);
   const [userLevel, setUserLevel] = useState<number>(typeof saved.userLevel === 'number' ? saved.userLevel : 1);
   const [hasLearnedTerm, setHasLearnedTerm] = useState<string[]>(saved.hasLearnedTerm || []);
   const [isRefreshingMarket, setIsRefreshingMarket] = useState<boolean>(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState<boolean>(false);
 
   // Sync dark mode class with document root
   useEffect(() => {
@@ -149,7 +164,6 @@ export default function App() {
     hasLearnedTerm
   ]);
 
-  // Keep selectedStock, portfolio, and watchlist synced when allStocks updates
   const updateStockInState = useCallback((updated: StockData) => {
     setAllStocks(prev => {
       const exists = prev.some(s => s.id === updated.id || s.bursaCode === updated.bursaCode);
@@ -171,7 +185,6 @@ export default function App() {
     );
   }, []);
 
-  // On-demand quote refresh when user views a specific stock
   useEffect(() => {
     if (currentScreen === 'stock-details' && selectedStock) {
       let cancelled = false;
@@ -190,7 +203,6 @@ export default function App() {
     if (isRefreshingMarket) return;
     setIsRefreshingMarket(true);
     try {
-      // Refresh top picks + user portfolio/watchlist stocks (low-resource batch)
       const priorityIds = new Set([
         ...allStocks.slice(0, 6).map(s => s.id),
         ...portfolio.map(p => p.stock.id),
@@ -203,8 +215,8 @@ export default function App() {
       }
       toast.success(
         language === 'ENG'
-          ? 'Bursa Malaysia prices synced (30m cache updated)'
-          : 'Harga Bursa Malaysia dikemas kini'
+          ? 'Market feed synchronized (30m cache updated)'
+          : 'Suapan pasaran Bursa Malaysia dikemas kini'
       );
     } finally {
       setIsRefreshingMarket(false);
@@ -226,10 +238,10 @@ export default function App() {
       const newLevel = Math.floor(newXP / 100) + 1;
       setUserLevel(prevLevel => {
         if (newLevel > prevLevel) {
-          toast.success(`🎉 Level Up! You are now Level ${newLevel}! (+${amount} XP: ${reason})`);
+          toast.success(`Tier Advanced — Level ${newLevel} (+${amount} XP · ${reason})`);
           return newLevel;
         }
-        toast.success(`+${amount} XP: ${reason}`);
+        toast.success(`+${amount} XP · ${reason}`);
         return prevLevel;
       });
       return newXP;
@@ -244,8 +256,8 @@ export default function App() {
     if (cashBalance < fees.netTotal) {
       toast.error(
         language === 'ENG'
-          ? `Insufficient virtual cash! Need RM ${fees.netTotal.toFixed(2)} (incl. RM ${fees.totalFees.toFixed(2)} fees), but you have RM ${cashBalance.toFixed(2)}.`
-          : `Tunai maya tidak mencukupi! Perlu RM ${fees.netTotal.toFixed(2)}, baki anda RM ${cashBalance.toFixed(2)}.`
+          ? `Insufficient buying power. Required: RM ${fees.netTotal.toFixed(2)} (incl. RM ${fees.totalFees.toFixed(2)} fees). Available: RM ${cashBalance.toFixed(2)}.`
+          : `Kuasa beli tidak mencukupi. Perlu RM ${fees.netTotal.toFixed(2)}, baki RM ${cashBalance.toFixed(2)}.`
       );
       return false;
     }
@@ -296,10 +308,10 @@ export default function App() {
 
     toast.success(
       language === 'ENG'
-        ? `Bought ${quantity} units of ${stock.ticker} for RM ${fees.netTotal.toFixed(2)} (incl. RM ${fees.totalFees.toFixed(2)} Bursa fees)`
-        : `Membeli ${quantity} unit ${stock.ticker} pada RM ${fees.netTotal.toFixed(2)}`
+        ? `Order Filled · Bought ${quantity} sh ${stock.ticker} @ RM ${price.toFixed(2)} (Net RM ${fees.netTotal.toFixed(2)})`
+        : `Pesanan Berjaya · Beli ${quantity} unit ${stock.ticker} (Bersih RM ${fees.netTotal.toFixed(2)})`
     );
-    addXP(50, `Bought ${stock.ticker}`);
+    addXP(50, `Executed buy order on ${stock.ticker}`);
     return true;
   };
 
@@ -308,8 +320,8 @@ export default function App() {
     if (!existingItem || existingItem.quantity <= 0) {
       toast.error(
         language === 'ENG'
-          ? `You don't own any units of ${stockToSell.ticker} to sell.`
-          : `Anda tidak memiliki sebarang unit ${stockToSell.ticker} untuk dijual.`
+          ? `No open position in ${stockToSell.ticker} available to sell.`
+          : `Tiada pegangan ${stockToSell.ticker} untuk dijual.`
       );
       return false;
     }
@@ -346,10 +358,10 @@ export default function App() {
 
     toast.success(
       language === 'ENG'
-        ? `Sold ${sellQty} units of ${stockToSell.ticker} for RM ${fees.netTotal.toFixed(2)} net proceeds!`
-        : `Menjual ${sellQty} unit ${stockToSell.ticker} dengan hasil bersih RM ${fees.netTotal.toFixed(2)}!`
+        ? `Order Filled · Sold ${sellQty} sh ${stockToSell.ticker} (Net Proceeds RM ${fees.netTotal.toFixed(2)})`
+        : `Pesanan Berjaya · Jual ${sellQty} unit ${stockToSell.ticker} (RM ${fees.netTotal.toFixed(2)})`
     );
-    addXP(30, `Sold ${stockToSell.ticker}`);
+    addXP(30, `Closed position on ${stockToSell.ticker}`);
     return true;
   };
 
@@ -357,13 +369,12 @@ export default function App() {
     sellFromPortfolio(stockToRemove);
   };
 
-  // Watchlist Logic (Fixed string ID type)
   const addToWatchlist = (stock: StockData) => {
     if (!watchlist.some(s => s.id === stock.id)) {
       setWatchlist(prev => [...prev, stock]);
       updateStockInState(stock);
-      toast.success(`${stock.ticker} added to watchlist!`);
-      addXP(5, `Added ${stock.ticker} to Watchlist`);
+      toast.success(`${stock.ticker} added to watchlist.`);
+      addXP(5, `Tracked ${stock.ticker}`);
     } else {
       toast.info(`${stock.ticker} is already in your watchlist.`);
     }
@@ -378,8 +389,8 @@ export default function App() {
     setCashBalance(prev => parseFloat((prev + amount).toFixed(2)));
     toast.success(
       language === 'ENG'
-        ? `Added RM ${amount.toLocaleString()} practice cash to your virtual wallet!`
-        : `Menambah RM ${amount.toLocaleString()} tunai latihan ke dompet maya anda!`
+        ? `Credited RM ${amount.toLocaleString()} practice capital to account.`
+        : `RM ${amount.toLocaleString()} modal latihan dikreditkan.`
     );
   };
 
@@ -394,136 +405,309 @@ export default function App() {
     setHasLearnedTerm([]);
     toast.success(
       language === 'ENG'
-        ? 'Demo account reset to RM 10,000 starting balance!'
-        : 'Akaun demo ditetapkan semula kepada baki permulaan RM 10,000!'
+        ? 'Account reset to RM 10,000.00 opening capital.'
+        : 'Akaun ditetapkan semula kepada modal RM 10,000.00.'
     );
   };
 
+  // Standalone Onboarding Screens
+  if (currentScreen === 'login') {
+    return (
+      <div className={darkMode ? 'dark' : ''}>
+        <LoginScreen navigateTo={navigateTo} language={language} toggleLanguage={toggleLanguage} />
+        <Toaster richColors position="bottom-left" />
+      </div>
+    );
+  }
+
+  if (currentScreen === 'questionnaire') {
+    return (
+      <div className={darkMode ? 'dark' : ''}>
+        <RiskQuestionnaire navigateTo={navigateTo} setUserProfile={setUserProfile} language={language} />
+        <Toaster richColors position="bottom-left" />
+      </div>
+    );
+  }
+
+  const holdingsValue = portfolio.reduce(
+    (acc, item) => acc + parseFloat(item.stock.price) * item.quantity,
+    0
+  );
+  const netLiquidity = holdingsValue + cashBalance;
+  const marketOpen = isBursaMarketOpen();
+
+  const navItems: { id: Screen; labelEng: string; labelBm: string; icon: any; count?: number }[] = [
+    { id: 'dashboard', labelEng: 'Market & Screener', labelBm: 'Pasaran & Saringan', icon: BarChart2 },
+    { id: 'stock-details', labelEng: 'Equity Terminal', labelBm: 'Terminal Ekuiti', icon: TrendingUp },
+    { id: 'portfolio', labelEng: 'Portfolio Ledger', labelBm: 'Lejar Portfolio', icon: Briefcase, count: portfolio.length },
+    { id: 'watchlist', labelEng: 'Watchlist', labelBm: 'Senarai Pantau', icon: Bookmark, count: watchlist.length },
+    { id: 'ai-recommendation', labelEng: 'Conviction Notes', labelBm: 'Nota Konviksi', icon: Compass },
+    { id: 'educational-hub', labelEng: 'Research & Academy', labelBm: 'Penyelidikan & Akademi', icon: BookOpen },
+    { id: 'profile', labelEng: 'Account & Mandate', labelBm: 'Akaun & Mandat', icon: Sliders }
+  ];
+
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-gray-50 text-gray-900'}`}>
-      {currentScreen === 'login' && (
-        <LoginScreen
-          navigateTo={navigateTo}
-          language={language}
-          toggleLanguage={toggleLanguage}
-        />
-      )}
-      {currentScreen === 'questionnaire' && (
-        <RiskQuestionnaire
-          navigateTo={navigateTo}
-          setUserProfile={setUserProfile}
-          language={language}
-        />
-      )}
-      {currentScreen === 'dashboard' && (
-        <Dashboard
-          navigateTo={navigateTo}
-          userProfile={userProfile}
-          userName={userName}
-          language={language}
-          stocks={allStocks}
-          setSelectedStock={stock => {
-            updateStockInState(stock);
-            setSelectedStock(stock);
-          }}
-          portfolio={portfolio}
-          cashBalance={cashBalance}
-          watchlist={watchlist}
-          userXP={userXP}
-          userLevel={userLevel}
-          onRefreshMarket={refreshMarketPrices}
-          isRefreshingMarket={isRefreshingMarket}
-        />
-      )}
-      {currentScreen === 'watchlist' && (
-        <WatchlistPage
-          navigateTo={navigateTo}
-          language={language}
-          stocks={allStocks}
-          watchlist={watchlist}
-          addToWatchlist={addToWatchlist}
-          removeFromWatchlist={removeFromWatchlist}
-          setSelectedStock={stock => {
-            updateStockInState(stock);
-            setSelectedStock(stock);
-          }}
-        />
-      )}
-      {currentScreen === 'ai-recommendation' && (
-        <AIRecommendation
-          navigateTo={navigateTo}
-          userProfile={userProfile}
-          language={language}
-          stocks={allStocks}
-          selectedStock={selectedStock}
-          setSelectedStock={setSelectedStock}
-          addToPortfolio={addToPortfolio}
-        />
-      )}
-      {currentScreen === 'stock-details' && (
-        <StockDetails
-          navigateTo={navigateTo}
-          language={language}
-          stock={selectedStock}
-          allStocks={allStocks}
-          setSelectedStock={setSelectedStock}
-          portfolio={portfolio}
-          cashBalance={cashBalance}
-          watchlist={watchlist}
-          addToWatchlist={addToWatchlist}
-          removeFromWatchlist={removeFromWatchlist}
-          addToPortfolio={addToPortfolio}
-          sellFromPortfolio={sellFromPortfolio}
-          addXP={addXP}
-          hasLearnedTerm={hasLearnedTerm}
-          setHasLearnedTerm={setHasLearnedTerm}
-        />
-      )}
-      {currentScreen === 'educational-hub' && (
-        <EducationalHub
-          navigateTo={navigateTo}
-          language={language}
-          stocks={allStocks}
-          setSelectedStock={setSelectedStock}
-          addXP={addXP}
-        />
-      )}
-      {currentScreen === 'profile' && (
-        <ProfileSettings
-          navigateTo={navigateTo}
-          userProfile={userProfile}
-          userName={userName}
-          setUserName={setUserName}
-          userEmail={userEmail}
-          setUserEmail={setUserEmail}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          language={language}
-          toggleLanguage={toggleLanguage}
-          userXP={userXP}
-          userLevel={userLevel}
-          portfolio={portfolio}
-          tradeHistory={tradeHistory}
-          hasLearnedTerm={hasLearnedTerm}
-          cashBalance={cashBalance}
-          onTopUpCash={topUpCash}
-          onResetDemo={resetDemoAccount}
-        />
-      )}
-      {currentScreen === 'portfolio' && (
-        <PortfolioPage
-          navigateTo={navigateTo}
-          language={language}
-          portfolio={portfolio}
-          cashBalance={cashBalance}
-          tradeHistory={tradeHistory}
-          userProfile={userProfile}
-          removeFromPortfolio={removeFromPortfolio}
-          sellFromPortfolio={sellFromPortfolio}
-          setSelectedStock={setSelectedStock}
-          onTopUpCash={topUpCash}
-        />
-      )}
+    <div className={`jom-shell ${darkMode ? 'dark' : ''}`}>
+      {/* Architectural Left Navigation Rail */}
+      <aside className="jom-sidebar">
+        <div className="p-5 space-y-6">
+          {/* Brand Lockup */}
+          <div
+            className="flex items-center justify-between cursor-pointer pb-4 border-b"
+            style={{ borderColor: 'var(--border-hairline)' }}
+            onClick={() => navigateTo('dashboard')}
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-editorial text-2xl tracking-tight">JomINVEST</span>
+                <span className="jom-tag">KLSE</span>
+              </div>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                {language === 'ENG' ? 'Bursa Research & Practice Desk' : 'Meja Penyelidikan & Latihan Bursa'}
+              </p>
+            </div>
+          </div>
+
+          {/* Primary Navigation */}
+          <nav className="space-y-1">
+            <div className="jom-kicker px-3 pb-2">
+              {language === 'ENG' ? 'Workspace' : 'Ruang Kerja'}
+            </div>
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const isActive = currentScreen === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => navigateTo(item.id)}
+                  className={`jom-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Icon size={15} strokeWidth={1.8} />
+                    <span>{language === 'ENG' ? item.labelEng : item.labelBm}</span>
+                  </span>
+                  {typeof item.count === 'number' && (
+                    <span className="font-tabular text-xs opacity-75">{item.count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Bottom Investor Mandate & Tier Block */}
+        <div className="p-4 border-t space-y-3" style={{ borderColor: 'var(--border-hairline)' }}>
+          <div className="jom-panel-subtle p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="jom-kicker">{language === 'ENG' ? 'Analyst Tier' : 'Tahap Penganalisis'}</span>
+              <span className="font-tabular text-xs font-semibold">
+                LVL 0{userLevel} · {userXP} XP
+              </span>
+            </div>
+            <div className="w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-hairline)' }}>
+              <div
+                className="h-full transition-all duration-300"
+                style={{
+                  width: `${userXP % 100}%`,
+                  backgroundColor: 'var(--accent-brand)'
+                }}
+              />
+            </div>
+            <div className="text-xs truncate" style={{ color: 'var(--ink-secondary)' }}>
+              {userName} · <span style={{ color: 'var(--ink-muted)' }}>{userProfile.split('(')[0].trim()}</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Column */}
+      <div className="jom-main-wrap">
+        {/* Top Institutional Status Bar */}
+        <header className="jom-topbar">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: marketOpen ? 'var(--signal-up)' : 'var(--ink-muted)' }}
+              />
+              <span className="font-tabular text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
+                {marketOpen
+                  ? 'BURSA MALAYSIA · CONTINUOUS TRADING'
+                  : 'BURSA MALAYSIA · EOD / 15M DELAYED'}
+              </span>
+            </div>
+            <button
+              onClick={refreshMarketPrices}
+              disabled={isRefreshingMarket}
+              className="jom-btn py-1 px-2.5 text-xs"
+            >
+              <RefreshCw size={12} className={isRefreshingMarket ? 'animate-spin' : ''} />
+              <span>{isRefreshingMarket ? 'Syncing' : language === 'ENG' ? 'Sync Feed' : 'Kemas Kini'}</span>
+            </button>
+          </div>
+
+          {/* Right Account Telemetry & Controls */}
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-5 pr-3 border-r" style={{ borderColor: 'var(--border-hairline)' }}>
+              <div className="text-right">
+                <div className="jom-kicker">{language === 'ENG' ? 'Net Liquidity' : 'Kecairan Bersih'}</div>
+                <div className="font-tabular text-xs font-semibold">RM {netLiquidity.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
+              <div className="text-right">
+                <div className="jom-kicker">{language === 'ENG' ? 'Buying Power' : 'Kuasa Beli'}</div>
+                <div className="font-tabular text-xs font-semibold" style={{ color: 'var(--signal-up)' }}>
+                  RM {cashBalance.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsCopilotOpen(true)}
+                className="jom-btn jom-btn-inverse py-1.5 px-3 text-xs"
+              >
+                <MessageSquare size={13} />
+                <span>{language === 'ENG' ? 'Research Copilot' : 'Pembantu AI'}</span>
+              </button>
+              <button onClick={toggleLanguage} className="jom-btn py-1.5 px-2.5 font-tabular text-xs">
+                {language}
+              </button>
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="jom-btn py-1.5 px-2.5 text-xs"
+                title="Toggle Theme"
+              >
+                {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Active Screen Viewport */}
+        <div className="flex-1">
+          {currentScreen === 'dashboard' && (
+            <Dashboard
+              navigateTo={navigateTo}
+              userProfile={userProfile}
+              userName={userName}
+              language={language}
+              stocks={allStocks}
+              setSelectedStock={stock => {
+                updateStockInState(stock);
+                setSelectedStock(stock);
+              }}
+              portfolio={portfolio}
+              cashBalance={cashBalance}
+              watchlist={watchlist}
+              userXP={userXP}
+              userLevel={userLevel}
+              onRefreshMarket={refreshMarketPrices}
+              isRefreshingMarket={isRefreshingMarket}
+            />
+          )}
+          {currentScreen === 'watchlist' && (
+            <WatchlistPage
+              navigateTo={navigateTo}
+              language={language}
+              stocks={allStocks}
+              watchlist={watchlist}
+              addToWatchlist={addToWatchlist}
+              removeFromWatchlist={removeFromWatchlist}
+              setSelectedStock={stock => {
+                updateStockInState(stock);
+                setSelectedStock(stock);
+              }}
+            />
+          )}
+          {currentScreen === 'ai-recommendation' && (
+            <AIRecommendation
+              navigateTo={navigateTo}
+              userProfile={userProfile}
+              language={language}
+              stocks={allStocks}
+              selectedStock={selectedStock}
+              setSelectedStock={setSelectedStock}
+              addToPortfolio={addToPortfolio}
+            />
+          )}
+          {currentScreen === 'stock-details' && (
+            <StockDetails
+              navigateTo={navigateTo}
+              language={language}
+              stock={selectedStock}
+              allStocks={allStocks}
+              setSelectedStock={setSelectedStock}
+              portfolio={portfolio}
+              cashBalance={cashBalance}
+              watchlist={watchlist}
+              addToWatchlist={addToWatchlist}
+              removeFromWatchlist={removeFromWatchlist}
+              addToPortfolio={addToPortfolio}
+              sellFromPortfolio={sellFromPortfolio}
+              addXP={addXP}
+              hasLearnedTerm={hasLearnedTerm}
+              setHasLearnedTerm={setHasLearnedTerm}
+            />
+          )}
+          {currentScreen === 'educational-hub' && (
+            <EducationalHub
+              navigateTo={navigateTo}
+              language={language}
+              stocks={allStocks}
+              setSelectedStock={setSelectedStock}
+              addXP={addXP}
+            />
+          )}
+          {currentScreen === 'profile' && (
+            <ProfileSettings
+              navigateTo={navigateTo}
+              userProfile={userProfile}
+              userName={userName}
+              setUserName={setUserName}
+              userEmail={userEmail}
+              setUserEmail={setUserEmail}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
+              language={language}
+              toggleLanguage={toggleLanguage}
+              userXP={userXP}
+              userLevel={userLevel}
+              portfolio={portfolio}
+              tradeHistory={tradeHistory}
+              hasLearnedTerm={hasLearnedTerm}
+              cashBalance={cashBalance}
+              onTopUpCash={topUpCash}
+              onResetDemo={resetDemoAccount}
+            />
+          )}
+          {currentScreen === 'portfolio' && (
+            <PortfolioPage
+              navigateTo={navigateTo}
+              language={language}
+              portfolio={portfolio}
+              cashBalance={cashBalance}
+              tradeHistory={tradeHistory}
+              userProfile={userProfile}
+              removeFromPortfolio={removeFromPortfolio}
+              sellFromPortfolio={sellFromPortfolio}
+              setSelectedStock={setSelectedStock}
+              onTopUpCash={topUpCash}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Global Research Copilot Drawer */}
+      <ChatbotModal
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+        language={language}
+        stocks={allStocks}
+        portfolio={portfolio}
+        cashBalance={cashBalance}
+        userProfile={userProfile}
+        userName={userName}
+      />
 
       <Toaster richColors position="bottom-left" />
     </div>

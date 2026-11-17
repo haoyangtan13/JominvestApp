@@ -1,8 +1,5 @@
 import { useMemo } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { ArrowLeft, TrendingUp, TrendingDown, CheckCircle2, Sparkles, ShoppingBag, BarChart3 } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type { Screen } from '../App';
 import type { StockData } from '../data/stocks';
 
@@ -25,7 +22,6 @@ export function AIRecommendation({
   setSelectedStock,
   addToPortfolio
 }: AIRecommendationProps) {
-  // Determine top 3 AI Picks tailored to the user's risk profile
   const profilePicks = useMemo(() => {
     const profileLower = (userProfile || '').toLowerCase();
     let targetTickers: string[];
@@ -35,7 +31,6 @@ export function AIRecommendation({
     } else if (profileLower.includes('moderate') || profileLower.includes('builder')) {
       targetTickers = ['CIMB', 'MISC', 'TM'];
     } else {
-      // Explorer / Aggressive
       targetTickers = ['GAMUDA', 'YTLPOWR', 'SUNWAY'];
     }
 
@@ -50,71 +45,83 @@ export function AIRecommendation({
 
   const texts = {
     ENG: {
-      back: 'Back to Dashboard',
-      topPicksForProfile: 'Tailored AI Picks for Your Profile:',
-      currentPrice: 'Current Price',
-      change24h: '24h Change',
-      aiAnalysis: 'JomINVEST AI Analysis',
-      whyRecommend: `Why JomINVEST AI Highlights ${activeStock?.ticker || 'This Stock'}:`,
-      reason1: 'Fundamental & Financial Strength',
-      reason1desc: `${activeStock?.name} commands a ${activeStock?.marketCap} market cap in the ${activeStock?.sector} sector with RM ${activeStock?.revenue} revenue and RM ${activeStock?.netProfit} net profit.`,
-      reason2: 'Valuation & Income Profile',
-      reason2desc: `Trading at a P/E ratio of ${activeStock?.peRatio} with an annual dividend yield of ${activeStock?.dividendYield} (${
-        activeStock?.isShariah ? '☪️ Shariah-Compliant' : 'Conventional'
-      }).`,
-      reason3: 'Fits Your Investor DNA',
-      reason3desc: `Selected for your ${
+      kicker: 'RESEARCH DESK · MANDATE CONVICTION NOTES',
+      title: 'Institutional Conviction Memorandum',
+      back: '← Market Screener',
+      topPicksForProfile: 'MANDATE-CALIBRATED SELECTION',
+      currentPrice: 'Last Traded Price',
+      change24h: '24h Session Change',
+      pe: 'P/E Multiple',
+      dividend: 'Trailing Dividend Yield',
+      marketCap: 'Market Capitalization',
+      shariah: 'Regulatory Screening',
+      thesisKicker: 'INVESTMENT THESIS & CATALYSTS',
+      whyRecommend: `Analytical Thesis — ${activeStock?.name || ''} (${activeStock?.bursaCode || ''})`,
+      reason1Code: '01 · BALANCE SHEET &EARNINGS SCALE',
+      reason1Title: 'Fundamental & Financial Strength',
+      reason1desc: `${activeStock?.name} commands a RM ${activeStock?.marketCap} market capitalization in the Malaysian ${activeStock?.sector} sector, generating RM ${activeStock?.revenue} in annual revenue and RM ${activeStock?.netProfit} in net earnings with a ${activeStock?.debtEquity} debt-to-equity ratio.`,
+      reason2Code: '02 · VALUATION & DISTRIBUTION PROFILE',
+      reason2Title: 'Valuation Multiple & Cash Yield',
+      reason2desc: `Currently trading at ${activeStock?.peRatio}x earnings with an indicated dividend yield of ${activeStock?.dividendYield}. Classified as ${
+        activeStock?.isShariah
+          ? 'SAC Shariah-Compliant by the Securities Commission of Malaysia'
+          : 'Conventional Main Market Equity'
+      }.`,
+      reason3Code: '03 · MANDATE ALIGNMENT',
+      reason3Title: 'Calibrated to Your Investor Mandate',
+      reason3desc: `Selected for the ${
         userProfile || 'Jom-Explorer (Aggressive)'
-      } strategy with a Momentum score of ${activeStock?.radarScores?.momentum ?? 75}/100 and Financial Health score of ${
-        activeStock?.radarScores?.health ?? 80
-      }/100.`,
-      add1Lot: 'Add 100 Units (1 Lot) to Portfolio',
-      add10Units: 'Add 10 Units (Micro) to Portfolio',
-      viewDetails: 'View Full Stock Details',
-      keyMetrics: 'Key Metrics & 5-Axis Radar Scores',
-      pe: 'P/E Ratio',
-      dividend: 'Dividend Yield',
-      marketCap: 'Market Cap',
-      shariah: 'Shariah Status',
-      shariahYes: '☪️ Shariah-Compliant',
-      shariahNo: 'Non-Shariah'
+      } mandate based on a quantitative Momentum rating of ${
+        activeStock?.radarScores?.momentum ?? 75
+      }/100 and Balance Sheet Health score of ${activeStock?.radarScores?.health ?? 80}/100.`,
+      factorKicker: 'QUANTITATIVE 5-AXIS SCORECARD',
+      factorTitle: 'Multi-Factor Fundamental Breakdown',
+      add1Lot: 'Execute 1 Board Lot (100 sh)',
+      add10Units: 'Execute Micro Order (10 sh)',
+      viewDetails: 'Open Equity Terminal →'
     },
     BM: {
-      back: 'Kembali ke Dashboard',
-      topPicksForProfile: 'Pilihan AI Disesuaikan Untuk Profil Anda:',
-      currentPrice: 'Harga Semasa',
-      change24h: 'Perubahan 24j',
-      aiAnalysis: 'Analisis AI JomINVEST',
-      whyRecommend: `Mengapa AI JomINVEST Menyerlahkan ${activeStock?.ticker || 'Saham Ini'}:`,
-      reason1: 'Kekuatan Asas & Kewangan',
-      reason1desc: `${activeStock?.name} mempunyai modal pasaran RM ${activeStock?.marketCap} dalam sektor ${activeStock?.sector} dengan hasil RM ${activeStock?.revenue} dan untung bersih RM ${activeStock?.netProfit}.`,
-      reason2: 'Profil Penilaian & Dividen',
-      reason2desc: `Didagangkan pada nisbah P/E ${activeStock?.peRatio} dengan hasil dividen tahunan ${activeStock?.dividendYield} (${
-        activeStock?.isShariah ? '☪️ Patuh Syariah' : 'Konvensional'
-      }).`,
-      reason3: 'Sesuai Dengan Profil Pelabur Anda',
-      reason3desc: `Dipilih untuk strategi ${
-        userProfile || 'Jom-Explorer (Agresif)'
-      } anda dengan skor Momentum ${activeStock?.radarScores?.momentum ?? 75}/100 dan Kesihatan Kewangan ${
-        activeStock?.radarScores?.health ?? 80
-      }/100.`,
-      add1Lot: 'Tambah 100 Unit (1 Lot) ke Portfolio',
-      add10Units: 'Tambah 10 Unit (Mikro) ke Portfolio',
-      viewDetails: 'Lihat Butiran Saham Penuh',
-      keyMetrics: 'Metrik Utama & Skor Radar 5-Paksi',
-      pe: 'Nisbah P/E',
-      dividend: 'Hasil Dividen',
+      kicker: 'MEJA PENYELIDIKAN · NOTA KONVIKSI MANDAT',
+      title: 'Memorandum Konviksi Institusi',
+      back: '← Saringan Pasaran',
+      topPicksForProfile: 'PILIHAN DISESUAIKAN MENGIKUT MANDAT',
+      currentPrice: 'Harga Dagangan Terakhir',
+      change24h: 'Perubahan Sesi 24j',
+      pe: 'Gandaan P/E',
+      dividend: 'Hasil Dividen Semasa',
       marketCap: 'Modal Pasaran',
-      shariah: 'Status Syariah',
-      shariahYes: '☪️ Patuh Syariah',
-      shariahNo: 'Bukan Syariah'
+      shariah: 'Saringan Kawal Selia',
+      thesisKicker: 'TESIS PELABURAN & PEMANGKIN',
+      whyRecommend: `Tesis Analisis — ${activeStock?.name || ''} (${activeStock?.bursaCode || ''})`,
+      reason1Code: '01 · SKALA KUNCI KIRA-KIRA & PENDAPATAN',
+      reason1Title: 'Kekuatan Asas & Kewangan',
+      reason1desc: `${activeStock?.name} mempunyai modal pasaran RM ${activeStock?.marketCap} dalam sektor ${activeStock?.sector} Malaysia, menjana hasil tahunan RM ${activeStock?.revenue} dan untung bersih RM ${activeStock?.netProfit} dengan nisbah hutang-ke-ekuiti ${activeStock?.debtEquity}.`,
+      reason2Code: '02 · PROFIL PENILAIAN & AGIHAN',
+      reason2Title: 'Gandaan Penilaian & Hasil Tunai',
+      reason2desc: `Didagangkan pada gandaan P/E ${activeStock?.peRatio}x dengan hasil dividen tahunan ${activeStock?.dividendYield}. Diklasifikasikan sebagai ${
+        activeStock?.isShariah
+          ? 'Patuh Syariah MPS oleh Suruhanjaya Sekuriti Malaysia'
+          : 'Ekuiti Konvensional Pasaran Utama'
+      }.`,
+      reason3Code: '03 · KESELARASAN MANDAT',
+      reason3Title: 'Disesuaikan Dengan Mandat Pelabur Anda',
+      reason3desc: `Dipilih untuk mandat ${
+        userProfile || 'Jom-Explorer (Aggressive)'
+      } berdasarkan skor Momentum kuantitatif ${
+        activeStock?.radarScores?.momentum ?? 75
+      }/100 dan Kesihatan Kunci Kira-kira ${activeStock?.radarScores?.health ?? 80}/100.`,
+      factorKicker: 'KAD SKOR KUANTITATIF 5-PAKSI',
+      factorTitle: 'Pecahan Asas Pelbagai Faktor',
+      add1Lot: 'Beli 1 Lot Papan (100 sh)',
+      add10Units: 'Beli Pesanan Mikro (10 sh)',
+      viewDetails: 'Buka Terminal Ekuiti →'
     }
   };
 
   const t = texts[language];
 
   if (!activeStock) {
-    return <div className="p-8 text-center">Loading AI Recommendations...</div>;
+    return <div className="jom-container">Loading research memorandum...</div>;
   }
 
   const radarList = [
@@ -126,246 +133,231 @@ export function AIRecommendation({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigateTo('dashboard')}>
-            <ArrowLeft className="mr-2" size={16} />
-            {t.back}
-          </Button>
-          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-            {userProfile}
-          </Badge>
+    <div className="jom-container space-y-8">
+      {/* Editorial Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="jom-kicker">{t.kicker}</div>
+          <h1 className="font-editorial text-4xl" style={{ color: 'var(--ink-primary)' }}>
+            {t.title}
+          </h1>
         </div>
-      </header>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="jom-tag">{userProfile}</span>
+          <button
+            type="button"
+            onClick={() => navigateTo('dashboard')}
+            className="jom-btn text-xs"
+          >
+            <ArrowLeft size={14} />
+            <span>{t.back}</span>
+          </button>
+        </div>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        {/* Top 3 Profile AI Picks Switcher */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-            {t.topPicksForProfile}
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {profilePicks.map((pick, idx) => {
-              const isSelected = pick.id === activeStock.id;
-              return (
-                <button
-                  key={pick.id}
-                  type="button"
-                  onClick={() => setSelectedStock(pick)}
-                  className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between ${
-                    isSelected
-                      ? 'bg-green-600 text-white border-green-600 shadow-md'
-                      : 'bg-white text-gray-800 border-gray-200 hover:border-green-300'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold opacity-75">#{idx + 1}</span>
-                      <span className="font-bold text-sm">{pick.ticker}</span>
-                      {pick.isShariah && <span className="text-xs">☪️</span>}
-                    </div>
-                    <p
-                      className={`text-xs truncate max-w-[140px] ${
-                        isSelected ? 'text-green-100' : 'text-gray-500'
-                      }`}
-                    >
-                      {pick.name}
-                    </p>
+      {/* Top 3 Profile Conviction Switcher */}
+      <div className="space-y-3">
+        <div className="jom-kicker">{t.topPicksForProfile}</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {profilePicks.map((pick, idx) => {
+            const isSelected = pick.id === activeStock.id;
+            return (
+              <button
+                key={pick.id}
+                type="button"
+                onClick={() => setSelectedStock(pick)}
+                className="jom-panel p-4 text-left transition-all flex items-center justify-between cursor-pointer"
+                style={{
+                  borderColor: isSelected ? 'var(--ink-primary)' : 'var(--border-hairline)',
+                  backgroundColor: isSelected ? 'var(--bg-subtle)' : 'var(--bg-surface)'
+                }}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
+                      0{idx + 1}
+                    </span>
+                    <span className="font-tabular text-sm font-semibold">{pick.ticker}</span>
+                    {pick.isShariah ? (
+                      <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
+                    ) : (
+                      <span className="jom-tag">CONVENTIONAL</span>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm">RM {pick.price}</p>
-                    <p
-                      className={`text-xs ${
-                        isSelected
-                          ? 'text-green-100'
-                          : pick.isPositive
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }`}
-                    >
-                      {pick.changePercent}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
+                  <p className="text-xs truncate max-w-[180px]" style={{ color: 'var(--ink-secondary)' }}>
+                    {pick.name}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <div className="font-tabular text-sm font-semibold">RM {pick.price}</div>
+                  <span
+                    className={`jom-tag font-tabular mt-1 ${
+                      pick.isPositive ? 'jom-tag-up' : 'jom-tag-down'
+                    }`}
+                  >
+                    {pick.changePercent}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Active Security Ledger Strip */}
+      <div className="jom-ledger-strip">
+        <div className="jom-ledger-cell space-y-1">
+          <div className="jom-kicker">{t.currentPrice}</div>
+          <div className="font-tabular text-2xl font-semibold">RM {activeStock.price}</div>
+          <div className="text-xs font-tabular" style={{ color: 'var(--ink-muted)' }}>
+            {activeStock.ticker} · {activeStock.bursaCode}
           </div>
         </div>
 
-        {/* Active Stock Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                  {activeStock.ticker.slice(0, 4)}
-                </div>
-                <div>
-                  <CardTitle className="text-2xl">{activeStock.name}</CardTitle>
-                  <p className="text-gray-500 text-sm">
-                    {activeStock.ticker} · <span className="font-mono">{activeStock.bursaCode}</span> ·{' '}
-                    {activeStock.sector}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    {activeStock.isShariah ? (
-                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-xs">
-                        {t.shariahYes}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs text-gray-600">
-                        {t.shariahNo}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                <Sparkles size={14} className="mr-1" />
-                AI Pick
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">{t.currentPrice}</p>
-                <p className="text-3xl font-bold">RM {activeStock.price}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">{t.change24h}</p>
-                <p
-                  className={`text-2xl font-bold flex items-center gap-2 ${
-                    activeStock.isPositive ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {activeStock.changePercent}
-                  {activeStock.isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* AI Analysis Section */}
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Sparkles className="text-green-600" size={24} />
-              <CardTitle className="text-green-900">{t.aiAnalysis}</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <h3 className="text-lg font-semibold text-green-950">{t.whyRecommend}</h3>
-
-            <div className="space-y-3">
-              <div className="flex gap-3 bg-white p-4 rounded-lg shadow-2xs">
-                <CheckCircle2 className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                <div>
-                  <h4 className="font-semibold text-green-900 mb-1">{t.reason1}</h4>
-                  <p className="text-sm text-gray-600">{t.reason1desc}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 bg-white p-4 rounded-lg shadow-2xs">
-                <CheckCircle2 className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                <div>
-                  <h4 className="font-semibold text-green-900 mb-1">{t.reason2}</h4>
-                  <p className="text-sm text-gray-600">{t.reason2desc}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 bg-white p-4 rounded-lg shadow-2xs">
-                <CheckCircle2 className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                <div>
-                  <h4 className="font-semibold text-green-900 mb-1">{t.reason3}</h4>
-                  <p className="text-sm text-gray-600">{t.reason3desc}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Key Metrics & 5-Axis Fundamental Scores */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 size={20} className="text-green-600" />
-              {t.keyMetrics}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">{t.pe}</p>
-                <p className="text-xl font-bold">{activeStock.peRatio}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">{t.dividend}</p>
-                <p className="text-xl font-bold text-green-700">{activeStock.dividendYield}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">{t.marketCap}</p>
-                <p className="text-xl font-bold">RM {activeStock.marketCap}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">{t.shariah}</p>
-                <p className="text-sm font-bold mt-1">
-                  {activeStock.isShariah ? t.shariahYes : t.shariahNo}
-                </p>
-              </div>
-            </div>
-
-            {/* 5-Axis Radar Score Bars */}
-            <div className="grid grid-cols-5 gap-2 pt-2">
-              {radarList.map(item => (
-                <div key={item.label} className="bg-gray-50 p-3 rounded-lg text-center border">
-                  <p className="text-xs text-gray-500">{item.label}</p>
-                  <p className="text-lg font-bold text-green-700">{item.score}</p>
-                  <div className="w-full bg-gray-200 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                    <div
-                      className="bg-green-600 h-full rounded-full"
-                      style={{ width: `${item.score}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button
-            className="flex-1 bg-green-600 hover:bg-green-700"
-            size="lg"
-            onClick={() => addToPortfolio(activeStock, 100)}
+        <div className="jom-ledger-cell space-y-1">
+          <div className="jom-kicker">{t.change24h}</div>
+          <div
+            className="font-tabular text-2xl font-semibold"
+            style={{ color: activeStock.isPositive ? 'var(--signal-up)' : 'var(--signal-down)' }}
           >
-            <ShoppingBag size={18} className="mr-2" />
+            {activeStock.changePercent}
+          </div>
+          <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+            {activeStock.sector}
+          </div>
+        </div>
+
+        <div className="jom-ledger-cell space-y-1">
+          <div className="jom-kicker">{t.pe} / {t.dividend}</div>
+          <div className="font-tabular text-2xl font-semibold">
+            {activeStock.peRatio}x · {activeStock.dividendYield}
+          </div>
+          <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+            {t.marketCap}: RM {activeStock.marketCap}
+          </div>
+        </div>
+
+        <div className="jom-ledger-cell space-y-1">
+          <div className="jom-kicker">{t.shariah}</div>
+          <div className="pt-1">
+            {activeStock.isShariah ? (
+              <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
+            ) : (
+              <span className="jom-tag">CONVENTIONAL</span>
+            )}
+          </div>
+          <div className="text-xs pt-1" style={{ color: 'var(--ink-muted)' }}>
+            SC Malaysia Classification
+          </div>
+        </div>
+      </div>
+
+      {/* 3-Pillar Research Memorandum */}
+      <div className="jom-panel p-6 space-y-6">
+        <div
+          className="pb-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+          style={{ borderColor: 'var(--border-hairline)' }}
+        >
+          <div>
+            <div className="jom-kicker">{t.thesisKicker}</div>
+            <h2 className="font-editorial text-3xl mt-0.5">{t.whyRecommend}</h2>
+          </div>
+          <span className="jom-tag">CONVICTION NOTE</span>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-5">
+          <div className="jom-panel-subtle p-5 space-y-2">
+            <div className="jom-kicker">{t.reason1Code}</div>
+            <h3 className="font-semibold text-sm" style={{ color: 'var(--ink-primary)' }}>
+              {t.reason1Title}
+            </h3>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              {t.reason1desc}
+            </p>
+          </div>
+
+          <div className="jom-panel-subtle p-5 space-y-2">
+            <div className="jom-kicker">{t.reason2Code}</div>
+            <h3 className="font-semibold text-sm" style={{ color: 'var(--ink-primary)' }}>
+              {t.reason2Title}
+            </h3>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              {t.reason2desc}
+            </p>
+          </div>
+
+          <div className="jom-panel-subtle p-5 space-y-2">
+            <div className="jom-kicker">{t.reason3Code}</div>
+            <h3 className="font-semibold text-sm" style={{ color: 'var(--ink-primary)' }}>
+              {t.reason3Title}
+            </h3>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              {t.reason3desc}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 5-Axis Quantitative Factor Scorecard */}
+      <div className="jom-panel p-6 space-y-5">
+        <div>
+          <div className="jom-kicker">{t.factorKicker}</div>
+          <h3 className="font-editorial text-2xl mt-0.5">{t.factorTitle}</h3>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          {radarList.map(item => (
+            <div key={item.label} className="jom-panel-subtle p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="jom-kicker">{item.label}</span>
+                <span className="font-tabular text-sm font-semibold">{item.score}/100</span>
+              </div>
+              <div
+                className="w-full h-1.5 rounded-full overflow-hidden"
+                style={{ backgroundColor: 'var(--border-hairline)' }}
+              >
+                <div
+                  className="h-full"
+                  style={{ width: `${item.score}%`, backgroundColor: 'var(--accent-brand)' }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Execution & Terminal Navigation Bar */}
+      <div className="jom-panel p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => addToPortfolio(activeStock, 100)}
+            className="jom-btn jom-btn-primary"
+          >
             {t.add1Lot}
-          </Button>
-          <Button
-            variant="secondary"
-            className="flex-1 bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
-            size="lg"
+          </button>
+          <button
+            type="button"
             onClick={() => addToPortfolio(activeStock, 10)}
+            className="jom-btn"
           >
             {t.add10Units}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1"
-            size="lg"
-            onClick={() => {
-              setSelectedStock(activeStock);
-              navigateTo('stock-details');
-            }}
-          >
-            {t.viewDetails}
-          </Button>
+          </button>
         </div>
-      </main>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedStock(activeStock);
+            navigateTo('stock-details');
+          }}
+          className="jom-btn jom-btn-inverse"
+        >
+          <span>{t.viewDetails}</span>
+          <ArrowRight size={14} />
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Trash2, Plus, Search, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { ArrowLeft, Trash2, Plus, Search, Loader2 } from 'lucide-react';
 import { StockData } from '../data/stocks';
 import { Screen } from '../App';
 import { searchBursaStocksOnDemand } from '../services/bursaService';
@@ -33,26 +29,44 @@ export function WatchlistPage({
 
   const texts = {
     ENG: {
-      title: 'My Watchlist',
-      back: 'Back to Dashboard',
-      addStock: 'Add Bursa Malaysia Stock',
-      searchPlaceholder: 'Search ticker, name, or .KL code to add (e.g. MAYBANK, 1155.KL)...',
-      emptyState: 'Your watchlist is empty. Search above to add Bursa Malaysia stocks!',
+      kicker: 'ACTIVE COVERAGE & PRICE MONITORING',
+      title: 'Institutional Watchlist',
+      back: '← Market Screener',
+      addStockKicker: 'ADD BURSA MALAYSIA SECURITY TO COVERAGE',
+      searchPlaceholder: 'Search ticker, company name, or .KL code to track (e.g. MAYBANK, 1155.KL, TENAGA)...',
+      emptyState: 'Your watchlist coverage is currently empty. Use the search bar above to add Bursa Malaysia securities.',
       remove: 'Remove',
-      added: 'Added',
-      shariah: '☪️ Shariah',
-      noStocksFound: 'No stocks found matching your search.'
+      add: 'Track Security',
+      noStocksFound: 'No additional Bursa Malaysia securities found matching your query.',
+      colSecurity: 'Security / Code',
+      colSector: 'Sector',
+      colCompliance: 'Compliance',
+      colTrend: '7D Trend',
+      colPrice: 'Last Price (RM)',
+      colChange: '24h Change',
+      colPe: 'P/E',
+      colYield: 'Div Yield',
+      colAction: 'Action'
     },
     BM: {
-      title: 'Senarai Pantau Saya',
-      back: 'Kembali ke Dashboard',
-      addStock: 'Tambah Saham Bursa Malaysia',
-      searchPlaceholder: 'Cari simbol, nama, atau kod .KL untuk tambah (cth: MAYBANK, 1155.KL)...',
-      emptyState: 'Senarai pantau anda kosong. Cari di atas untuk menambah saham!',
+      kicker: 'LIPUTAN AKTIF & PEMANTAUAN HARGA',
+      title: 'Senarai Pantau Institusi',
+      back: '← Saringan Pasaran',
+      addStockKicker: 'TAMBAH SEKURITI BURSA MALAYSIA KE LIPUTAN',
+      searchPlaceholder: 'Cari simbol, nama syarikat, atau kod .KL untuk dipantau (cth: MAYBANK, 1155.KL)...',
+      emptyState: 'Senarai pantau anda masih kosong. Gunakan carian di atas untuk menambah sekuriti Bursa Malaysia.',
       remove: 'Buang',
-      added: 'Ditambah',
-      shariah: '☪️ Syariah',
-      noStocksFound: 'Tiada saham ditemui.'
+      add: 'Pantau',
+      noStocksFound: 'Tiada sekuriti tambahan ditemui.',
+      colSecurity: 'Sekuriti / Kod',
+      colSector: 'Sektor',
+      colCompliance: 'Pematuhan',
+      colTrend: 'Trend 7H',
+      colPrice: 'Harga Terakhir (RM)',
+      colChange: 'Perubahan 24j',
+      colPe: 'P/E',
+      colYield: 'Hasil Div',
+      colAction: 'Tindakan'
     }
   };
 
@@ -87,7 +101,6 @@ export function WatchlistPage({
     };
   }, [searchQuery, stocks]);
 
-  // Filter stocks for search (excluding ones already in watchlist)
   const availableStocks = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
@@ -115,170 +128,252 @@ export function WatchlistPage({
     return Array.from(map.values());
   }, [searchQuery, stocks, watchlist, onDemandResults]);
 
-  const handleCardClick = (stock: StockData) => {
+  const handleRowClick = (stock: StockData) => {
     setSelectedStock(stock);
     navigateTo('stock-details');
   };
 
+  const renderSparkline = (data: number[], isPositive: boolean) => {
+    if (!data || data.length === 0) return null;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min || 1;
+    const width = 76;
+    const height = 24;
+
+    const points = data
+      .map((value, index) => {
+        const x = (index / Math.max(1, data.length - 1)) * width;
+        const y = height - ((value - min) / range) * (height - 4) - 2;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(' ');
+
+    return (
+      <svg width={width} height={height} className="inline-block overflow-visible">
+        <polyline
+          points={points}
+          fill="none"
+          stroke={isPositive ? 'var(--signal-up)' : 'var(--signal-down)'}
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 pb-20 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigateTo('dashboard')} className="p-2">
-            <ArrowLeft size={24} />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
-            <p className="text-xs text-gray-500">
-              {watchlist.length} {language === 'ENG' ? 'stocks tracked' : 'saham dipantau'}
-            </p>
-          </div>
+    <div className="jom-container space-y-8">
+      {/* Editorial Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="jom-kicker">{t.kicker}</div>
+          <h1 className="font-editorial text-4xl" style={{ color: 'var(--ink-primary)' }}>
+            {t.title}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="jom-tag font-tabular">
+            {watchlist.length} {language === 'ENG' ? 'TRACKED' : 'DIPANTAU'}
+          </span>
+          <button
+            type="button"
+            onClick={() => navigateTo('dashboard')}
+            className="jom-btn text-xs"
+          >
+            <ArrowLeft size={14} />
+            <span>{t.back}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Search & Add Security Panel */}
+      <div className="jom-panel p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="jom-kicker">{t.addStockKicker}</span>
+          {isSearching && (
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--ink-muted)' }}>
+              <Loader2 size={13} className="animate-spin" />
+              <span>Querying Bursa Malaysia (.KL)...</span>
+            </span>
+          )}
         </div>
 
-        {/* Search & Add Section */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium uppercase tracking-wide text-gray-500">
-                {t.addStock}
-              </CardTitle>
-              {isSearching && (
-                <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <Loader2 size={14} className="animate-spin" />
-                  Searching Bursa (.KL)...
-                </span>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                placeholder={t.searchPlaceholder}
-                className="pl-10"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
-            {searchQuery.trim() && (
-              <div className="mt-4 space-y-2">
-                {availableStocks.length > 0 ? (
-                  availableStocks.slice(0, 6).map(stock => (
-                    <div
-                      key={stock.id}
-                      onClick={() => handleCardClick(stock)}
-                      className="flex items-center justify-between p-3 bg-white border rounded-lg hover:shadow-sm transition-shadow cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xs">
-                          {stock.ticker.slice(0, 4)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-gray-900">{stock.name}</p>
-                            {stock.isShariah && (
-                              <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-[10px] px-1.5 py-0">
-                                {t.shariah}
-                              </Badge>
+        <div className="relative">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2"
+            style={{ color: 'var(--ink-muted)' }}
+          />
+          <input
+            type="text"
+            placeholder={t.searchPlaceholder}
+            className="jom-input"
+            style={{ paddingLeft: '2.25rem' }}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {searchQuery.trim() && (
+          <div className="pt-2">
+            {availableStocks.length > 0 ? (
+              <div className="jom-panel-subtle overflow-hidden">
+                <div className="jom-table-wrap">
+                  <table className="jom-table">
+                    <tbody>
+                      {availableStocks.slice(0, 6).map(stock => (
+                        <tr key={stock.id} onClick={() => handleRowClick(stock)}>
+                          <td>
+                            <div className="font-semibold text-xs">
+                              {stock.ticker}{' '}
+                              <span className="font-tabular font-normal" style={{ color: 'var(--ink-muted)' }}>
+                                · {stock.bursaCode}
+                              </span>
+                            </div>
+                            <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                              {stock.name}
+                            </div>
+                          </td>
+                          <td>
+                            {stock.isShariah ? (
+                              <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
+                            ) : (
+                              <span className="jom-tag">CONVENTIONAL</span>
                             )}
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            {stock.ticker} · <span className="font-mono">{stock.bursaCode}</span> · RM {stock.price}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          addToWatchlist(stock);
-                          setSearchQuery('');
-                        }}
-                      >
-                        <Plus size={16} className="mr-1" /> {language === 'ENG' ? 'Add' : 'Tambah'}
-                      </Button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    {isSearching ? 'Searching Bursa Malaysia (.KL)...' : t.noStocksFound}
-                  </p>
-                )}
+                          </td>
+                          <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
+                            RM {stock.price}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                addToWatchlist(stock);
+                                setSearchQuery('');
+                              }}
+                              className="jom-btn jom-btn-primary text-xs py-1 px-3"
+                            >
+                              <Plus size={13} />
+                              <span>{t.add}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+            ) : (
+              <p className="text-xs py-3" style={{ color: 'var(--ink-muted)' }}>
+                {isSearching ? 'Searching Bursa Malaysia (.KL)...' : t.noStocksFound}
+              </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        )}
+      </div>
 
-        {/* Watchlist Items */}
-        <div className="space-y-4">
-          {watchlist.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-              <TrendingUp className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-              <p className="text-gray-500 font-medium">{t.emptyState}</p>
-            </div>
-          ) : (
-            watchlist.map(stock => (
-              <Card
-                key={stock.id}
-                onClick={() => handleCardClick(stock)}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <CardContent className="p-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-sm shrink-0 ${
-                        stock.isPositive ? 'bg-green-500' : 'bg-red-500'
-                      }`}
-                    >
-                      {stock.isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-lg text-gray-900">{stock.ticker}</h3>
-                        <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          {stock.bursaCode}
+      {/* Watchlist Table */}
+      <div className="jom-panel overflow-hidden">
+        {watchlist.length === 0 ? (
+          <div className="p-12 text-center space-y-2">
+            <div className="jom-kicker">NO ACTIVE COVERAGE</div>
+            <p className="text-sm" style={{ color: 'var(--ink-secondary)' }}>
+              {t.emptyState}
+            </p>
+          </div>
+        ) : (
+          <div className="jom-table-wrap">
+            <table className="jom-table">
+              <thead>
+                <tr>
+                  <th>{t.colSecurity}</th>
+                  <th>{t.colSector}</th>
+                  <th>{t.colCompliance}</th>
+                  <th>{t.colTrend}</th>
+                  <th style={{ textAlign: 'right' }}>{t.colPrice}</th>
+                  <th style={{ textAlign: 'right' }}>{t.colChange}</th>
+                  <th style={{ textAlign: 'right' }}>{t.colPe}</th>
+                  <th style={{ textAlign: 'right' }}>{t.colYield}</th>
+                  <th style={{ textAlign: 'right' }}>{t.colAction}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {watchlist.map(stock => (
+                  <tr key={stock.id} onClick={() => handleRowClick(stock)}>
+                    <td>
+                      <div className="font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                        {stock.ticker}{' '}
+                        <span
+                          className="font-tabular text-xs font-normal"
+                          style={{ color: 'var(--ink-muted)' }}
+                        >
+                          · {stock.bursaCode}
                         </span>
-                        {stock.isShariah && (
-                          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-[10px] px-2 py-0">
-                            {t.shariah}
-                          </Badge>
-                        )}
                       </div>
-                      <p className="text-sm text-gray-500 truncate">
-                        {stock.name} · {stock.sector}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-                    <div className="text-right">
-                      <p className="font-mono font-bold text-lg">RM {stock.price}</p>
-                      <p
-                        className={`text-xs font-bold ${
-                          stock.isPositive ? 'text-green-600' : 'text-red-600'
+                      <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                        {stock.name}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                        {stock.sector}
+                      </span>
+                    </td>
+                    <td>
+                      {stock.isShariah ? (
+                        <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
+                      ) : (
+                        <span className="jom-tag">CONVENTIONAL</span>
+                      )}
+                    </td>
+                    <td>{renderSparkline(stock.sparkline, stock.isPositive)}</td>
+                    <td className="font-tabular font-semibold" style={{ textAlign: 'right' }}>
+                      {stock.price}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span
+                        className={`jom-tag font-tabular ${
+                          stock.isPositive ? 'jom-tag-up' : 'jom-tag-down'
                         }`}
                       >
                         {stock.changePercent}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-red-500 hover:bg-red-50"
-                      onClick={e => {
-                        e.stopPropagation();
-                        removeFromWatchlist(stock.id);
-                      }}
+                      </span>
+                    </td>
+                    <td
+                      className="font-tabular text-xs"
+                      style={{ textAlign: 'right', color: 'var(--ink-secondary)' }}
                     >
-                      <Trash2 size={20} />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                      {stock.peRatio}
+                    </td>
+                    <td
+                      className="font-tabular text-xs font-medium"
+                      style={{ textAlign: 'right', color: 'var(--ink-primary)' }}
+                    >
+                      {stock.dividendYield}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          removeFromWatchlist(stock.id);
+                        }}
+                        className="jom-btn text-xs py-1 px-2.5"
+                        title={t.remove}
+                      >
+                        <Trash2 size={13} />
+                        <span>{t.remove}</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

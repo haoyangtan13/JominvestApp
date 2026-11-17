@@ -1,22 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Switch } from './ui/switch';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
-import {
-  ArrowLeft,
-  Edit,
-  Trophy,
-  Lock,
-  CheckCircle2,
-  Save,
-  Wallet,
-  Plus,
-  RotateCcw,
-  RefreshCw
-} from 'lucide-react';
+import { Plus, RotateCcw, RefreshCw, Save, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Screen, PortfolioItem, TradeRecord } from '../App';
 
@@ -67,54 +50,59 @@ export function ProfileSettings({
 
   const texts = {
     ENG: {
-      back: 'Back to Dashboard',
-      title: 'Profile & Settings',
-      profileCard: 'Investor Profile',
-      edit: 'Edit Profile',
-      save: 'Save Changes',
-      retakeRisk: 'Retake Risk Assessment',
-      walletCard: 'Virtual Practice Wallet',
-      walletDesc: 'Manage your simulated Bursa Malaysia practice funds',
-      virtualCash: 'Available Practice Cash',
-      totalEquity: 'Total Account Equity',
-      topUpBtn: '+ Top Up RM 5,000 Practice Cash',
-      resetBtn: 'Reset Demo Account',
-      learningJourney: 'Learning Journey',
-      level: 'Level',
-      achievements: 'Dynamic Investor Achievements',
-      settings: 'App Preferences',
-      darkMode: 'Dark Mode',
-      language: 'Language',
-      unlocked: 'Unlocked',
-      locked: 'Locked'
+      kicker: 'ACCOUNT & MANDATE LEDGER',
+      title: 'Investor Identity, Capital Controls & Analyst Milestones',
+      subtitle:
+        'Manage your investment risk mandate, simulated Bursa Malaysia practice capital, workspace preferences, and verified analyst milestones.',
+      editBtn: 'Edit Account Details',
+      saveBtn: 'Save Account Details',
+      retakeMandate: 'Retake Risk Mandate Assessment',
+      capitalKicker: 'PRACTICE CAPITAL CONTROLS',
+      capitalTitle: 'Simulated Bursa Clearing Account',
+      capitalDesc:
+        'Credit additional practice liquidity or reset your position ledger and contract note history back to the RM 10,000.00 opening balance.',
+      creditBtn: '+ Credit RM 5,000',
+      resetBtn: 'Reset Account',
+      milestonesKicker: 'ACCREDITATION & TELEMETRY',
+      milestonesTitle: 'Analyst Milestones & Verification',
+      colCode: 'Code',
+      colMilestone: 'Milestone',
+      colCriteria: 'Verification Criteria & Live Telemetry',
+      colStatus: 'Standing',
+      prefsKicker: 'WORKSPACE PREFERENCES',
+      prefsTitle: 'Display & Localization',
+      themeLabel: 'Color Palette',
+      langLabel: 'Interface Language'
     },
     BM: {
-      back: 'Kembali ke Papan Pemuka',
-      title: 'Profil & Tetapan',
-      profileCard: 'Profil Pelabur',
-      edit: 'Edit Profil',
-      save: 'Simpan Perubahan',
-      retakeRisk: 'Ambil Semula Ujian Risiko',
-      walletCard: 'Dompet Latihan Maya',
-      walletDesc: 'Urus dana latihan simulasi Bursa Malaysia anda',
-      virtualCash: 'Tunai Latihan Tersedia',
-      totalEquity: 'Jumlah Ekuiti Akaun',
-      topUpBtn: '+ Tambah RM 5,000 Tunai Latihan',
-      resetBtn: 'Tetapkan Semula Akaun Demo',
-      learningJourney: 'Perjalanan Pembelajaran',
-      level: 'Tahap',
-      achievements: 'Pencapaian Pelabur Dinamik',
-      settings: 'Tetapan Aplikasi',
-      darkMode: 'Mod Gelap',
-      language: 'Bahasa',
-      unlocked: 'Dibuka',
-      locked: 'Terkunci'
+      kicker: 'LEJAR AKAUN & MANDAT',
+      title: 'Identiti Pelabur, Kawalan Modal & Pencapaian Penganalisis',
+      subtitle:
+        'Urus mandat risiko pelaburan anda, modal latihan simulasi Bursa Malaysia, tetapan ruang kerja, dan pencapaian penganalisis.',
+      editBtn: 'kemas Kini Butiran',
+      saveBtn: 'Simpan Butiran Akaun',
+      retakeMandate: 'Ambil Semula Penilaian Mandat Risiko',
+      capitalKicker: 'KAWALAN MODAL LATIHAN',
+      capitalTitle: 'Akaun Penjelasan Simulasi Bursa',
+      capitalDesc:
+        'Kreditkan kecairan latihan tambahan atau tetapkan semula lejar posisi dan sejarah nota kontrak kepada baki permulaan RM 10,000.00.',
+      creditBtn: '+ Kredit RM 5,000',
+      resetBtn: 'Tetapkan Semula Akaun',
+      milestonesKicker: 'AKREDITASI & TELEMETRI',
+      milestonesTitle: 'Pencapaian & Pengesahan Penganalisis',
+      colCode: 'Kod',
+      colMilestone: 'Pencapaian',
+      colCriteria: 'Kriteria Pengesahan & Telemetri Semasa',
+      colStatus: 'Status',
+      prefsKicker: 'TETAPAN RUANG KERJA',
+      prefsTitle: 'Paparan & Bahasa',
+      themeLabel: 'Tema Warna',
+      langLabel: 'Bahasa Antara Muka'
     }
   };
 
   const t = texts[language];
 
-  // Initials from userName
   const initials = useMemo(() => {
     const parts = (userName || 'TH').trim().split(/\s+/);
     if (parts.length >= 2) {
@@ -123,7 +111,6 @@ export function ProfileSettings({
     return (userName || 'TH').slice(0, 2).toUpperCase();
   }, [userName]);
 
-  // Portfolio calculations for achievements
   const holdingsValue = useMemo(() => {
     return portfolio.reduce(
       (acc, item) => acc + parseFloat(item.stock.price) * item.quantity,
@@ -131,7 +118,7 @@ export function ProfileSettings({
     );
   }, [portfolio]);
 
-  const totalEquity = holdingsValue + cashBalance;
+  const totalNetLiquidity = holdingsValue + cashBalance;
 
   const uniqueSectorsCount = useMemo(() => {
     return new Set(portfolio.map(item => item.stock.sector)).size;
@@ -145,46 +132,48 @@ export function ProfileSettings({
     return hasShariah && hasHighDiv;
   }, [portfolio]);
 
-  const dynamicAchievements = useMemo(
+  const dynamicMilestones = useMemo(
     () => [
       {
-        id: 'first-trade',
-        titleEng: 'First Simulated Trade',
-        titleBm: 'Dagangan Simulasi Pertama',
-        descEng: 'Executed your first practice trade on Bursa Malaysia',
-        descBm: 'Melaksanakan dagangan latihan pertama di Bursa Malaysia',
+        code: 'MS-01',
+        titleEng: 'Initial Order Execution',
+        titleBm: 'Pelaksanaan Pesanan Pertama',
+        descEng: `Execute at least 1 simulated contract note on Bursa Malaysia (${tradeHistory.length} contract note(s) logged).`,
+        descBm: `Laksanakan sekurang-kurangnya 1 nota kontrak simulasi di Bursa Malaysia (${tradeHistory.length} nota kontrak direkodkan).`,
         unlocked: tradeHistory.length > 0 || portfolio.length > 0
       },
       {
-        id: 'wealth-builder',
-        titleEng: 'Wealth Builder (RM 10.5K+ Equity or RM 2K+ Invested)',
-        titleBm: 'Pembina Kekayaan (Ekuiti RM 10.5K+ atau RM 2K+ Dilabur)',
-        descEng: `Invested RM ${holdingsValue.toFixed(0)} in stocks / RM ${totalEquity.toFixed(0)} equity`,
-        descBm: `Melabur RM ${holdingsValue.toFixed(0)} dalam saham / Ekuiti RM ${totalEquity.toFixed(0)}`,
-        unlocked: holdingsValue >= 2000 || totalEquity > 10500
+        code: 'MS-02',
+        titleEng: 'Capital Deployment & Equity Growth',
+        titleBm: 'Peruntukan Modal & Pertumbuhan Ekuiti',
+        descEng: `Maintain RM 2,000+ in active equity holdings or exceed RM 10,500 net liquidity (Holdings: RM ${holdingsValue.toFixed(2)} | Net Liquidity: RM ${totalNetLiquidity.toFixed(2)}).`,
+        descBm: `Pegang RM 2,000+ dalam saham aktif atau melebihi kecairan bersih RM 10,500 (Pegangan: RM ${holdingsValue.toFixed(2)}).`,
+        unlocked: holdingsValue >= 2000 || totalNetLiquidity > 10500
       },
       {
-        id: 'jargon-master',
-        titleEng: 'Jargon Master (Learned 3+ Terms)',
-        titleBm: 'Pakar Istilah (Belajar 3+ Istilah)',
-        descEng: `Learned ${hasLearnedTerm.length}/3 financial terms in Jargon Buster`,
-        descBm: `Belajar ${hasLearnedTerm.length}/3 istilah kewangan dalam Jargon Buster`,
+        code: 'MS-03',
+        titleEng: 'Lexicon & Factor Mastery',
+        titleBm: 'Penguasaan Istilah & Faktor Kewangan',
+        descEng: `Master at least 3 financial valuation terms in the Equity Terminal (${hasLearnedTerm.length} / 3 terms verified).`,
+        descBm: `Kuasai sekurang-kurangnya 3 istilah penilaian kewangan di Terminal Ekuiti (${hasLearnedTerm.length} / 3 istilah disahkan).`,
         unlocked: hasLearnedTerm.length >= 3
       },
       {
-        id: 'sector-diversifier',
-        titleEng: 'Sector Diversifier (3+ Sectors)',
-        titleBm: 'Kepelbagaian Sektor (3+ Sektor)',
-        descEng: `Currently holding ${uniqueSectorsCount}/3 Bursa Malaysia sectors`,
-        descBm: `Kini memegang ${uniqueSectorsCount}/3 sektor Bursa Malaysia`,
+        code: 'MS-04',
+        titleEng: 'Multi-Sector Diversification',
+        titleBm: 'Kepelbagaian Pelbagai Sektor',
+        descEng: `Allocate equity capital across 3 or more uncorrelated Bursa Malaysia sectors (${uniqueSectorsCount} / 3 sectors active).`,
+        descBm: `Agihkan modal ekuiti merentasi 3 atau lebih sektor Bursa Malaysia (${uniqueSectorsCount} / 3 sektor aktif).`,
         unlocked: uniqueSectorsCount >= 3
       },
       {
-        id: 'shariah-dividend',
-        titleEng: 'Shariah & Dividend Explorer',
-        titleBm: 'Peneroka Syariah & Dividen',
-        descEng: 'Hold at least 1 Shariah stock (☪️) and 1 stock with >4% dividend yield',
-        descBm: 'Pegang sekurang-kurangnya 1 saham Syariah (☪️) dan 1 saham dividen >4%',
+        code: 'MS-05',
+        titleEng: 'SAC Shariah & Yield Mandate',
+        titleBm: 'Mandat Syariah MPS & Hasil Dividen',
+        descEng:
+          'Hold at least 1 SAC Shariah-compliant security alongside 1 security yielding >4.0% p.a.',
+        descBm:
+          'Pegang sekurang-kurangnya 1 sekuriti patuh Syariah MPS dan 1 sekuriti dengan hasil dividen >4.0% setahun.',
         unlocked: hasShariahAndDividend
       }
     ],
@@ -192,7 +181,7 @@ export function ProfileSettings({
       tradeHistory.length,
       portfolio.length,
       holdingsValue,
-      totalEquity,
+      totalNetLiquidity,
       hasLearnedTerm.length,
       uniqueSectorsCount,
       hasShariahAndDividend
@@ -207,7 +196,9 @@ export function ProfileSettings({
       setUserEmail(cleanedEmail);
       setIsEditing(false);
       toast.success(
-        language === 'ENG' ? 'Profile updated!' : 'Profil berjaya dikemas kini!'
+        language === 'ENG'
+          ? 'Investor account details updated.'
+          : 'Butiran akaun pelabur dikemas kini.'
       );
     } else {
       setDraftName(userName);
@@ -216,245 +207,336 @@ export function ProfileSettings({
     }
   };
 
-  // Safe Math for XP Bar
   const xpForNextLevel = 100;
   const safeXP = Number(userXP) || 0;
   const safeLevel = Number(userLevel) || 1;
   const currentLevelXP = safeXP % xpForNextLevel;
   const progressPercentage = (currentLevelXP / xpForNextLevel) * 100;
+  const unlockedCount = dynamicMilestones.filter(m => m.unlocked).length;
+
+  const formatRM = (val: number) =>
+    val.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigateTo('dashboard')}>
-            <ArrowLeft className="mr-2" size={16} />
-            {t.back}
-          </Button>
-          <span className="text-sm font-semibold text-gray-500">{t.title}</span>
+    <div className="jom-container space-y-8">
+      {/* Editorial Header */}
+      <div
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b"
+        style={{ borderColor: 'var(--border-hairline)' }}
+      >
+        <div className="space-y-1.5">
+          <div className="jom-kicker">{t.kicker}</div>
+          <h1 className="font-editorial text-4xl">{t.title}</h1>
+          <p className="text-sm max-w-2xl" style={{ color: 'var(--ink-secondary)' }}>
+            {t.subtitle}
+          </p>
         </div>
-      </header>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => navigateTo('questionnaire')}
+            className="jom-btn"
+          >
+            <RefreshCw size={13} />
+            <span>{t.retakeMandate}</span>
+          </button>
+        </div>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        <h1 className="text-3xl font-bold">{t.title}</h1>
+      {/* 4-Cell Account & Tier Telemetry Strip */}
+      <div className="jom-ledger-strip">
+        <div className="jom-ledger-cell space-y-1.5">
+          <div className="jom-kicker">ANALYST TIER</div>
+          <div className="font-tabular text-2xl font-semibold">
+            LEVEL 0{safeLevel}
+          </div>
+          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--bg-subtle)' }}>
+            <div
+              className="h-full transition-all duration-300"
+              style={{
+                width: `${progressPercentage}%`,
+                backgroundColor: 'var(--accent-brand)'
+              }}
+            />
+          </div>
+        </div>
 
-        {/* 1. EDITABLE PROFILE CARD */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle>{t.profileCard}</CardTitle>
-            <Button
-              variant={isEditing ? 'default' : 'outline'}
-              size="sm"
-              className={isEditing ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
+        <div className="jom-ledger-cell space-y-1.5">
+          <div className="jom-kicker">ACCUMULATED XP</div>
+          <div className="font-tabular text-2xl font-semibold">{safeXP} XP</div>
+          <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
+            {currentLevelXP} / {xpForNextLevel} XP to Level 0{safeLevel + 1}
+          </div>
+        </div>
+
+        <div className="jom-ledger-cell space-y-1.5">
+          <div className="jom-kicker">TOTAL NET LIQUIDITY</div>
+          <div className="font-tabular text-2xl font-semibold">
+            RM {formatRM(totalNetLiquidity)}
+          </div>
+          <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
+            Holdings: RM {formatRM(holdingsValue)}
+          </div>
+        </div>
+
+        <div className="jom-ledger-cell space-y-1.5">
+          <div className="jom-kicker">AVAILABLE BUYING POWER</div>
+          <div
+            className="font-tabular text-2xl font-semibold"
+            style={{ color: 'var(--signal-up)' }}
+          >
+            RM {formatRM(cashBalance)}
+          </div>
+          <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
+            {tradeHistory.length} contract note(s) settled
+          </div>
+        </div>
+      </div>
+
+      {/* Two-Column Grid: Account Mandate + Practice Capital Controls */}
+      <div className="grid md:grid-cols-12 gap-6">
+        {/* Left 7 cols: Investor Identity & Mandate */}
+        <section className="md:col-span-7 jom-panel p-6 flex flex-col justify-between space-y-6">
+          <div
+            className="flex items-start justify-between gap-4 pb-4 border-b"
+            style={{ borderColor: 'var(--border-hairline)' }}
+          >
+            <div className="flex items-center gap-3.5">
+              <div
+                className="w-11 h-11 rounded-md flex items-center justify-center font-tabular text-sm font-semibold border shrink-0"
+                style={{
+                  backgroundColor: 'var(--bg-subtle)',
+                  borderColor: 'var(--border-hairline)'
+                }}
+              >
+                {initials}
+              </div>
+              <div>
+                <div className="jom-kicker">PRIMARY ACCOUNT HOLDER</div>
+                <h2 className="font-editorial text-2xl">{userName}</h2>
+              </div>
+            </div>
+
+            <button
+              type="button"
               onClick={handleToggleEdit}
+              className={`jom-btn ${isEditing ? 'jom-btn-primary' : ''}`}
             >
               {isEditing ? (
                 <>
-                  <Save size={15} className="mr-1.5" /> {t.save}
+                  <Save size={13} />
+                  <span>{t.saveBtn}</span>
                 </>
               ) : (
                 <>
-                  <Edit size={15} className="mr-1.5" /> {t.edit}
+                  <Edit3 size={13} />
+                  <span>{t.editBtn}</span>
                 </>
               )}
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1">
-                <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0">
-                  {initials}
+            </button>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="jom-kicker block">FULL NAME</label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  className="jom-input"
+                  value={draftName}
+                  onChange={e => setDraftName(e.target.value)}
+                  placeholder="Full Name"
+                />
+              ) : (
+                <div className="jom-panel-subtle px-3.5 py-2 text-sm font-medium">
+                  {userName}
                 </div>
-                {isEditing ? (
-                  <div className="space-y-2 flex-1 max-w-sm">
-                    <Input
-                      value={draftName}
-                      onChange={e => setDraftName(e.target.value)}
-                      placeholder="Your Name"
-                    />
-                    <Input
-                      value={draftEmail}
-                      onChange={e => setDraftEmail(e.target.value)}
-                      placeholder="Your Email"
-                      type="email"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-lg font-bold">{userName}</p>
-                    <p className="text-sm text-gray-500">{userEmail}</p>
-                    <Badge
-                      variant="secondary"
-                      className="mt-2 bg-green-50 text-green-700 border border-green-200"
-                    >
-                      {userProfile}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateTo('questionnaire')}
-              >
-                <RefreshCw size={14} className="mr-1.5" />
-                {t.retakeRisk}
-              </Button>
+              )}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* 2. VIRTUAL WALLET MANAGEMENT CARD */}
-        <Card className="border-green-200 bg-gradient-to-r from-green-50/70 to-emerald-50/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-green-900">
-              <Wallet size={20} className="text-green-600" />
-              {t.walletCard}
-            </CardTitle>
-            <CardDescription>{t.walletDesc}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex gap-6">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold">
-                  {t.virtualCash}
-                </p>
-                <p className="text-2xl font-extrabold text-green-700">
-                  RM {cashBalance.toFixed(2)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold">
-                  {t.totalEquity}
-                </p>
-                <p className="text-2xl font-bold text-gray-800">
-                  RM {totalEquity.toFixed(2)}
-                </p>
+            <div className="space-y-1.5">
+              <label className="jom-kicker block">REGISTERED EMAIL</label>
+              {isEditing ? (
+                <input
+                  type="email"
+                  className="jom-input"
+                  value={draftEmail}
+                  onChange={e => setDraftEmail(e.target.value)}
+                  placeholder="Email Address"
+                />
+              ) : (
+                <div className="jom-panel-subtle px-3.5 py-2 text-sm font-tabular">
+                  {userEmail}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div
+            className="pt-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            style={{ borderColor: 'var(--border-hairline)' }}
+          >
+            <div className="space-y-1">
+              <div className="jom-kicker">ASSIGNED RISK MANDATE</div>
+              <div className="flex items-center gap-2">
+                <span className="jom-tag jom-tag-shariah">{userProfile}</span>
+                <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
+                  KLSE Practice CDS
+                </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white"
+            <button
+              type="button"
+              onClick={() => navigateTo('questionnaire')}
+              className="jom-btn text-xs"
+            >
+              <RefreshCw size={12} />
+              <span>{t.retakeMandate}</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Right 5 cols: Practice Capital Controls & Workspace Preferences */}
+        <section className="md:col-span-5 jom-panel p-6 flex flex-col justify-between space-y-6">
+          <div className="space-y-4">
+            <div
+              className="pb-4 border-b"
+              style={{ borderColor: 'var(--border-hairline)' }}
+            >
+              <div className="jom-kicker">{t.capitalKicker}</div>
+              <h2 className="font-editorial text-2xl mt-0.5">{t.capitalTitle}</h2>
+              <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                {t.capitalDesc}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2.5">
+              <button
+                type="button"
                 onClick={() => onTopUpCash(5000)}
+                className="jom-btn jom-btn-primary flex-1"
               >
-                <Plus size={15} className="mr-1" />
-                {t.topUpBtn}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-red-200 text-red-700 hover:bg-red-50"
+                <Plus size={14} />
+                <span>{t.creditBtn}</span>
+              </button>
+              <button
+                type="button"
                 onClick={onResetDemo}
+                className="jom-btn jom-btn-danger"
               >
-                <RotateCcw size={14} className="mr-1.5" />
-                {t.resetBtn}
-              </Button>
+                <RotateCcw size={13} />
+                <span>{t.resetBtn}</span>
+              </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* 3. XP & LEVEL CARD */}
-        <Card className="border-2 border-indigo-100 bg-white">
-          <CardHeader className="bg-indigo-50 pb-4">
+          {/* Workspace Preferences */}
+          <div
+            className="pt-5 border-t space-y-3"
+            style={{ borderColor: 'var(--border-hairline)' }}
+          >
+            <div className="jom-kicker">{t.prefsKicker}</div>
+
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-indigo-900 flex items-center gap-2">
-                  <Trophy className="text-yellow-500" />
-                  {t.learningJourney}
-                </CardTitle>
-                <CardDescription className="text-indigo-700 font-medium mt-1">
-                  {t.level} {safeLevel}
-                </CardDescription>
-              </div>
-              <div className="bg-white px-4 py-2 rounded-lg shadow-xs border border-indigo-100 text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Total XP</p>
-                <p className="text-2xl font-bold text-indigo-600">{safeXP}</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="mb-2 flex justify-between text-sm font-medium">
-              <span>Progress to Level {safeLevel + 1}</span>
-              <span>
-                {currentLevelXP} / {xpForNextLevel} XP
+              <span className="text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
+                {t.themeLabel}
               </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div
-                className="bg-indigo-600 h-4 rounded-full transition-all"
-                style={{ width: `${progressPercentage}%` }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-500 mt-4 text-center">
-              Learn terms in Stock Details, complete Educational Hub quizzes & trade stocks to earn XP!
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* 4. DYNAMIC ACHIEVEMENTS (5 BADGES) */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.achievements}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {dynamicAchievements.map(a => (
-                <div
-                  key={a.id}
-                  className={`border p-4 rounded-xl flex flex-col items-center text-center transition-all ${
-                    a.unlocked
-                      ? 'bg-green-50/40 border-green-200 shadow-xs'
-                      : 'bg-gray-50/50 border-gray-200 opacity-80'
-                  }`}
+              <div className="jom-segmented">
+                <button
+                  type="button"
+                  className={!darkMode ? 'active' : ''}
+                  onClick={() => setDarkMode(false)}
                 >
-                  {a.unlocked ? (
-                    <CheckCircle2 className="text-green-600 mb-2" size={26} />
-                  ) : (
-                    <Lock className="text-gray-400 mb-2" size={26} />
-                  )}
-                  <p className="font-bold text-sm">
-                    {language === 'ENG' ? a.titleEng : a.titleBm}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {language === 'ENG' ? a.descEng : a.descBm}
-                  </p>
-                  <Badge
-                    variant={a.unlocked ? 'default' : 'secondary'}
-                    className={`mt-3 text-xs ${
-                      a.unlocked ? 'bg-green-600 text-white' : ''
-                    }`}
-                  >
-                    {a.unlocked ? t.unlocked : t.locked}
-                  </Badge>
-                </div>
-              ))}
+                  ALABASTER (LIGHT)
+                </button>
+                <button
+                  type="button"
+                  className={darkMode ? 'active' : ''}
+                  onClick={() => setDarkMode(true)}
+                >
+                  OBSIDIAN (DARK)
+                </button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* 5. SETTINGS */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.settings}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label>{t.darkMode}</Label>
-              <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
+                {t.langLabel}
+              </span>
+              <div className="jom-segmented">
+                <button
+                  type="button"
+                  className={language === 'ENG' ? 'active' : ''}
+                  onClick={() => {
+                    if (language !== 'ENG') toggleLanguage();
+                  }}
+                >
+                  ENGLISH
+                </button>
+                <button
+                  type="button"
+                  className={language === 'BM' ? 'active' : ''}
+                  onClick={() => {
+                    if (language !== 'BM') toggleLanguage();
+                  }}
+                >
+                  BAHASA MELAYU
+                </button>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <Label>{t.language}</Label>
-              <Button variant="outline" size="sm" onClick={toggleLanguage}>
-                {language === 'ENG' ? 'English (Switch to BM)' : 'Bahasa Melayu (Tukar ke ENG)'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
+          </div>
+        </section>
+      </div>
+
+      {/* 5-Row Institutional Analyst Milestones & Verification Table */}
+      <section className="jom-panel overflow-hidden">
+        <div
+          className="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+          style={{ borderColor: 'var(--border-hairline)' }}
+        >
+          <div>
+            <div className="jom-kicker">{t.milestonesKicker}</div>
+            <h2 className="font-editorial text-2xl mt-0.5">{t.milestonesTitle}</h2>
+          </div>
+          <span className="jom-tag font-tabular">
+            {unlockedCount} / {dynamicMilestones.length} VERIFIED
+          </span>
+        </div>
+
+        <div className="jom-table-wrap">
+          <table className="jom-table">
+            <thead>
+              <tr>
+                <th>{t.colCode}</th>
+                <th>{t.colMilestone}</th>
+                <th>{t.colCriteria}</th>
+                <th className="text-right">{t.colStatus}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dynamicMilestones.map(m => (
+                <tr key={m.code} style={{ cursor: 'default' }}>
+                  <td className="font-tabular font-semibold whitespace-nowrap">{m.code}</td>
+                  <td className="font-semibold whitespace-nowrap">
+                    {language === 'ENG' ? m.titleEng : m.titleBm}
+                  </td>
+                  <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG' ? m.descEng : m.descBm}
+                  </td>
+                  <td className="text-right whitespace-nowrap">
+                    {m.unlocked ? (
+                      <span className="jom-tag jom-tag-up">UNLOCKED</span>
+                    ) : (
+                      <span className="jom-tag">PENDING</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

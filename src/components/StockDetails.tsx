@@ -1,28 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { TooltipProvider } from './ui/tooltip';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
   ArrowLeft,
-  HelpCircle,
-  TrendingUp,
-  TrendingDown,
-  Newspaper,
-  DollarSign,
+  Bookmark,
   Minus,
   Plus,
-  Lightbulb,
-  X,
-  Trophy,
-  Star,
-  Wallet,
-  Scale,
-  Receipt,
-  Info
+  ChevronDown,
+  ChevronUp,
+  ArrowUpRight
 } from 'lucide-react';
-import { Input } from './ui/input';
 import {
   AreaChart,
   Area,
@@ -77,11 +62,10 @@ export function StockDetails({
   setHasLearnedTerm
 }: StockDetailsProps) {
   const [quantity, setQuantity] = useState(1);
-  const [lotMode, setLotMode] = useState<'lot' | 'micro'>('lot'); // 'lot' = ×100 shares, 'micro' = ×1 share
+  const [lotMode, setLotMode] = useState<'lot' | 'micro'>('lot');
   const [learningTerm, setLearningTerm] = useState<string | null>(null);
   const [peerStockId, setPeerStockId] = useState<string>('');
 
-  // Pick a default same-sector peer when stock changes
   useEffect(() => {
     if (!stock || !allStocks.length) return;
     const sameSector = allStocks.find(
@@ -94,172 +78,154 @@ export function StockDetails({
     }
   }, [stock?.id, allStocks]);
 
-  // Learning Definitions
   const definitions: Record<
     string,
     { ENG: { simple: string; detail: string }; BM: { simple: string; detail: string } }
   > = {
-    'Price': {
-      ENG: {
-        simple: 'The current cost to buy one share.',
-        detail: 'Stock prices change continuously during Bursa Malaysia trading hours based on supply and demand.'
-      },
-      BM: {
-        simple: 'Kos semasa untuk membeli satu saham.',
-        detail: 'Harga saham berubah berdasarkan permintaan dan penawaran di Bursa Malaysia.'
-      }
-    },
     'P/E Ratio': {
       ENG: {
-        simple: 'Are you overpaying for profits?',
-        detail: 'Price-to-Earnings Ratio shows how much investors pay per RM1 of company earnings. Lower P/E vs sector peers often signals better value.'
+        simple: 'Valuation multiple comparing share price to annual earnings per share.',
+        detail:
+          'Price-to-Earnings Ratio indicates how much capital investors pay per RM 1.00 of reported net profit. Comparing a security’s P/E against its Bursa Malaysia sector peer helps identify relative undervaluation or growth expectations.'
       },
       BM: {
-        simple: 'Adakah anda bayar terlalu mahal?',
-        detail: 'Nisbah Harga-kepada-Pendapatan menunjukkan berapa pelabur bayar untuk setiap RM1 keuntungan syarikat.'
-      }
-    },
-    'Market Cap': {
-      ENG: {
-        simple: 'How big is the company?',
-        detail: 'The total market value of all issued shares combined. Blue-chip large caps (>RM 10B) tend to be more stable.'
-      },
-      BM: {
-        simple: 'Berapa besar syarikat ini?',
-        detail: 'Jumlah nilai pasaran semua saham syarikat digabungkan. Syarikat modal besar biasanya lebih stabil.'
+        simple: 'Gandaan penilaian membandingkan harga saham dengan pendapatan sesaham tahunan.',
+        detail:
+          'Nisbah Harga-kepada-Pendapatan menunjukkan berapa pelabur membayar untuk setiap RM 1.00 keuntungan bersih. Membandingkan P/E dengan rakan sektor Bursa Malaysia membantu mengenal pasti penilaian relatif.'
       }
     },
     'Dividend Yield': {
       ENG: {
-        simple: 'Your annual cash bonus %.',
-        detail: 'The percentage of the share price paid out as cash dividends to shareholders each year.'
+        simple: 'Annualized cash distribution expressed as a percentage of current share price.',
+        detail:
+          'Calculated as annual dividend per share divided by current market price. Malaysian blue-chip banks, utilities, and REITs traditionally distribute semi-annual or quarterly cash dividends.'
       },
       BM: {
-        simple: 'Peratusan bonus tunai tahunan anda.',
-        detail: 'Peratusan harga saham yang dibayar sebagai dividen tunai kepada pemegang saham setiap tahun.'
+        simple: 'Agihan tunai tahunan dinyatakan sebagai peratusan daripada harga saham semasa.',
+        detail:
+          'Dikira sebagai dividen tahunan sesaham dibahagikan dengan harga pasaran semasa. Saham cip biru Malaysia lazimnya mengagihkan dividen tunai secara separuh tahunan atau suku tahunan.'
+      }
+    },
+    'Market Cap': {
+      ENG: {
+        simple: 'Total equity market valuation of all issued shares on Bursa Malaysia.',
+        detail:
+          'Computed by multiplying total issued shares by current market price. FBM KLCI constituents represent the 30 largest companies by full market capitalization on the Main Market.'
+      },
+      BM: {
+        simple: 'Jumlah penilaian pasaran ekuiti bagi semua saham terbitan di Bursa Malaysia.',
+        detail:
+          'Dikira dengan mendarabkan jumlah saham terbitan dengan harga pasaran semasa. Komponen FBM KLCI mewakili 30 syarikat terbesar di Pasaran Utama.'
       }
     },
     'Volume': {
       ENG: {
-        simple: 'How actively traded is this stock?',
-        detail: 'Total shares traded today. High volume means strong liquidity—making it easy to buy or sell quickly.'
+        simple: 'Aggregate number of shares traded during the active KLSE session.',
+        detail:
+          'Higher trading volume signifies deeper order-book liquidity and tighter bid-ask spreads, allowing institutional and retail board-lot orders to clear with minimal slippage.'
       },
       BM: {
-        simple: 'Berapa aktif saham ini didagangkan?',
-        detail: 'Jumlah saham didagangkan hari ini. Volum tinggi bermakna kecairan tinggi dan mudah dijual beli.'
+        simple: 'Jumlah agregat saham yang didagangkan sepanjang sesi aktif KLSE.',
+        detail:
+          'Volum dagangan yang tinggi menandakan kecairan buku pesanan yang kukuh dan memudahkan pesanan dibeli atau dijual dengan pantas.'
       }
     },
     'Shariah Status': {
       ENG: {
-        simple: 'Screened by the Shariah Advisory Council (SAC) of SC Malaysia.',
-        detail: 'Securities Commission Malaysia screens companies on business activity benchmarks (5% cap on conventional banking/gambling/alcohol/tobacco; 20% cap on hotel/resort/share trading) and financial ratio benchmarks (cash & conventional debt over total assets must each be <33%).'
+        simple: 'Screened semi-annually by the Shariah Advisory Council (SAC) of SC Malaysia.',
+        detail:
+          'Securities Commission Malaysia evaluates business activity benchmarks (5% revenue cap on conventional finance, insurance, gambling, liquor, tobacco; 20% cap on hotel/resort operations and share trading) and financial ratio thresholds (conventional debt and cash placed in conventional accounts must each remain below 33% of total assets).'
       },
       BM: {
-        simple: 'Disaring oleh Majlis Penasihat Syariah (MPS) Suruhanjaya Sekuriti Malaysia.',
-        detail: 'Suruhanjaya Sekuriti Malaysia menyaring syarikat berdasarkan tanda aras aktiviti perniagaan (had 5% bagi perbankan konvensional/perjudian/arak/tembakau; had 20% bagi perhotelan) dan tanda aras nisbah kewangan (tunai & hutang konvensional ke atas jumlah aset mestilah masing-masing <33%).'
+        simple: 'Disaring dua kali setahun oleh Majlis Penasihat Syariah (MPS) Suruhanjaya Sekuriti Malaysia.',
+        detail:
+          'Suruhanjaya Sekuriti Malaysia menilai tanda aras aktiviti perniagaan (had 5% bagi kewangan konvensional, perjudian, arak, tembakau; had 20% bagi operasi hotel dan dagangan saham) serta tanda aras nisbah kewangan (hutang dan tunai konvensional masing-masing mestilah di bawah 33% daripada jumlah aset).'
       }
     }
   };
 
   const texts = {
     ENG: {
-      back: 'Back',
-      stockDetails: 'Stock Details',
-      priceChart: '30-Day Price Chart (MYR)',
-      keyMetrics: 'Key Metrics (Tap to Learn +10 XP)',
-      price: 'Price',
+      backToScreener: '← Market Screener',
+      addWatchlist: 'Add to Watchlist',
+      inWatchlist: 'Tracked in Watchlist',
+      viewThesis: 'Conviction Thesis →',
+      chartKicker: 'HISTORICAL PRICE ACTION · 30 TRADING SESSIONS',
+      chartTitle: '30-Day Price Chart (MYR)',
+      radarKicker: 'MULTI-FACTOR QUANTITATIVE BENCHMARK',
+      radarTitle: '5-Axis Fundamental Health Radar & Peer Benchmark',
+      compareWithPeer: 'Benchmark Peer:',
+      colMetric: 'Fundamental Metric',
       peRatio: 'P/E Ratio',
       dividend: 'Dividend Yield',
       marketCap: 'Market Cap',
-      volume: 'Volume',
-      shariahStatus: 'Shariah Status',
-      shariahCompliant: '☪️ Shariah-Compliant',
-      nonShariah: 'Conventional (Non-Shariah)',
-      overview: 'Overview',
-      financials: 'Financials',
-      news: 'News',
-      buy: 'Buy',
-      sell: 'Sell',
       revenue: 'Revenue',
       netProfit: 'Net Profit',
       debtEquity: 'Debt/Equity',
-      sector: 'Sector',
-      units: 'Quantity',
-      xpReward: '+10 XP',
-      addWatchlist: 'Add to Watchlist',
-      inWatchlist: 'In Watchlist',
-      tradingSimulator: 'Bursa Malaysia Trading Simulator',
-      availableCash: 'Available Virtual Cash',
-      ownedUnits: 'Currently Owned Units',
-      lotModeLabel: 'Standard Bursa Lot (×100 units)',
-      microModeLabel: 'Student Micro-Unit (×1 unit)',
-      lotNote: 'On Bursa Malaysia, 1 standard board lot equals 100 shares. Switch to Student Micro-Unit mode to practice with single shares!',
-      feeBreakdown: 'Bursa Malaysia Fee Breakdown (Buy Estimate)',
-      grossValue: 'Gross Share Value',
-      brokerageFee: 'Brokerage Fee (0.10%, min RM1)',
+      volume: 'Volume',
+      shariahStatus: 'Shariah Status',
+      glossaryKicker: 'ANALYST COMPETENCY · +10 XP PER METRIC INSPECTED',
+      glossaryTitle: 'Interactive Fundamental Glossary',
+      ticketHeader: 'ORDER TICKET · KLSE SIMULATION',
+      boardLot: 'Board Lot (×100 sh)',
+      microUnit: 'Micro Unit (×1 sh)',
+      quantityLabel: 'Order Quantity',
+      availableCash: 'Available Cash',
+      currentPosition: 'Current Position',
+      feeScheduleTitle: 'Bursa Malaysia Fee Schedule',
+      grossPrincipal: 'Gross Principal',
+      brokerageFee: 'Brokerage (0.10%, min RM1)',
       clearingFee: 'Clearing Fee (0.03%)',
-      stampDuty: 'Stamp Duty (RM1 per RM1,000)',
-      netTotal: 'Net Total (incl. Fees)',
-      radarTitle: '5-Axis Fundamental Health Radar & Peer Comparison',
-      compareWithPeer: 'Compare with Peer:'
+      stampDuty: 'Contract Stamp Duty',
+      netSettlement: 'Net Settlement',
+      executeBuy: 'Execute Buy Order',
+      executeSell: 'Execute Sell Order',
+      lotFootnote: '1 standard Bursa Malaysia board lot equals 100 shares. Micro Unit mode allows single-share sizing for practice.',
+      filingsKicker: 'MARKET INTELLIGENCE & DISCLOSURES',
+      filingsTitle: 'Recent Bursa Malaysia Filings & Sector Notes'
     },
     BM: {
-      back: 'Kembali',
-      stockDetails: 'Butiran Saham',
-      priceChart: 'Carta Harga 30 Hari (MYR)',
-      keyMetrics: 'Metrik Utama (Ketik untuk Belajar +10 XP)',
-      price: 'Harga',
+      backToScreener: '← Saringan Pasaran',
+      addWatchlist: 'Tambah Senarai Pantau',
+      inWatchlist: 'Dalam Senarai Pantau',
+      viewThesis: 'Tesis Konviksi →',
+      chartKicker: 'PRESTASI HARGA HISTORIKAL · 30 SESI DAGANGAN',
+      chartTitle: 'Carta Harga 30 Hari (MYR)',
+      radarKicker: 'PENANDA ARAS KUANTITATIF PELBAGAI FAKTOR',
+      radarTitle: 'Radar Kesihatan Asas 5-Paksi & Penanda Aras Rakan Setara',
+      compareWithPeer: 'Rakan Setara:',
+      colMetric: 'Metrik Asas',
       peRatio: 'Nisbah P/E',
       dividend: 'Hasil Dividen',
       marketCap: 'Modal Pasaran',
-      volume: 'Volum',
-      shariahStatus: 'Status Syariah',
-      shariahCompliant: '☪️ Patuh Syariah',
-      nonShariah: 'Konvensional (Bukan Syariah)',
-      overview: 'Gambaran Keseluruhan',
-      financials: 'Kewangan',
-      news: 'Berita',
-      buy: 'Beli',
-      sell: 'Jual',
       revenue: 'Hasil',
       netProfit: 'Untung Bersih',
       debtEquity: 'Hutang/Ekuiti',
-      sector: 'Sektor',
-      units: 'Kuantiti',
-      xpReward: '+10 XP',
-      addWatchlist: 'Tambah Senarai Pantau',
-      inWatchlist: 'Dalam Senarai Pantau',
-      tradingSimulator: 'Simulator Dagangan Bursa Malaysia',
-      availableCash: 'Tunai Maya Tersedia',
-      ownedUnits: 'Unit Dimiliki Semasa',
-      lotModeLabel: 'Lot Piawai Bursa (×100 unit)',
-      microModeLabel: 'Unit Mikro Pelajar (×1 unit)',
-      lotNote: 'Di Bursa Malaysia, 1 lot papan piawai bersamaan 100 saham. Tukar ke mod Unit Mikro Pelajar untuk berlatih dengan 1 unit!',
-      feeBreakdown: 'Pecahan Yuran Bursa Malaysia (Anggaran Beli)',
-      grossValue: 'Nilai Saham Kasar',
-      brokerageFee: 'Yuran Broker (0.10%, min RM1)',
-      clearingFee: 'Yuran penjelasan (0.03%)',
-      stampDuty: 'Duti Setem (RM1 setiap RM1,000)',
-      netTotal: 'Jumlah Bersih (termasuk Yuran)',
-      radarTitle: 'Radar Kesihatan Asas 5-Paksi & Perbandingan Rakan Setara',
-      compareWithPeer: 'Bandingkan dengan:'
+      volume: 'Volum',
+      shariahStatus: 'Status Syariah',
+      glossaryKicker: 'KOMPETENSI PENGANALISIS · +10 XP SETIAP METRIK DISEMAK',
+      glossaryTitle: 'Glosari Asas Interaktif',
+      ticketHeader: 'TIKET PESANAN · SIMULASI KLSE',
+      boardLot: 'Lot Papan (×100 sh)',
+      microUnit: 'Unit Mikro (×1 sh)',
+      quantityLabel: 'Kuantiti Pesanan',
+      availableCash: 'Tunai Tersedia',
+      currentPosition: 'Pegangan Semasa',
+      feeScheduleTitle: 'Jadual Yuran Bursa Malaysia',
+      grossPrincipal: 'Prinsipal Kasar',
+      brokerageFee: 'Brokeraj (0.10%, min RM1)',
+      clearingFee: 'Yuran Penjelasan (0.03%)',
+      stampDuty: 'Duti Setem Kontrak',
+      netSettlement: 'Penyelesaian Bersih',
+      executeBuy: 'Laksanakan Pesanan Beli',
+      executeSell: 'Laksanakan Pesanan Jual',
+      lotFootnote: '1 lot papan piawai Bursa Malaysia bersamaan 100 saham. Mod Unit Mikro membenarkan latihan unit tunggal.',
+      filingsKicker: 'MAKLUMAT PASARAN & PENGUMUMAN',
+      filingsTitle: 'Nota Sektor & Pengumuman Terkini Bursa Malaysia'
     }
   };
 
   const t = texts[language];
-
-  if (!stock) {
-    return <div className="p-8 text-center">Loading...</div>;
-  }
-
-  const isInWatchlist = watchlist.some(w => w.id === stock.id);
-  const ownedHolding = portfolio.find(item => item.stock.id === stock.id);
-  const ownedUnits = ownedHolding ? ownedHolding.quantity : 0;
-
-  const effectiveUnits = lotMode === 'lot' ? quantity * 100 : quantity;
-  const priceNum = parseFloat(stock.price);
-  const buyFees = calculateBursaFees(priceNum, effectiveUnits, 'BUY');
-  const sellFees = calculateBursaFees(priceNum, Math.min(effectiveUnits, ownedUnits || effectiveUnits), 'SELL');
 
   const peerStock = useMemo(
     () => allStocks.find(s => s.id === peerStockId) || null,
@@ -267,6 +233,7 @@ export function StockDetails({
   );
 
   const radarData = useMemo(() => {
+    if (!stock) return [];
     const scores = stock.radarScores || {
       value: 70,
       growth: 70,
@@ -305,6 +272,20 @@ export function StockDetails({
     ];
   }, [stock, peerStock]);
 
+  if (!stock) {
+    return <div className="jom-container">Loading security terminal...</div>;
+  }
+
+  const isInWatchlist = watchlist.some(w => w.id === stock.id);
+  const ownedHolding = portfolio.find(item => item.stock.id === stock.id);
+  const ownedUnits = ownedHolding ? ownedHolding.quantity : 0;
+
+  const effectiveUnits = lotMode === 'lot' ? quantity * 100 : quantity;
+  const priceNum = parseFloat(stock.price);
+  const buyFees = calculateBursaFees(priceNum, effectiveUnits, 'BUY');
+  const sellUnits = Math.min(effectiveUnits, ownedUnits || effectiveUnits);
+  const sellFees = calculateBursaFees(priceNum, sellUnits, 'SELL');
+
   const handleQuantityChange = (val: string) => {
     const num = parseInt(val, 10);
     if (!isNaN(num) && num > 0) {
@@ -317,547 +298,597 @@ export function StockDetails({
 
   const handleTermClick = (termKey: string) => {
     if (!hasLearnedTerm.includes(termKey)) {
-      addXP(10, `Learned about ${termKey}`);
+      addXP(10, `Inspected ${termKey}`);
       setHasLearnedTerm([...hasLearnedTerm, termKey]);
     }
     setLearningTerm(learningTerm === termKey ? null : termKey);
   };
 
-  const renderMetric = (label: string, value: string, termKey: string) => {
-    const isExpanded = learningTerm === termKey;
-    const def = definitions[termKey];
-    const isLearned = hasLearnedTerm.includes(termKey);
-
-    return (
-      <div className="flex flex-col gap-2">
-        <div
-          className={`flex justify-between items-center p-4 rounded-lg transition-all duration-300 cursor-pointer overflow-hidden relative ${
-            isExpanded
-              ? 'bg-blue-50 border border-blue-200 shadow-sm'
-              : 'bg-white hover:bg-gray-50 border border-gray-100'
-          }`}
-          onClick={() => handleTermClick(termKey)}
-        >
-          {!isLearned && (
-            <div className="absolute right-0 top-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">
-              {t.xpReward}
-            </div>
-          )}
-
-          <div className="flex items-center gap-2">
-            <span className={`font-medium ${isExpanded ? 'text-blue-700' : 'text-gray-700'}`}>
-              {label}
-            </span>
-            <div className="bg-blue-100 text-blue-600 rounded-full p-1 opacity-70">
-              <HelpCircle size={14} />
-            </div>
-          </div>
-          <span className="text-base sm:text-lg font-semibold text-right">{value}</span>
-        </div>
-
-        {isExpanded && def && (
-          <div className="bg-white border-l-4 border-blue-500 pl-4 py-3 pr-3 shadow-sm rounded-r-lg animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2 text-blue-700 font-semibold">
-                <Lightbulb size={18} className="text-amber-500" />
-                {language === 'ENG' ? 'Quick Learn' : 'Belajar Cepat'}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={e => {
-                  e.stopPropagation();
-                  setLearningTerm(null);
-                }}
-              >
-                <X size={14} />
-              </Button>
-            </div>
-            <p className="text-gray-800 font-medium mb-2 leading-snug">{def[language].simple}</p>
-            <p className="text-sm text-gray-500 leading-relaxed">{def[language].detail}</p>
-
-            {isLearned && (
-              <div className="mt-3 flex items-center gap-2 text-green-600 text-sm font-bold bg-green-50 px-3 py-1.5 rounded-full w-fit">
-                <Trophy size={14} />
-                {language === 'ENG' ? 'Knowledge Gained!' : 'Ilmu Diperolehi!'}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const glossaryItems = [
+    { key: 'P/E Ratio', label: t.peRatio, value: `${stock.peRatio}x` },
+    { key: 'Dividend Yield', label: t.dividend, value: stock.dividendYield },
+    { key: 'Market Cap', label: t.marketCap, value: `RM ${stock.marketCap}` },
+    { key: 'Volume', label: t.volume, value: stock.volume },
+    {
+      key: 'Shariah Status',
+      label: t.shariahStatus,
+      value: stock.isShariah ? 'SAC SHARIAH COMPLIANT' : 'CONVENTIONAL'
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigateTo('dashboard')}>
-            <ArrowLeft className="mr-2" size={16} />
-            {t.back}
-          </Button>
-          <h1 className="text-xl font-bold">{t.stockDetails}</h1>
-          <Button
-            variant={isInWatchlist ? 'secondary' : 'outline'}
-            size="sm"
-            onClick={() =>
-              isInWatchlist ? removeFromWatchlist(stock.id) : addToWatchlist(stock)
-            }
-            className="gap-1.5"
+    <div className="jom-container space-y-8">
+      {/* Equity Header Bar */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigateTo('dashboard')}
+            className="jom-btn text-xs"
           >
-            <Star
-              size={15}
-              className={isInWatchlist ? 'fill-yellow-400 text-yellow-500' : 'text-gray-500'}
-            />
-            <span className="hidden sm:inline">
-              {isInWatchlist ? t.inWatchlist : t.addWatchlist}
-            </span>
-          </Button>
-        </div>
-      </header>
+            <ArrowLeft size={14} />
+            <span>{t.backToScreener}</span>
+          </button>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        {/* Stock Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0">
-                  {stock.ticker.slice(0, 4)}
-                </div>
-                <div>
-                  <CardTitle className="text-2xl">{stock.name}</CardTitle>
-                  <p className="text-gray-500 text-sm mt-0.5">
-                    <span className="font-semibold text-gray-800">{stock.ticker}</span> ·{' '}
-                    <span className="font-mono">{stock.bursaCode}</span> · Bursa Malaysia
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs text-blue-700 bg-blue-50">
-                      {stock.sector}
-                    </Badge>
-                    {stock.isShariah ? (
-                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-xs">
-                        {t.shariahCompliant}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-gray-600 text-xs">
-                        {t.nonShariah}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigateTo('ai-recommendation')}
+              className="jom-btn text-xs"
+            >
+              <span>{t.viewThesis}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                isInWatchlist ? removeFromWatchlist(stock.id) : addToWatchlist(stock)
+              }
+              className={`jom-btn text-xs ${isInWatchlist ? 'jom-btn-inverse' : ''}`}
+            >
+              <Bookmark size={14} />
+              <span>{isInWatchlist ? t.inWatchlist : t.addWatchlist}</span>
+            </button>
+          </div>
+        </div>
+
+        <div
+          className="jom-panel p-6 flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-tabular text-xs font-semibold">
+                {stock.ticker} · {stock.bursaCode}
+              </span>
+              <span className="jom-tag">{stock.sector}</span>
+              {stock.isShariah ? (
+                <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
+              ) : (
+                <span className="jom-tag">CONVENTIONAL</span>
+              )}
+            </div>
+            <h1 className="font-editorial text-4xl" style={{ color: 'var(--ink-primary)' }}>
+              {stock.name}
+            </h1>
+            <p className="text-xs max-w-2xl leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              {stock.description}
+            </p>
+          </div>
+
+          <div className="md:text-right shrink-0 space-y-1">
+            <div className="jom-kicker">LAST TRADED PRICE (MYR)</div>
+            <div className="font-tabular text-3xl sm:text-4xl font-semibold">
+              RM {stock.price}
+            </div>
+            <div className="flex md:justify-end items-center gap-2 pt-0.5">
+              <span
+                className={`jom-tag font-tabular ${
+                  stock.isPositive ? 'jom-tag-up' : 'jom-tag-down'
+                }`}
+              >
+                {stock.change} ({stock.changePercent})
+              </span>
+              {stock.lastUpdated && (
+                <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
+                  {stock.lastUpdated}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Two-Column Terminal Grid */}
+      <div className="grid lg:grid-cols-12 gap-6 items-start">
+        {/* Left 8 Columns */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* 30-Day Price Chart Panel */}
+          <div className="jom-panel p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="jom-kicker">{t.chartKicker}</div>
+                <h2 className="font-editorial text-2xl mt-0.5">{t.chartTitle}</h2>
+              </div>
+              <span className="jom-tag font-tabular">{stock.bursaCode} · DAILY EOD</span>
+            </div>
+
+            <div className="w-full" style={{ height: '290px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={stock.history}>
+                  <defs>
+                    <linearGradient id="editorialPriceGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0A5C36" stopOpacity={0.24} />
+                      <stop offset="95%" stopColor="#0A5C36" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-hairline)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
+                    tickFormatter={str => {
+                      const date = new Date(str);
+                      return `${date.getDate()}/${date.getMonth() + 1}`;
+                    }}
+                    minTickGap={28}
+                  />
+                  <YAxis
+                    domain={['auto', 'auto']}
+                    tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
+                    width={52}
+                  />
+                  <RechartsTooltip
+                    formatter={(value: number) => [`RM ${value.toFixed(2)}`, stock.ticker]}
+                    labelFormatter={label => new Date(label).toLocaleDateString()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="price"
+                    stroke="#0A5C36"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#editorialPriceGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 5-Axis Fundamental Health Radar & Peer Benchmark */}
+          <div className="jom-panel p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="jom-kicker">{t.radarKicker}</div>
+                <h2 className="font-editorial text-2xl mt-0.5">{t.radarTitle}</h2>
               </div>
 
-              <div className="sm:text-right">
-                <p className="text-3xl font-bold">RM {stock.price}</p>
-                <p
-                  className={`text-base font-semibold flex sm:justify-end items-center gap-1 ${
-                    stock.isPositive ? 'text-green-600' : 'text-red-600'
-                  }`}
+              <div className="flex items-center gap-2">
+                <label htmlFor="peer-select" className="jom-kicker whitespace-nowrap">
+                  {t.compareWithPeer}
+                </label>
+                <select
+                  id="peer-select"
+                  value={peerStockId}
+                  onChange={e => setPeerStockId(e.target.value)}
+                  className="jom-input text-xs font-tabular"
+                  style={{ width: 'auto', minWidth: '175px' }}
                 >
-                  {stock.change} ({stock.changePercent})
-                  {stock.isPositive ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-                </p>
-                {stock.lastUpdated && (
-                  <p className="text-xs text-gray-400 mt-1">Updated: {stock.lastUpdated}</p>
-                )}
+                  {allStocks
+                    .filter(s => s.id !== stock.id)
+                    .map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.ticker} · {s.sector}
+                      </option>
+                    ))}
+                </select>
               </div>
             </div>
-          </CardHeader>
-        </Card>
 
-        <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">{t.overview}</TabsTrigger>
-            <TabsTrigger value="financials">{t.financials}</TabsTrigger>
-            <TabsTrigger value="news">{t.news}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            {/* AI Insight Card */}
-            <Card className="bg-blue-50 border-blue-200 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2 text-blue-800">
-                  <div className="bg-blue-200 p-1.5 rounded-lg text-blue-700">
-                    <TrendingUp size={18} />
-                  </div>
-                  {language === 'ENG' ? 'JomINVEST AI Insight' : 'Wawasan AI JomINVEST'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-blue-900 font-bold mb-1">
-                  {stock.isPositive
-                    ? language === 'ENG'
-                      ? 'Bullish Momentum Detected 🚀'
-                      : 'Momentum Naik Dikesan 🚀'
-                    : language === 'ENG'
-                    ? 'Value Consolidation Zone 📉'
-                    : 'Zon Konsolidasi Nilai 📉'}
-                </p>
-                <p className="text-sm text-blue-800/80 leading-relaxed">
-                  {language === 'ENG'
-                    ? `${stock.name} (${stock.bursaCode}) trades at a P/E of ${stock.peRatio} with a ${stock.dividendYield} dividend yield in the ${stock.sector} sector.`
-                    : `${stock.name} (${stock.bursaCode}) didagangkan pada P/E ${stock.peRatio} dengan hasil dividen ${stock.dividendYield} dalam sektor ${stock.sector}.`}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Price Chart & Trading Simulator Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t.priceChart}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full bg-white rounded-lg p-2 border border-gray-200">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <AreaChart data={stock.history}>
-                      <defs>
-                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={str => {
-                          const date = new Date(str);
-                          return `${date.getDate()}/${date.getMonth() + 1}`;
-                        }}
-                        minTickGap={30}
+            <div className="grid md:grid-cols-12 gap-6 items-center">
+              <div className="md:col-span-5 w-full" style={{ height: '270px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="var(--border-hairline)" />
+                    <PolarAngleAxis
+                      dataKey="axis"
+                      tick={{ fontSize: 11, fill: 'var(--ink-secondary)' }}
+                    />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} />
+                    <Radar
+                      name={stock.ticker}
+                      dataKey={stock.ticker}
+                      stroke="#0A5C36"
+                      fill="#0A5C36"
+                      fillOpacity={0.28}
+                    />
+                    {peerStock && (
+                      <Radar
+                        name={peerStock.ticker}
+                        dataKey={peerStock.ticker}
+                        stroke="#52585E"
+                        fill="#52585E"
+                        fillOpacity={0.18}
                       />
-                      <YAxis domain={['auto', 'auto']} />
-                      <RechartsTooltip
-                        formatter={(value: number) => [`RM ${value.toFixed(2)}`, 'Price']}
-                        labelFormatter={label => new Date(label).toLocaleDateString()}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="price"
-                        stroke="#16a34a"
-                        fillOpacity={1}
-                        fill="url(#colorPrice)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                    )}
+                    <Legend />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
 
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-gray-700 text-sm leading-relaxed">{stock.description}</p>
-                </div>
-
-                {/* Buy/Sell Trading Simulator Zone */}
-                <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-gray-200">
-                    <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                      <Receipt size={20} className="text-green-600" />
-                      {t.tradingSimulator}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border">
-                        <Wallet size={15} className="text-green-600" />
-                        <span className="text-gray-500">{t.availableCash}:</span>
-                        <span className="font-bold text-gray-900">RM {cashBalance.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border">
-                        <span className="text-gray-500">{t.ownedUnits}:</span>
-                        <span className="font-bold text-blue-700">{ownedUnits} units</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mode Toggle: Standard Bursa Lot (x100) vs Student Micro-Unit (x1) */}
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setLotMode('lot')}
-                        className={`p-2.5 rounded-lg text-xs font-semibold border transition-all ${
-                          lotMode === 'lot'
-                            ? 'bg-green-600 text-white border-green-600 shadow-xs'
-                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        {t.lotModeLabel}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setLotMode('micro')}
-                        className={`p-2.5 rounded-lg text-xs font-semibold border transition-all ${
-                          lotMode === 'micro'
-                            ? 'bg-green-600 text-white border-green-600 shadow-xs'
-                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        {t.microModeLabel}
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                      <Info size={13} className="text-blue-500 shrink-0" />
-                      {t.lotNote}
-                    </p>
-                  </div>
-
-                  {/* Quantity & Action Row */}
-                  <div className="grid md:grid-cols-2 gap-6 items-start">
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium text-gray-700 block">
-                        {t.units} ({lotMode === 'lot' ? `${quantity} lot = ${effectiveUnits} units` : `${effectiveUnits} units`})
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={decrement}>
-                          <Minus size={16} />
-                        </Button>
-                        <Input
-                          type="number"
-                          value={quantity}
-                          onChange={e => handleQuantityChange(e.target.value)}
-                          className="text-center font-bold text-lg bg-white"
-                        />
-                        <Button variant="outline" size="icon" onClick={increment}>
-                          <Plus size={16} />
-                        </Button>
-                      </div>
-
-                      {/* Buy & Sell Buttons */}
-                      <div className="flex gap-3 pt-2">
-                        <Button
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          size="lg"
-                          onClick={() => addToPortfolio(stock, effectiveUnits)}
-                        >
-                          {t.buy} {effectiveUnits} Units
-                        </Button>
-                        <Button
-                          className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-40"
-                          size="lg"
-                          disabled={ownedUnits <= 0}
-                          onClick={() => sellFromPortfolio(stock, effectiveUnits)}
-                        >
-                          {t.sell} {Math.min(effectiveUnits, ownedUnits || effectiveUnits)} Units
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Transparent Bursa Malaysia Fee Breakdown */}
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-2 text-xs">
-                      <p className="font-bold text-gray-800 text-sm mb-2">{t.feeBreakdown}</p>
-                      <div className="flex justify-between text-gray-600">
-                        <span>{t.grossValue} ({effectiveUnits} × RM {stock.price})</span>
-                        <span className="font-medium">RM {buyFees.grossAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-gray-600">
-                        <span>{t.brokerageFee}</span>
-                        <span>RM {buyFees.brokerageFee.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-gray-600">
-                        <span>{t.clearingFee}</span>
-                        <span>RM {buyFees.clearingFee.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-gray-600">
-                        <span>{t.stampDuty}</span>
-                        <span>RM {buyFees.stampDuty.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-sm text-gray-900 pt-2 border-t">
-                        <span>{t.netTotal}</span>
-                        <span className="text-green-700">RM {buyFees.netTotal.toFixed(2)}</span>
-                      </div>
-                      {ownedUnits > 0 && (
-                        <div className="flex justify-between text-[11px] text-gray-500 pt-1">
-                          <span>Est. Net Proceeds if Selling:</span>
-                          <span className="font-semibold">RM {sellFees.netTotal.toFixed(2)}</span>
-                        </div>
-                      )}
-                    </div>
+              {/* Peer Benchmark Table */}
+              {peerStock && (
+                <div className="md:col-span-7 jom-panel-subtle overflow-hidden">
+                  <div className="jom-table-wrap">
+                    <table className="jom-table">
+                      <thead>
+                        <tr>
+                          <th>{t.colMetric}</th>
+                          <th style={{ textAlign: 'right' }}>{stock.ticker}</th>
+                          <th style={{ textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedStock(peerStock)}
+                              className="inline-flex items-center gap-1 underline cursor-pointer"
+                              style={{ color: 'var(--ink-primary)' }}
+                            >
+                              <span>{peerStock.ticker}</span>
+                              <ArrowUpRight size={12} />
+                            </button>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                            {t.peRatio}
+                          </td>
+                          <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
+                            {stock.peRatio}x
+                          </td>
+                          <td className="font-tabular text-xs" style={{ textAlign: 'right' }}>
+                            {peerStock.peRatio}x
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                            {t.dividend}
+                          </td>
+                          <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
+                            {stock.dividendYield}
+                          </td>
+                          <td className="font-tabular text-xs" style={{ textAlign: 'right' }}>
+                            {peerStock.dividendYield}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                            {t.marketCap}
+                          </td>
+                          <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
+                            RM {stock.marketCap}
+                          </td>
+                          <td className="font-tabular text-xs" style={{ textAlign: 'right' }}>
+                            RM {peerStock.marketCap}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                            {t.revenue}
+                          </td>
+                          <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
+                            RM {stock.revenue}
+                          </td>
+                          <td className="font-tabular text-xs" style={{ textAlign: 'right' }}>
+                            RM {peerStock.revenue}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                            {t.netProfit}
+                          </td>
+                          <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
+                            RM {stock.netProfit}
+                          </td>
+                          <td className="font-tabular text-xs" style={{ textAlign: 'right' }}>
+                            RM {peerStock.netProfit}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                            {t.debtEquity}
+                          </td>
+                          <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
+                            {stock.debtEquity}
+                          </td>
+                          <td className="font-tabular text-xs" style={{ textAlign: 'right' }}>
+                            {peerStock.debtEquity}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                            {t.shariahStatus}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            {stock.isShariah ? (
+                              <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
+                            ) : (
+                              <span className="jom-tag">CONVENTIONAL</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            {peerStock.isShariah ? (
+                              <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
+                            ) : (
+                              <span className="jom-tag">CONVENTIONAL</span>
+                            )}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
+          </div>
 
-            {/* 5-Axis Fundamental Health Radar & Peer Comparison */}
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Scale className="text-green-600" size={20} />
-                    {t.radarTitle}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 text-sm">
-                    <label htmlFor="peer-select" className="text-gray-600 whitespace-nowrap">
-                      {t.compareWithPeer}
-                    </label>
-                    <select
-                      id="peer-select"
-                      value={peerStockId}
-                      onChange={e => setPeerStockId(e.target.value)}
-                      className="border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white font-medium"
+          {/* Interactive Fundamental Glossary (+10 XP per metric inspected) */}
+          <div className="jom-panel overflow-hidden">
+            <div
+              className="p-6 border-b flex items-center justify-between"
+              style={{ borderColor: 'var(--border-hairline)' }}
+            >
+              <div>
+                <div className="jom-kicker">{t.glossaryKicker}</div>
+                <h2 className="font-editorial text-2xl mt-0.5">{t.glossaryTitle}</h2>
+              </div>
+              <span className="jom-tag font-tabular">
+                {hasLearnedTerm.length} / 5 VERIFIED
+              </span>
+            </div>
+
+            <div>
+              {glossaryItems.map((item, idx) => {
+                const isExpanded = learningTerm === item.key;
+                const isLearned = hasLearnedTerm.includes(item.key);
+                const def = definitions[item.key];
+
+                return (
+                  <div
+                    key={item.key}
+                    className={idx !== glossaryItems.length - 1 ? 'border-b' : ''}
+                    style={{ borderColor: 'var(--border-hairline)' }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleTermClick(item.key)}
+                      className="w-full p-4 px-6 flex items-center justify-between text-left cursor-pointer transition-colors"
+                      style={{
+                        backgroundColor: isExpanded ? 'var(--bg-subtle)' : 'transparent'
+                      }}
                     >
-                      {allStocks
-                        .filter(s => s.id !== stock.id)
-                        .map(s => (
-                          <option key={s.id} value={s.id}>
-                            {s.ticker} ({s.sector})
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6 items-center">
-                  <div className="w-full h-[290px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={radarData}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="axis" />
-                        <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                        <Radar
-                          name={stock.ticker}
-                          dataKey={stock.ticker}
-                          stroke="#16a34a"
-                          fill="#16a34a"
-                          fillOpacity={0.35}
-                        />
-                        {peerStock && (
-                          <Radar
-                            name={peerStock.ticker}
-                            dataKey={peerStock.ticker}
-                            stroke="#2563eb"
-                            fill="#2563eb"
-                            fillOpacity={0.25}
-                          />
-                        )}
-                        <Legend />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Side-by-Side Peer Comparison Table */}
-                  {peerStock && (
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3">
-                      <div className="grid grid-cols-3 text-xs font-bold uppercase text-gray-500 pb-2 border-b">
-                        <span>Metric</span>
-                        <span className="text-green-700">{stock.ticker}</span>
-                        <span
-                          className="text-blue-700 cursor-pointer hover:underline"
-                          onClick={() => setSelectedStock(peerStock)}
-                        >
-                          {peerStock.ticker} ↗
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-sm" style={{ color: 'var(--ink-primary)' }}>
+                          {item.label}
                         </span>
+                        {isLearned ? (
+                          <span className="jom-tag jom-tag-shariah">VERIFIED</span>
+                        ) : (
+                          <span className="jom-tag">+10 XP</span>
+                        )}
                       </div>
-                      <div className="grid grid-cols-3 text-sm">
-                        <span className="text-gray-600">Price</span>
-                        <span className="font-semibold">RM {stock.price}</span>
-                        <span className="font-semibold">RM {peerStock.price}</span>
-                      </div>
-                      <div className="grid grid-cols-3 text-sm">
-                        <span className="text-gray-600">P/E Ratio</span>
-                        <span className="font-semibold">{stock.peRatio}</span>
-                        <span className="font-semibold">{peerStock.peRatio}</span>
-                      </div>
-                      <div className="grid grid-cols-3 text-sm">
-                        <span className="text-gray-600">Dividend Yield</span>
-                        <span className="font-semibold">{stock.dividendYield}</span>
-                        <span className="font-semibold">{peerStock.dividendYield}</span>
-                      </div>
-                      <div className="grid grid-cols-3 text-sm">
-                        <span className="text-gray-600">Market Cap</span>
-                        <span className="font-semibold">RM {stock.marketCap}</span>
-                        <span className="font-semibold">RM {peerStock.marketCap}</span>
-                      </div>
-                      <div className="grid grid-cols-3 text-sm">
-                        <span className="text-gray-600">Shariah</span>
-                        <span className="font-semibold">{stock.isShariah ? '☪️ Yes' : 'No'}</span>
-                        <span className="font-semibold">{peerStock.isShariah ? '☪️ Yes' : 'No'}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Key Metrics with Inline Learning - XP ENABLED */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t.keyMetrics}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TooltipProvider>
-                  <div className="space-y-4">
-                    {renderMetric(t.peRatio, stock.peRatio, 'P/E Ratio')}
-                    {renderMetric(t.dividend, stock.dividendYield, 'Dividend Yield')}
-                    {renderMetric(t.marketCap, `RM ${stock.marketCap}`, 'Market Cap')}
-                    {renderMetric(t.volume, stock.volume, 'Volume')}
-                    {renderMetric(
-                      t.shariahStatus,
-                      stock.isShariah ? t.shariahCompliant : t.nonShariah,
-                      'Shariah Status'
+                      <div className="flex items-center gap-3">
+                        <span className="font-tabular text-sm font-semibold">
+                          {item.value}
+                        </span>
+                        {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                      </div>
+                    </button>
+
+                    {isExpanded && def && (
+                      <div
+                        className="px-6 pb-5 pt-2 space-y-2 border-t"
+                        style={{
+                          borderColor: 'var(--border-hairline)',
+                          backgroundColor: 'var(--bg-elevated)'
+                        }}
+                      >
+                        <p className="text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                          {def[language].simple}
+                        </p>
+                        <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                          {def[language].detail}
+                        </p>
+                      </div>
                     )}
                   </div>
-                </TooltipProvider>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                );
+              })}
+            </div>
+          </div>
 
-          <TabsContent value="financials" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="text-green-600" />
-                  {t.financials}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">{t.revenue}</span>
-                  <span className="font-semibold text-lg">RM {stock.revenue}</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">{t.netProfit}</span>
-                  <span className="font-semibold text-lg text-green-600">RM {stock.netProfit}</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">{t.debtEquity}</span>
-                  <span className="font-semibold text-lg">{stock.debtEquity}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="news" className="space-y-6 mt-6">
-            <div className="space-y-4">
+          {/* Market Filings & Sector Notes */}
+          <div className="jom-panel p-6 space-y-4">
+            <div>
+              <div className="jom-kicker">{t.filingsKicker}</div>
+              <h3 className="font-editorial text-2xl mt-0.5">{t.filingsTitle}</h3>
+            </div>
+            <div className="space-y-3">
               {[
                 {
-                  title: `${stock.name} (${stock.bursaCode}) reports resilient quarterly operational performance on Bursa Malaysia`,
-                  source: 'The Edge Malaysia · 2 hours ago'
+                  headline: `${stock.name} (${stock.bursaCode}) reports resilient quarterly operational performance on Bursa Malaysia Main Market`,
+                  source: 'THE EDGE MALAYSIA · INSTITUTIONAL DESK'
                 },
                 {
-                  title: `Analysts maintain positive outlook on ${stock.sector} sector amid domestic institutional inflows`,
-                  source: 'Bursa Marketplace · 5 hours ago'
-                },
-                {
-                  title: `Retail and EPF participation in ${stock.ticker} remains steady going into dividend season`,
-                  source: 'StarBiz · 1 day ago'
+                  headline: `Domestic institutional funds maintain net allocation in ${stock.sector} constituents ahead of dividend cycle`,
+                  source: 'BURSA MARKETPLACE · SECTOR BRIEFING'
                 }
-              ].map((item, i) => (
-                <Card key={i} className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-4 flex gap-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-                      <Newspaper className="text-gray-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">{item.title}</h4>
-                      <p className="text-xs text-gray-500">{item.source}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              ].map((note, index) => (
+                <div key={index} className="jom-panel-subtle p-4 space-y-1">
+                  <div className="jom-kicker">{note.source}</div>
+                  <p className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
+                    {note.headline}
+                  </p>
+                </div>
               ))}
             </div>
-          </TabsContent>
-        </Tabs>
-      </main>
+          </div>
+        </div>
+
+        {/* Right 4 Columns — Sticky Brokerage Order Ticket */}
+        <div className="lg:col-span-4">
+          <div className="jom-panel p-6 sticky top-20 space-y-5">
+            <div
+              className="pb-4 border-b flex items-center justify-between"
+              style={{ borderColor: 'var(--border-hairline)' }}
+            >
+              <span className="jom-kicker">{t.ticketHeader}</span>
+              <span className="jom-tag font-tabular">{stock.ticker}</span>
+            </div>
+
+            {/* Segmented Unit Mode */}
+            <div className="space-y-2">
+              <div className="jom-segmented w-full grid grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setLotMode('lot')}
+                  className={lotMode === 'lot' ? 'active' : ''}
+                >
+                  {t.boardLot}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLotMode('micro')}
+                  className={lotMode === 'micro' ? 'active' : ''}
+                >
+                  {t.microUnit}
+                </button>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                {t.lotFootnote}
+              </p>
+            </div>
+
+            {/* Quantity Stepper */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="jom-kicker">{t.quantityLabel}</span>
+                <span className="font-tabular text-xs font-semibold" style={{ color: 'var(--ink-secondary)' }}>
+                  = {effectiveUnits} sh
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={decrement}
+                  className="jom-btn px-3 py-2"
+                  aria-label="Decrease quantity"
+                >
+                  <Minus size={14} />
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  value={quantity}
+                  onChange={e => handleQuantityChange(e.target.value)}
+                  className="jom-input font-tabular text-center font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={increment}
+                  className="jom-btn px-3 py-2"
+                  aria-label="Increase quantity"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Position & Buying Power Summary */}
+            <div className="jom-panel-subtle p-3.5 space-y-2 font-tabular text-xs">
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.availableCash}</span>
+                <span className="font-semibold" style={{ color: 'var(--signal-up)' }}>
+                  RM {cashBalance.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.currentPosition}</span>
+                <span className="font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                  {ownedUnits} sh ({Math.floor(ownedUnits / 100)} lots)
+                </span>
+              </div>
+            </div>
+
+            {/* Line-Item Bursa Malaysia Fee Schedule */}
+            <div
+              className="space-y-2.5 pt-3 border-t font-tabular text-xs"
+              style={{ borderColor: 'var(--border-hairline)' }}
+            >
+              <div className="jom-kicker">{t.feeScheduleTitle}</div>
+
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>
+                  {t.grossPrincipal} ({effectiveUnits} × {stock.price})
+                </span>
+                <span>RM {buyFees.grossAmount.toFixed(2)}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.brokerageFee}</span>
+                <span>RM {buyFees.brokerageFee.toFixed(2)}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.clearingFee}</span>
+                <span>RM {buyFees.clearingFee.toFixed(2)}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.stampDuty}</span>
+                <span>RM {buyFees.stampDuty.toFixed(2)}</span>
+              </div>
+
+              <div
+                className="flex items-center justify-between pt-2.5 border-t text-sm font-semibold"
+                style={{ borderColor: 'var(--border-hairline)', color: 'var(--ink-primary)' }}
+              >
+                <span>{t.netSettlement}</span>
+                <span>RM {buyFees.netTotal.toFixed(2)}</span>
+              </div>
+
+              {ownedUnits > 0 && (
+                <div
+                  className="flex items-center justify-between pt-1 text-xs"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  <span>Est. Sell Proceeds ({sellUnits} sh)</span>
+                  <span>RM {sellFees.netTotal.toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Execution Buttons */}
+            <div className="space-y-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => addToPortfolio(stock, effectiveUnits)}
+                className="jom-btn jom-btn-primary w-full py-2.5"
+              >
+                {t.executeBuy} ({effectiveUnits} sh)
+              </button>
+
+              <button
+                type="button"
+                disabled={ownedUnits <= 0}
+                onClick={() => sellFromPortfolio(stock, effectiveUnits)}
+                className="jom-btn jom-btn-danger w-full py-2.5"
+              >
+                {t.executeSell} ({ownedUnits > 0 ? sellUnits : 0} sh)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
