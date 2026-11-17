@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Play,
   Clock,
@@ -6,7 +6,9 @@ import {
   ArrowUpRight,
   Download,
   Check,
-  X
+  X,
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import {
@@ -21,6 +23,17 @@ import {
 } from 'recharts';
 import { toast } from 'sonner';
 import type { Screen, StockData } from '../App';
+import {
+  extractTextFromDocument,
+  analyzeFilingWithAI,
+  type RingkasAnalysisResult
+} from '../services/aiService';
+import {
+  fetchBursaNews,
+  computeMarketBreadth,
+  type BursaNewsItem,
+  type MarketBreadthSummary
+} from '../services/bursaService';
 
 interface EducationalHubProps {
   navigateTo: (screen: Screen) => void;
@@ -362,12 +375,51 @@ export function EducationalHub({
   const [isScanning, setIsScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(true);
   const [loadingText, setLoadingText] = useState('Parsing Bursa Filing...');
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedText, setUploadedText] = useState<string>('');
+  const [customPasteOpen, setCustomPasteOpen] = useState<boolean>(false);
+  const [aiReport, setAiReport] = useState<RingkasAnalysisResult | null>(null);
+
+  // JomSentimen Live News & Market Breadth State
+  const [newsItems, setNewsItems] = useState<BursaNewsItem[]>([]);
+  const [isRefreshingNews, setIsRefreshingNews] = useState<boolean>(false);
 
   // Curriculum & Briefing Modal State
   const [activeLearningItem, setActiveLearningItem] = useState<EducationalItem | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [completedQuizzes, setCompletedQuizzes] = useState<string[]>([]);
+
+  const loadBursaNewsWire = useCallback(
+    async (isManualRefresh: boolean = false) => {
+      setIsRefreshingNews(true);
+      try {
+        if (isManualRefresh) {
+          try {
+            localStorage.removeItem('jominvest_bursa_news_v1');
+          } catch {
+            // Ignore storage errors
+          }
+        }
+        const items = await fetchBursaNews(stocks);
+        setNewsItems(items);
+        if (isManualRefresh) {
+          toast.success(
+            language === 'ENG'
+              ? 'Bursa Malaysia news wire & market breadth synchronized.'
+              : 'Suapan berita Bursa Malaysia & keluasan pasaran dikemas kini.'
+          );
+        }
+      } finally {
+        setIsRefreshingNews(false);
+      }
+    },
+    [stocks, language]
+  );
+
+  useEffect(() => {
+    loadBursaNewsWire(false);
+  }, [loadBursaNewsWire]);
 
   useEffect(() => {
     if (isScanning) {
@@ -427,7 +479,7 @@ export function EducationalHub({
     return stocks.find(s => s.id === selectedStockId) || stocks[0];
   }, [stocks, selectedStockId]);
 
-  const dynamicReport = useMemo(() => {
+  const dynamicReport = useMemo<RingkasAnalysisResult | null>(() => {
     if (!currentStock) return null;
     const pe = parseFloat(currentStock.peRatio) || 15;
     const divYield = parseFloat(currentStock.dividendYield.replace('%', '')) || 0;
@@ -485,12 +537,27 @@ export function EducationalHub({
 
     return {
       title: `${currentStock.name} (${currentStock.ticker})`,
+      bursaCode: currentStock.bursaCode,
+      isShariah: currentStock.isShariah,
       growth: growthText,
       risk: riskText,
       dividend: dividendText,
-      score: confidenceScore
+      score: confidenceScore,
+      sourceLabel: uploadedFileName
+        ? `UPLOADED FILING · ${uploadedFileName.toUpperCase()}`
+        : 'VERIFIED PDF FILING',
+      extractedExcerpt: uploadedText.trim() ? uploadedText.trim().slice(0, 260) : undefined,
+      provider: 'QUANT_ENGINE'
     };
-  }, [currentStock, language]);
+  }, [currentStock, language, uploadedFileName, uploadedText]);
+
+  const activeReport = aiReport || dynamicReport;
+
+  const getProviderLabel = (provider?: 'API_KEY_LLM' | 'LIVE_CLOUD_LLM' | 'QUANT_ENGINE') => {
+    if (provider === 'API_KEY_LLM') return 'LIVE LLM';
+    if (provider === 'LIVE_CLOUD_LLM') return 'CLOUD AI';
+    return 'QUANT ENGINE';
+  };
 
   // 10-Year Compounding & Malaysian Benchmark Model
   const wealthData = useMemo(() => {
@@ -529,31 +596,97 @@ export function EducationalHub({
   const finalFd = finalPoint.fixedDeposit;
   const finalInvested = finalPoint.invested;
 
-  const handleAnalyze = () => {
+  const runFilingAnalysis = async (
+    targetStock: StockData | undefined,
+    fileNameArg?: string | null,
+    textArg?: string
+  ) => {
+    const stockToUse = targetStock || currentStock;
+    if (!stockToUse) return;
     setIsScanning(true);
     setScanComplete(false);
-    setTimeout(() => {
+    try {
+      const effectiveName =
+        fileNameArg !== undefined
+          ? fileNameArg || undefined
+          : uploadedFileName || (uploadedText.trim() ? 'Pasted_Bursa_Filing.txt' : undefined);
+      const effectiveText =
+        textArg !== undefined ? textArg : uploadedText.trim() || undefined;
+
+      const result = await analyzeFilingWithAI({
+        stock: stockToUse,
+        uploadedFileName: effectiveName,
+        uploadedText: effectiveText,
+        language
+      });
+      setAiReport(result);
+    } finally {
       setIsScanning(false);
       setScanComplete(true);
-    }, 1050);
+    }
+  };
+
+  const handleAnalyze = () => {
+    runFilingAnalysis(currentStock);
+  };
+
+  const handleFileUpload = async (file: File) => {
+    const matched = stocks.find(
+      s =>
+        file.name.toUpperCase().includes(s.ticker) ||
+        file.name.toUpperCase().includes(s.name.split(' ')[0].toUpperCase())
+    );
+    const targetStock = matched || currentStock;
+    if (matched) {
+      setSelectedStockId(matched.id);
+    }
+
+    setUploadedFileName(file.name);
+    toast.success(
+      language === 'ENG'
+        ? `Loaded filing: ${file.name} — extracting document text & ratios...`
+        : `Pemfailan dimuatkan: ${file.name} — mengekstrak teks & nisbah utama...`
+    );
+
+    const extracted = await extractTextFromDocument(file);
+    setUploadedText(extracted);
+    await runFilingAnalysis(targetStock, file.name, extracted);
+  };
+
+  const handleClearCustomDocument = () => {
+    setUploadedFileName(null);
+    setUploadedText('');
+    setAiReport(null);
+    toast.info(
+      language === 'ENG'
+        ? 'Cleared custom filing document.'
+        : 'Dokumen pemfailan tersuai dipadamkan.'
+    );
   };
 
   const handleExportSummary = () => {
-    if (!currentStock || !dynamicReport) return;
+    if (!currentStock || !activeReport) return;
     const textReport = [
       `JOMRINGKAS INSTITUTIONAL EQUITY BRIEF`,
       `Security: ${currentStock.name} (${currentStock.ticker} / ${currentStock.bursaCode})`,
       `Spot Price: RM ${currentStock.price} (${currentStock.changePercent}) | Sector: ${currentStock.sector}`,
-      `Fundamental Score: ${dynamicReport.score} / 100`,
+      `Synthesis Engine: ${getProviderLabel(activeReport.provider)} | Fundamental Score: ${activeReport.score} / 100`,
+      ...(uploadedText.trim() || activeReport.extractedExcerpt
+        ? [
+            ``,
+            `EXTRACTED DOCUMENT EXCERPT (${uploadedFileName || 'Custom Filing'})`,
+            (activeReport.extractedExcerpt || uploadedText.trim().slice(0, 260))
+          ]
+        : []),
       ``,
       `01 / GROWTH & REVENUE CATALYST`,
-      dynamicReport.growth,
+      activeReport.growth,
       ``,
       `02 / VALUATION & BALANCE SHEET RISK`,
-      dynamicReport.risk,
+      activeReport.risk,
       ``,
       `03 / DIVIDEND & SAC SHARIAH STANDING`,
-      dynamicReport.dividend
+      activeReport.dividend
     ].join('\n');
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -611,44 +744,25 @@ export function EducationalHub({
   const articleItems = learningItems.filter(i => i.type === 'article');
   const tutorialItems = learningItems.filter(i => i.type === 'tutorial');
 
-  const newsWireItems = [
-    {
-      source: 'The Edge Malaysia',
-      time: '10m ago',
-      headline:
-        'Johor hyperscale data center & grid capex expansion lifts GAMUDA, YTLPOWR and TENAGA orderbook visibility.',
-      impact: 'CONSTRUCTIVE',
-      tagClass: 'jom-tag jom-tag-up',
-      ticker: 'GAMUDA'
-    },
-    {
-      source: 'Bursa Filing Wire',
-      time: '32m ago',
-      headline:
-        'Crude palm oil futures consolidate near RM 3,850/MT as plantation issuers report steady FFB yields.',
-      impact: 'NEUTRAL',
-      tagClass: 'jom-tag',
-      ticker: 'SDH'
-    },
-    {
-      source: 'StarBiz Institutional',
-      time: '1h ago',
-      headline:
-        'Bank Negara Malaysia maintains OPR at 3.00%, anchoring net interest margin stability for MAYBANK and CIMB.',
-      impact: 'CONSTRUCTIVE',
-      tagClass: 'jom-tag jom-tag-up',
-      ticker: 'MAYBANK'
-    },
-    {
-      source: 'Bernama Economic Desk',
-      time: '2h ago',
-      headline:
-        'Global wafer fab utilization recovery supports OSAT export billings across Penang semiconductor cluster.',
-      impact: 'CONSTRUCTIVE',
-      tagClass: 'jom-tag jom-tag-up',
-      ticker: 'INARI'
-    }
-  ];
+  const marketBreadth: MarketBreadthSummary = useMemo(
+    () => computeMarketBreadth(stocks, newsItems),
+    [stocks, newsItems]
+  );
+
+  const getImpactTagClass = (impact: BursaNewsItem['impact']) => {
+    if (impact === 'CONSTRUCTIVE') return 'jom-tag jom-tag-up';
+    if (impact === 'CAUTIOUS') return 'jom-tag jom-tag-down';
+    return 'jom-tag';
+  };
+
+  const getRegimeTagClass = (regime: MarketBreadthSummary['regime']) => {
+    if (regime === 'CONSTRUCTIVE') return 'jom-tag jom-tag-up';
+    if (regime === 'FEAR') return 'jom-tag jom-tag-down';
+    return 'jom-tag jom-tag-warn';
+  };
+
+  const excerptToDisplay =
+    activeReport?.extractedExcerpt || (uploadedText.trim() ? uploadedText.trim().slice(0, 260) : '');
 
   return (
     <div className="jom-container space-y-8">
@@ -727,10 +841,11 @@ export function EducationalHub({
                       {language === 'ENG' ? 'SELECT BURSA ISSUER' : 'PILIH PENERBIT BURSA'}
                     </label>
                     <select
-                      className="jom-input font-tabular"
+                      className="jom-input font-tabular w-full"
                       value={selectedStockId}
                       onChange={e => {
                         setSelectedStockId(e.target.value);
+                        setAiReport(null);
                         setScanComplete(true);
                       }}
                     >
@@ -742,14 +857,37 @@ export function EducationalHub({
                     </select>
                   </div>
 
-                  {/* Custom PDF / Annual Report Upload */}
-                  <div className="space-y-1.5">
-                    <label className="jom-kicker block">
-                      {language === 'ENG' ? 'OR UPLOAD PDF / FILING DOCUMENT' : 'ATAU MUAT NAIK PDF / PEMFAILAN'}
-                    </label>
+                  {/* Custom PDF / Annual Report Upload & Paste Text */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="jom-kicker block">
+                        {language === 'ENG'
+                          ? 'OR UPLOAD PDF / FILING DOCUMENT'
+                          : 'ATAU MUAT NAIK PDF / PEMFAILAN'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setCustomPasteOpen(prev => !prev)}
+                        className="jom-kicker underline cursor-pointer"
+                      >
+                        {customPasteOpen
+                          ? language === 'ENG'
+                            ? 'HIDE PASTE'
+                            : 'TUTUP TEKS'
+                          : language === 'ENG'
+                          ? 'PASTE FILING TEXT'
+                          : 'TAMPAL TEKS'}
+                      </button>
+                    </div>
                     <label className="jom-btn w-full justify-between cursor-pointer text-xs font-tabular">
-                      <span className="truncate">
-                        {language === 'ENG' ? 'Upload Annual Report (.PDF / .TXT)' : 'Muat Naik Laporan Tahunan (.PDF / .TXT)'}
+                      <span className="truncate flex items-center gap-1.5">
+                        <FileText size={13} />
+                        <span className="truncate">
+                          {uploadedFileName ||
+                            (language === 'ENG'
+                              ? 'Upload Annual Report (.PDF / .TXT / .CSV)'
+                              : 'Muat Naik Laporan (.PDF / .TXT / .CSV)')}
+                        </span>
                       </span>
                       <span className="jom-tag">BROWSE</span>
                       <input
@@ -759,21 +897,42 @@ export function EducationalHub({
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          const matched = stocks.find(
-                            s =>
-                              file.name.toUpperCase().includes(s.ticker) ||
-                              file.name.toUpperCase().includes(s.name.split(' ')[0].toUpperCase())
-                          );
-                          if (matched) setSelectedStockId(matched.id);
-                          toast.success(
-                            language === 'ENG'
-                              ? `Loaded filing: ${file.name} — extracting key ratios...`
-                              : `Pemfailan dimuatkan: ${file.name} — mengekstrak nisbah utama...`
-                          );
-                          handleAnalyze();
+                          handleFileUpload(file);
                         }}
                       />
                     </label>
+
+                    {customPasteOpen && (
+                      <div className="space-y-1.5 pt-1">
+                        <textarea
+                          rows={3}
+                          value={uploadedText}
+                          onChange={e => {
+                            setUploadedText(e.target.value);
+                            if (!uploadedFileName && e.target.value.trim()) {
+                              setUploadedFileName('Pasted_Bursa_Filing.txt');
+                            }
+                          }}
+                          placeholder={
+                            language === 'ENG'
+                              ? 'Paste raw Bursa quarterly announcement, audited financial statement notes, or management commentary...'
+                              : 'Tampal teks pengumuman suku tahunan Bursa, nota penyata kewangan, atau ulasan pengurusan...'
+                          }
+                          className="jom-input w-full text-xs font-tabular"
+                        />
+                        {(uploadedFileName || uploadedText) && (
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={handleClearCustomDocument}
+                              className="jom-btn py-1 px-2.5 text-[11px]"
+                            >
+                              {language === 'ENG' ? 'Clear Document' : 'Padam Dokumen'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {currentStock && (
@@ -835,7 +994,7 @@ export function EducationalHub({
                   </div>
                 ) : (
                   scanComplete &&
-                  dynamicReport &&
+                  activeReport &&
                   currentStock && (
                     <div className="space-y-6">
                       {/* Memo Header */}
@@ -845,15 +1004,18 @@ export function EducationalHub({
                       >
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="jom-tag">VERIFIED PDF FILING</span>
+                            <span className="jom-tag">{activeReport.sourceLabel || 'VERIFIED PDF FILING'}</span>
                             <span className="jom-tag font-tabular">{currentStock.bursaCode}</span>
                             {currentStock.isShariah ? (
                               <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
                             ) : (
                               <span className="jom-tag">CONVENTIONAL</span>
                             )}
+                            <span className="jom-tag font-tabular">
+                              {getProviderLabel(activeReport.provider)}
+                            </span>
                           </div>
-                          <h3 className="font-editorial text-2xl">{dynamicReport.title}</h3>
+                          <h3 className="font-editorial text-2xl">{activeReport.title}</h3>
                         </div>
 
                         <div className="sm:text-right shrink-0">
@@ -862,10 +1024,38 @@ export function EducationalHub({
                             className="font-tabular text-2xl font-semibold mt-0.5"
                             style={{ color: 'var(--signal-up)' }}
                           >
-                            {dynamicReport.score} / 100
+                            {activeReport.score} / 100
                           </div>
                         </div>
                       </div>
+
+                      {/* Extracted Document Excerpt Box (when uploadedText or aiReport.extractedExcerpt is present) */}
+                      {excerptToDisplay && (
+                        <div
+                          className="jom-panel-subtle p-4 space-y-1.5"
+                          style={{ borderLeft: '3px solid var(--accent-brand)' }}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="jom-kicker">
+                              EXTRACTED DOCUMENT EXCERPT
+                              {uploadedFileName ? ` · ${uploadedFileName.toUpperCase()}` : ''}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleClearCustomDocument}
+                              className="jom-kicker underline cursor-pointer"
+                            >
+                              {language === 'ENG' ? 'CLEAR' : 'PADAM'}
+                            </button>
+                          </div>
+                          <p
+                            className="font-tabular text-xs leading-relaxed"
+                            style={{ color: 'var(--ink-secondary)' }}
+                          >
+                            "{excerptToDisplay}"
+                          </p>
+                        </div>
+                      )}
 
                       {/* 3 Numbered Memo Sections */}
                       <div className="space-y-4">
@@ -876,7 +1066,7 @@ export function EducationalHub({
                               : '01 / PEMANGKIN PERTUMBUHAN & HASIL'}
                           </div>
                           <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                            {dynamicReport.growth}
+                            {activeReport.growth}
                           </p>
                         </div>
 
@@ -887,7 +1077,7 @@ export function EducationalHub({
                               : '02 / PENILAIAN & RISIKO KUNCI KIRA-KIRA'}
                           </div>
                           <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                            {dynamicReport.risk}
+                            {activeReport.risk}
                           </p>
                         </div>
 
@@ -898,7 +1088,7 @@ export function EducationalHub({
                               : '03 / DIVIDEN & KEDUDUKAN SYARIAH MPS'}
                           </div>
                           <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                            {dynamicReport.dividend}
+                            {activeReport.dividend}
                           </p>
                         </div>
                       </div>
@@ -965,7 +1155,9 @@ export function EducationalHub({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="jom-kicker">JOMSENTIMEN · MARKET BREADTH</span>
-                    <span className="jom-tag jom-tag-up">CONSTRUCTIVE</span>
+                    <span className={getRegimeTagClass(marketBreadth.regime)}>
+                      {marketBreadth.regime}
+                    </span>
                   </div>
                   <h2 className="font-editorial text-2xl">
                     {language === 'ENG'
@@ -1005,8 +1197,9 @@ export function EducationalHub({
                       />
                       <g
                         style={{
-                          transform: `rotate(${(74 / 100) * 180 - 90}deg)`,
-                          transformOrigin: '100px 95px'
+                          transform: `rotate(${(marketBreadth.score / 100) * 180 - 90}deg)`,
+                          transformOrigin: '100px 95px',
+                          transition: 'transform 0.45s ease'
                         }}
                       >
                         <line
@@ -1031,7 +1224,7 @@ export function EducationalHub({
                   <div className="text-center mt-4">
                     <div className="jom-kicker">COMPOSITE BREADTH INDEX</div>
                     <div className="font-tabular text-2xl font-semibold mt-0.5">
-                      74 / 100 · CONSTRUCTIVE
+                      {marketBreadth.score} / 100 · {marketBreadth.regime}
                     </div>
                   </div>
                 </div>
@@ -1040,17 +1233,28 @@ export function EducationalHub({
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-hairline)' }}>
                   <div className="jom-panel-subtle p-2.5">
                     <div className="jom-kicker">ADV / DEC</div>
-                    <div className="font-tabular text-xs font-semibold mt-1">542 / 386</div>
+                    <div className="font-tabular text-xs font-semibold mt-1">
+                      {marketBreadth.advancers} / {marketBreadth.decliners}
+                    </div>
                   </div>
                   <div className="jom-panel-subtle p-2.5">
                     <div className="jom-kicker">INST. FLOW</div>
-                    <div className="font-tabular text-xs font-semibold mt-1" style={{ color: 'var(--signal-up)' }}>
-                      +RM 142M
+                    <div
+                      className="font-tabular text-xs font-semibold mt-1"
+                      style={{
+                        color: marketBreadth.netFlowLabel.startsWith('-')
+                          ? 'var(--signal-down)'
+                          : 'var(--signal-up)'
+                      }}
+                    >
+                      {marketBreadth.netFlowLabel}
                     </div>
                   </div>
                   <div className="jom-panel-subtle p-2.5">
                     <div className="jom-kicker">OPR BENCH</div>
-                    <div className="font-tabular text-xs font-semibold mt-1">3.00%</div>
+                    <div className="font-tabular text-xs font-semibold mt-1">
+                      {marketBreadth.oprRate}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1058,7 +1262,7 @@ export function EducationalHub({
               {/* Right 7 cols: Institutional News Wire Table */}
               <div className="md:col-span-7 flex flex-col justify-between">
                 <div
-                  className="p-5 border-b flex items-center justify-between"
+                  className="p-5 border-b flex items-center justify-between gap-2"
                   style={{ borderColor: 'var(--border-hairline)' }}
                 >
                   <div>
@@ -1069,7 +1273,18 @@ export function EducationalHub({
                         : 'Berita Pemangkin Korporat & Makro'}
                     </h3>
                   </div>
-                  <span className="jom-tag font-tabular">KLSE WIRE</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => loadBursaNewsWire(true)}
+                      disabled={isRefreshingNews}
+                      className="jom-btn py-1 px-2.5 text-xs"
+                    >
+                      <RefreshCw size={12} className={isRefreshingNews ? 'animate-spin' : ''} />
+                      <span>{language === 'ENG' ? 'Refresh Wire' : 'Segar Semula'}</span>
+                    </button>
+                    <span className="jom-tag font-tabular">KLSE WIRE</span>
+                  </div>
                 </div>
 
                 <div className="jom-table-wrap flex-1">
@@ -1082,9 +1297,9 @@ export function EducationalHub({
                       </tr>
                     </thead>
                     <tbody>
-                      {newsWireItems.map((news, idx) => (
+                      {newsItems.map(news => (
                         <tr
-                          key={idx}
+                          key={news.id}
                           onClick={() => {
                             const found = stocks.find(s => s.ticker === news.ticker);
                             if (found) {
@@ -1096,16 +1311,34 @@ export function EducationalHub({
                           <td className="whitespace-nowrap">
                             <div className="font-semibold text-xs">{news.source}</div>
                             <div className="font-tabular text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                              {news.time} · {news.ticker}
+                              {news.timeAgo} · {news.ticker}
                             </div>
                           </td>
                           <td>
-                            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                              {news.headline}
-                            </p>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                                {news.headline}
+                              </p>
+                              {news.url && (
+                                <a
+                                  href={news.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="jom-btn py-0.5 px-1.5 text-[11px] font-tabular shrink-0"
+                                  title={
+                                    language === 'ENG'
+                                      ? 'Open source article in new tab'
+                                      : 'Buka artikel sumber di tab baharu'
+                                  }
+                                >
+                                  ↗
+                                </a>
+                              )}
+                            </div>
                           </td>
                           <td className="text-right whitespace-nowrap">
-                            <span className={news.tagClass}>{news.impact}</span>
+                            <span className={getImpactTagClass(news.impact)}>{news.impact}</span>
                           </td>
                         </tr>
                       ))}

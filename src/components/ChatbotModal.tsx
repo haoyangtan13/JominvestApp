@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send } from 'lucide-react';
+import { X, Send, Key, ArrowUpRight, Loader2 } from 'lucide-react';
 import { stocks as defaultStocks, type StockData } from '../data/stocks';
-import type { PortfolioItem } from '../App';
+import type { PortfolioItem, Screen } from '../App';
+import {
+  getStoredAIApiKey,
+  setStoredAIApiKey,
+  generateJomAIResponse
+} from '../services/aiService';
+import { toast } from 'sonner';
 
 export interface ChatbotModalProps {
   isOpen: boolean;
@@ -12,12 +18,18 @@ export interface ChatbotModalProps {
   cashBalance?: number;
   userProfile?: string;
   userName?: string;
+  setSelectedStock?: (stock: StockData) => void;
+  navigateTo?: (screen: Screen) => void;
 }
 
 interface Message {
   role: 'ai' | 'user';
+  sender: 'user' | 'bot';
   content: string;
+  text: string;
   isTabular?: boolean;
+  provider?: 'API_KEY_LLM' | 'LIVE_CLOUD_LLM' | 'QUANT_ENGINE';
+  referencedTickers?: string[];
 }
 
 export function ChatbotModal({
@@ -28,21 +40,43 @@ export function ChatbotModal({
   portfolio = [],
   cashBalance = 10000,
   userProfile = 'Jom-Explorer (Aggressive)',
-  userName = 'Tan'
+  userName = 'Tan',
+  setSelectedStock,
+  navigateTo
 }: ChatbotModalProps) {
   const firstName = (userName || 'Tan').split(' ')[0];
+
+  const initialGreeting =
+    language === 'ENG'
+      ? `Greetings, ${firstName}. JomAI Research Copilot is synchronized with ${stocks.length} Bursa Malaysia securities and your live portfolio ledger. Query any issuer ticker, compare multiples, audit sector concentration, or verify SAC Shariah standing.`
+      : `Salam sejahtera, ${firstName}. Pembantu Penyelidikan JomAI diselaraskan dengan ${stocks.length} sekuriti Bursa Malaysia dan lejar portfolio anda. Tanya mengenai sebarang saham, perbandingan gandaan, atau saringan Syariah MPS.`;
 
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'ai',
-      content:
-        language === 'ENG'
-          ? `Greetings, ${firstName}. JomAI Research Copilot is synchronized with ${stocks.length} Bursa Malaysia securities and your live portfolio ledger. Query any issuer ticker, compare multiples, audit sector concentration, or verify SAC Shariah standing.`
-          : `Salam sejahtera, ${firstName}. Pembantu Penyelidikan JomAI diselaraskan dengan ${stocks.length} sekuriti Bursa Malaysia dan lejar portfolio anda. Tanya mengenai sebarang saham, perbandingan gandaan, atau saringan Syariah MPS.`
+      sender: 'bot',
+      content: initialGreeting,
+      text: initialGreeting,
+      isTabular: false,
+      provider: 'QUANT_ENGINE',
+      referencedTickers: ['MAYBANK', 'TENAGA', 'GAMUDA']
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  // AI Engine & API Key Configuration State
+  const [showKeyConfig, setShowKeyConfig] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState<string>(() => getStoredAIApiKey());
+  const [hasActiveKey, setHasActiveKey] = useState<boolean>(() => Boolean(getStoredAIApiKey()));
+
+  useEffect(() => {
+    if (isOpen) {
+      const currentKey = getStoredAIApiKey();
+      setApiKeyInput(currentKey);
+      setHasActiveKey(Boolean(currentKey));
+    }
+  }, [isOpen]);
 
   const texts = {
     ENG: {
@@ -84,251 +118,109 @@ export function ChatbotModal({
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const buildSmartResponse = (rawText: string): { content: string; isTabular: boolean } => {
-    const lowerText = rawText.toLowerCase();
-
-    // 1. Check if user mentions 1 or 2 stocks from `stocks`
-    const matchedStocks = stocks.filter(s => {
-      const tickerMatch = lowerText.includes(s.ticker.toLowerCase());
-      const nameParts = s.name
-        .toLowerCase()
-        .replace(/berhad|bhd|malaysia|\(.*?\)/g, '')
-        .trim()
-        .split(/\s+/)
-        .filter(w => w.length >= 4);
-      const nameMatch = nameParts.some(part => lowerText.includes(part));
-      return tickerMatch || nameMatch;
-    });
-
-    if (matchedStocks.length >= 2) {
-      const [s1, s2] = matchedStocks;
-      const r1 = Math.round(
-        (s1.radarScores.value +
-          s1.radarScores.growth +
-          s1.radarScores.health +
-          s1.radarScores.dividend +
-          s1.radarScores.momentum) /
-          5
-      );
-      const r2 = Math.round(
-        (s2.radarScores.value +
-          s2.radarScores.growth +
-          s2.radarScores.health +
-          s2.radarScores.dividend +
-          s2.radarScores.momentum) /
-          5
-      );
-      const content =
-        language === 'ENG'
-          ? `HEAD-TO-HEAD EQUITY COMPARISON: ${s1.ticker} vs ${s2.ticker}\n\n` +
-            `01 / ${s1.name} (${s1.ticker} · ${s1.bursaCode})\n` +
-            `Spot: RM ${s1.price} (${s1.changePercent}) | P/E: ${s1.peRatio}x | Yield: ${s1.dividendYield} | D/E: ${s1.debtEquity} | ${s1.isShariah ? 'SAC SHARIAH' : 'CONVENTIONAL'} | Composite Score: ${r1}/100\n\n` +
-            `02 / ${s2.name} (${s2.ticker} · ${s2.bursaCode})\n` +
-            `Spot: RM ${s2.price} (${s2.changePercent}) | P/E: ${s2.peRatio}x | Yield: ${s2.dividendYield} | D/E: ${s2.debtEquity} | ${s2.isShariah ? 'SAC SHARIAH' : 'CONVENTIONAL'} | Composite Score: ${r2}/100\n\n` +
-            `DESK VERDICT: ${
-              parseFloat(s1.dividendYield) > parseFloat(s2.dividendYield)
-                ? `${s1.ticker} leads on indicated dividend distribution (${s1.dividendYield})`
-                : `${s2.ticker} leads on indicated dividend distribution (${s2.dividendYield})`
-            }, while ${
-              s1.radarScores.growth >= s2.radarScores.growth ? s1.ticker : s2.ticker
-            } exhibits superior earnings growth momentum.`
-          : `PERBANDINGAN EKUITI: ${s1.ticker} lwn ${s2.ticker}\n\n` +
-            `01 / ${s1.name} (${s1.ticker} · ${s1.bursaCode})\n` +
-            `Harga: RM ${s1.price} (${s1.changePercent}) | P/E: ${s1.peRatio}x | Dividen: ${s1.dividendYield} | ${s1.isShariah ? 'SAC SHARIAH' : 'KONVENSIONAL'} | Skor: ${r1}/100\n\n` +
-            `02 / ${s2.name} (${s2.ticker} · ${s2.bursaCode})\n` +
-            `Harga: RM ${s2.price} (${s2.changePercent}) | P/E: ${s2.peRatio}x | Dividen: ${s2.dividendYield} | ${s2.isShariah ? 'SAC SHARIAH' : 'KONVENSIONAL'} | Skor: ${r2}/100`;
-
-      return { content, isTabular: true };
-    }
-
-    if (matchedStocks.length === 1) {
-      const s = matchedStocks[0];
-      const avgRadar = Math.round(
-        (s.radarScores.value +
-          s.radarScores.growth +
-          s.radarScores.health +
-          s.radarScores.dividend +
-          s.radarScores.momentum) /
-          5
-      );
-      const content =
-        language === 'ENG'
-          ? `ISSUER BRIEF: ${s.name} (${s.ticker} / ${s.bursaCode})\n` +
-            `Sector: ${s.sector} | Classification: ${s.isShariah ? 'SAC SHARIAH' : 'CONVENTIONAL'}\n` +
-            `Spot Price: RM ${s.price} (${s.changePercent}) | 1 Board Lot (100 sh): RM ${(parseFloat(s.price) * 100).toFixed(2)}\n` +
-            `Multiples: P/E ${s.peRatio}x | Indicated Yield: ${s.dividendYield} | Debt/Equity: ${s.debtEquity}\n` +
-            `FY Financials: Revenue ${s.revenue} | Net Profit ${s.netProfit}\n\n` +
-            `THESIS (${avgRadar}/100): ${s.description}`
-          : `NOTA PENERBIT: ${s.name} (${s.ticker} / ${s.bursaCode})\n` +
-            `Sektor: ${s.sector} | Status: ${s.isShariah ? 'SAC SHARIAH' : 'KONVENSIONAL'}\n` +
-            `Harga Semasa: RM ${s.price} (${s.changePercent}) | 1 Lot (100 unit): RM ${(parseFloat(s.price) * 100).toFixed(2)}\n` +
-            `Gandaan: P/E ${s.peRatio}x | Kadar Dividen: ${s.dividendYield} | Hutang/Ekuiti: ${s.debtEquity}\n` +
-            `Kewangan: Hasil ${s.revenue} | Untung Bersih ${s.netProfit}`;
-
-      return { content, isTabular: true };
-    }
-
-    // 2. Portfolio Audit
-    if (
-      lowerText.includes('portfolio') ||
-      lowerText.includes('pegangan') ||
-      lowerText.includes('audit') ||
-      lowerText.includes('analyze my') ||
-      lowerText.includes('check my')
-    ) {
-      const holdingsValue = portfolio.reduce(
-        (acc, item) => acc + parseFloat(item.stock.price) * item.quantity,
-        0
-      );
-      const totalEquity = holdingsValue + cashBalance;
-      if (portfolio.length === 0) {
-        const content =
-          language === 'ENG'
-            ? `PORTFOLIO LEDGER AUDIT (${firstName} · ${userProfile})\n` +
-              `Open Positions: 0 securities\n` +
-              `Available Buying Power: RM ${cashBalance.toFixed(2)} (100% cash reserve)\n\n` +
-              `RECOMMENDATION: Deploy initial capital across 3 uncorrelated Bursa sectors via the Market Screener or Conviction Notes to establish baseline yield and growth exposure.`
-            : `AUDIT LEJAR PORTFOLIO (${firstName} · ${userProfile})\n` +
-              `Posisi Terbuka: 0 sekuriti\n` +
-              `Kuasa Beli Tersedia: RM ${cashBalance.toFixed(2)} (100% rizab tunai)\n\n` +
-              `CADANGAN: Mulakan pelaburan merentasi 3 sektor Bursa melalui Saringan Pasaran.`;
-        return { content, isTabular: true };
-      }
-
-      const sectors: Record<string, number> = {};
-      portfolio.forEach(item => {
-        const val = parseFloat(item.stock.price) * item.quantity;
-        sectors[item.stock.sector] = (sectors[item.stock.sector] || 0) + val;
-      });
-      const sortedSectors = Object.entries(sectors).sort((a, b) => b[1] - a[1]);
-      const topSector = sortedSectors[0];
-      const topSectorPct = Math.round((topSector[1] / holdingsValue) * 100);
-      const holdingsSummary = portfolio
-        .map(i => `${i.stock.ticker} (${i.quantity} sh)`)
-        .join(', ');
-
-      const content =
-        language === 'ENG'
-          ? `PORTFOLIO LEDGER AUDIT (${firstName} · ${userProfile})\n` +
-            `Total Net Liquidity: RM ${totalEquity.toFixed(2)}\n` +
-            `Holdings Value: RM ${holdingsValue.toFixed(2)} | Buying Power: RM ${cashBalance.toFixed(2)}\n` +
-            `Open Positions (${portfolio.length}): ${holdingsSummary}\n` +
-            `Lead Sector Exposure: ${topSector[0]} (${topSectorPct}% across ${sortedSectors.length} sector(s))\n\n` +
-            `RISK NOTE: ${
-              sortedSectors.length < 3
-                ? 'Portfolio spans fewer than 3 sectors. Add an uncorrelated sector to reach institutional diversification standards.'
-                : 'Multi-sector diversification across 3+ industries is optimal.'
-            }`
-          : `AUDIT LEJAR PORTFOLIO (${firstName} · ${userProfile})\n` +
-            `Jumlah Kecairan Bersih: RM ${totalEquity.toFixed(2)}\n` +
-            `Nilai Pegangan: RM ${holdingsValue.toFixed(2)} | Kuasa Beli: RM ${cashBalance.toFixed(2)}\n` +
-            `Posisi Aktif (${portfolio.length}): ${holdingsSummary}\n` +
-            `Sektor Utama: ${topSector[0]} (${topSectorPct}% merentasi ${sortedSectors.length} sektor).`;
-
-      return { content, isTabular: true };
-    }
-
-    // 3. Shariah / SAC Screening
-    if (
-      lowerText.includes('shariah') ||
-      lowerText.includes('syariah') ||
-      lowerText.includes('sac') ||
-      lowerText.includes('halal') ||
-      lowerText.includes('islamic')
-    ) {
-      const shariahStocks = stocks.filter(s => s.isShariah).slice(0, 6);
-      const listStr = shariahStocks
-        .map(s => `${s.ticker} (RM ${s.price} · Yield ${s.dividendYield})`)
-        .join('\n• ');
-      const content =
-        language === 'ENG'
-          ? `SAC SHARIAH SCREENING METHODOLOGY (SC MALAYSIA)\n` +
-            `The Securities Commission Shariah Advisory Council audits issuers semi-annually against business activity benchmarks (5% / 20%) and financial ratio ceilings (<33% conventional debt and cash over total assets).\n\n` +
-            `SELECTED SAC SHARIAH ISSUERS:\n• ${listStr}`
-          : `METODOLOGI SARINGAN SYARIAH MPS (SC MALAYSIA)\n` +
-            `Majlis Penasihat Syariah SC menyaring sekuriti berdasarkan penanda aras aktiviti perniagaan dan nisbah kewangan (<33% hutang & tunai konvensional).\n\n` +
-            `SEKURITI PATUH SYARIAH MPS:\n• ${listStr}`;
-      return { content, isTabular: true };
-    }
-
-    // 4. Dividend Yield Inquiry
-    if (
-      lowerText.includes('dividend') ||
-      lowerText.includes('dividen') ||
-      lowerText.includes('passive') ||
-      lowerText.includes('yield')
-    ) {
-      const topDiv = [...stocks]
-        .sort(
-          (a, b) =>
-            parseFloat(b.dividendYield.replace('%', '')) -
-            parseFloat(a.dividendYield.replace('%', ''))
-        )
-        .slice(0, 5);
-      const divList = topDiv
-        .map(s => `• ${s.ticker} (${s.bursaCode}): ${s.dividendYield} yield @ RM ${s.price}`)
-        .join('\n');
-      const content =
-        language === 'ENG'
-          ? `HIGHEST INDICATED DIVIDEND YIELDS (BURSA MALAYSIA)\n${divList}\n\n` +
-            `NOTE: Malaysia operates a Single-Tier Dividend System; distributions are tax-exempt for retail shareholders.`
-          : `HASIL DIVIDEN TERTINGGI (BURSA MALAYSIA)\n${divList}\n\n` +
-            `NOTA: Malaysia mengamalkan Sistem Dividen Satu Peringkat yang dikecualikan cukai.`;
-      return { content, isTabular: true };
-    }
-
-    // 5. Fees / Board Lot / Contract Note Schedule
-    if (
-      lowerText.includes('fee') ||
-      lowerText.includes('yuran') ||
-      lowerText.includes('lot') ||
-      lowerText.includes('broker') ||
-      lowerText.includes('stamp') ||
-      lowerText.includes('contract') ||
-      lowerText.includes('kos')
-    ) {
-      const content =
-        language === 'ENG'
-          ? `BURSA MALAYSIA CONTRACT NOTE & FEE SCHEDULE\n` +
-            `01 / Standard Board Lot: 100 shares per lot (e.g. 100 sh @ RM 5.00 = RM 500.00 principal).\n` +
-            `02 / Brokerage Fee: 0.10% of gross contract value (minimum RM 1.00).\n` +
-            `03 / Clearing Fee: 0.03% of gross contract value (capped at RM 1,000.00).\n` +
-            `04 / Stamp Duty: RM 1.00 per RM 1,000.00 (or fractional part) of contract value.\n\n` +
-            `All simulated executions in JomINVEST automatically compute and deduct these exact statutory charges.`
-          : `JADUAL LOT & YURAN NOTA KONTRAK BURSA MALAYSIA\n` +
-            `01 / Saiz Lot Standard: 100 unit saham setiap lot.\n` +
-            `02 / Yuran Broker: 0.10% daripada nilai kasar kontrak (minimum RM 1.00).\n` +
-            `03 / Yuran Penjelasan: 0.03% daripada nilai kasar kontrak.\n` +
-            `04 / Duti Setem: RM 1.00 bagi setiap RM 1,000.00 nilai kontrak.`;
-      return { content, isTabular: true };
-    }
-
-    const content =
-      language === 'ENG'
-        ? `JomAI Research Copilot is ready to query all ${stocks.length} Bursa Malaysia issuers. Try entering:\n• "Compare MAYBANK vs CIMB"\n• "TENAGA" or "GAMUDA"\n• "Audit my portfolio"\n• "Top dividend yields" or "SAC Shariah issuers"`
-        : `Pembantu Penyelidikan JomAI sedia menganalisis ${stocks.length} sekuriti Bursa Malaysia. Cuba tanya:\n• "Bandingkan MAYBANK vs CIMB"\n• "TENAGA" atau "GAMUDA"\n• "Audit portfolio saya"\n• "Hasil dividen tertinggi"`;
-
-    return { content, isTabular: false };
+  const getProviderBadgeLabel = (
+    provider?: 'API_KEY_LLM' | 'LIVE_CLOUD_LLM' | 'QUANT_ENGINE'
+  ): string => {
+    if (provider === 'API_KEY_LLM') return 'LIVE LLM';
+    if (provider === 'LIVE_CLOUD_LLM') return 'CLOUD AI';
+    return 'KLSE QUANT ENGINE';
   };
 
-  const handleSendMessage = (text: string) => {
-    if (!text.trim()) return;
+  const handleSaveApiKey = () => {
+    const trimmed = apiKeyInput.trim();
+    setStoredAIApiKey(trimmed);
+    setHasActiveKey(Boolean(trimmed));
+    setShowKeyConfig(false);
+    toast.success(
+      trimmed
+        ? language === 'ENG'
+          ? 'AI API Key saved. Live LLM synthesis active.'
+          : 'Kunci API AI disimpan. Sintesis LLM langsung aktif.'
+        : language === 'ENG'
+        ? 'Switched to Auto Cloud / Quant Engine.'
+        : 'Beralih ke Enjin Awan / Kuantitatif Automatik.'
+    );
+  };
 
-    const newUserMsg: Message = { role: 'user', content: text };
-    setMessages(prev => [...prev, newUserMsg]);
+  const handleClearApiKey = () => {
+    setApiKeyInput('');
+    setStoredAIApiKey('');
+    setHasActiveKey(false);
+    toast.success(
+      language === 'ENG'
+        ? 'API Key cleared. Using Auto Cloud / Quant Engine.'
+        : 'Kunci API dipadamkan. Menggunakan Enjin Awan / Kuantitatif.'
+    );
+  };
+
+  const handleSendMessage = async (rawQuery: string) => {
+    const queryText = rawQuery.trim();
+    if (!queryText || isTyping) return;
+
+    const newUserMsg: Message = {
+      role: 'user',
+      sender: 'user',
+      content: queryText,
+      text: queryText
+    };
+    const nextHistory = [...messages, newUserMsg];
+    setMessages(nextHistory);
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const aiResponse = buildSmartResponse(text);
+    try {
+      const response = await generateJomAIResponse(queryText, nextHistory, {
+        stocks,
+        portfolio,
+        cashBalance,
+        riskProfile: userProfile,
+        language
+      });
+
       const newAiMsg: Message = {
         role: 'ai',
-        content: aiResponse.content,
-        isTabular: aiResponse.isTabular
+        sender: 'bot',
+        content: response.text,
+        text: response.text,
+        isTabular: true,
+        provider: response.provider,
+        referencedTickers: response.referencedTickers
       };
       setMessages(prev => [...prev, newAiMsg]);
+    } catch {
+      const fallbackText =
+        language === 'ENG'
+          ? `JomAI Research Copilot encountered a temporary connection interruption. Please retry your query on any of our ${stocks.length} Bursa Malaysia issuers.`
+          : `Pembantu Penyelidikan JomAI mengalami gangguan sambungan sementara. Sila cuba semula pertanyaan anda.`;
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'ai',
+          sender: 'bot',
+          content: fallbackText,
+          text: fallbackText,
+          isTabular: false,
+          provider: 'QUANT_ENGINE'
+        }
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 450);
+    }
+  };
+
+  const handleTickerPillClick = (ticker: string) => {
+    const matched = stocks.find(s => s.ticker === ticker);
+    if (matched && setSelectedStock && navigateTo) {
+      setSelectedStock(matched);
+      navigateTo('stock-details');
+      onClose();
+      return;
+    }
+    handleSendMessage(
+      language === 'ENG'
+        ? `Provide an institutional research brief on ${ticker}`
+        : `Berikan nota penyelidikan institusi untuk ${ticker}`
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -363,22 +255,85 @@ export function ChatbotModal({
           }}
         >
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="jom-kicker">{t.kicker}</span>
-              <span className="jom-tag jom-tag-shariah">KLSE DATA LINKED</span>
+              <span className={`jom-tag ${hasActiveKey ? 'jom-tag-up' : 'jom-tag-shariah'}`}>
+                {hasActiveKey ? 'API KEY ACTIVE' : 'AUTO CLOUD / QUANT ENGINE'}
+              </span>
             </div>
             <h3 className="font-editorial text-2xl">{t.title}</h3>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="jom-btn py-1.5 px-2.5"
-            title="Close Copilot Drawer"
-          >
-            <X size={15} />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowKeyConfig(prev => !prev)}
+              className={`jom-btn py-1.5 px-2.5 text-xs ${showKeyConfig ? 'jom-btn-inverse' : ''}`}
+              title="Configure AI Engine & API Key"
+            >
+              <Key size={13} />
+              <span>{language === 'ENG' ? 'API Key / Engine' : 'Kunci API'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="jom-btn py-1.5 px-2.5"
+              title="Close Copilot Drawer"
+            >
+              <X size={15} />
+            </button>
+          </div>
         </div>
+
+        {/* Expandable AI Engine & API Key Configuration Bar */}
+        {showKeyConfig && (
+          <div
+            className="p-4 border-b space-y-2.5 text-xs"
+            style={{
+              borderColor: 'var(--border-hairline)',
+              backgroundColor: 'var(--bg-subtle)'
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <span className="jom-kicker">
+                {language === 'ENG'
+                  ? 'AI ENGINE & OPTIONAL LLM API KEY'
+                  : 'ENJIN AI & KUNCI API LLM PILIHAN'}
+              </span>
+              <span className="jom-tag font-tabular">
+                {hasActiveKey ? 'API KEY ACTIVE' : 'AUTO CLOUD / QUANT ENGINE'}
+              </span>
+            </div>
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              {language === 'ENG'
+                ? 'Paste an optional Gemini (AIza...), Groq (gsk_...), or OpenAI (sk-...) API key for direct LLM synthesis, or leave blank to use the built-in Cloud AI & KLSE Quant Engine.'
+                : 'Masukkan kunci API Gemini (AIza...), Groq (gsk_...), atau OpenAI (sk-...) untuk sintesis LLM terus, atau biarkan kosong untuk Enjin Awan & Kuantitatif KLSE.'}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={e => setApiKeyInput(e.target.value)}
+                placeholder="AIza... / gsk_... / sk-..."
+                className="jom-input flex-1 font-tabular text-xs"
+              />
+              <button
+                type="button"
+                onClick={handleSaveApiKey}
+                className="jom-btn jom-btn-primary py-1.5 px-3 text-xs"
+              >
+                {language === 'ENG' ? 'Save Key' : 'Simpan'}
+              </button>
+              <button
+                type="button"
+                onClick={handleClearApiKey}
+                className="jom-btn py-1.5 px-2.5 text-xs"
+              >
+                {language === 'ENG' ? 'Clear' : 'Padam'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Message Stream */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -389,8 +344,15 @@ export function ChatbotModal({
                 key={index}
                 className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
               >
-                <div className="jom-kicker mb-1 px-0.5">
-                  {isUser ? 'INVESTOR QUERY' : 'JOMAI DESK NOTE'}
+                <div className="flex items-center gap-2 mb-1 px-0.5">
+                  <span className="jom-kicker">
+                    {isUser ? 'INVESTOR QUERY' : 'JOMAI DESK NOTE'}
+                  </span>
+                  {!isUser && (
+                    <span className="jom-tag font-tabular">
+                      {getProviderBadgeLabel(message.provider)}
+                    </span>
+                  )}
                 </div>
                 <div
                   className={`max-w-[92%] rounded-lg p-3.5 border text-xs leading-relaxed whitespace-pre-line ${
@@ -412,6 +374,36 @@ export function ChatbotModal({
                 >
                   {message.content}
                 </div>
+
+                {/* Clickable Referenced Ticker Pills */}
+                {!isUser &&
+                  message.referencedTickers &&
+                  message.referencedTickers.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {message.referencedTickers.map(ticker => {
+                        const matchedStock = stocks.find(s => s.ticker === ticker);
+                        return (
+                          <button
+                            key={ticker}
+                            type="button"
+                            onClick={() => handleTickerPillClick(ticker)}
+                            className="jom-tag font-tabular cursor-pointer transition-opacity hover:opacity-80 flex items-center gap-1"
+                            title={
+                              matchedStock
+                                ? `${matchedStock.name} (RM ${matchedStock.price})`
+                                : ticker
+                            }
+                          >
+                            <span>
+                              {ticker}
+                              {matchedStock ? ` · RM ${matchedStock.price}` : ''}
+                            </span>
+                            <ArrowUpRight size={10} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
             );
           })}
@@ -419,8 +411,12 @@ export function ChatbotModal({
           {isTyping && (
             <div className="flex flex-col items-start">
               <div className="jom-kicker mb-1">JOMAI DESK NOTE</div>
-              <div className="jom-panel-subtle px-3.5 py-2.5 font-tabular text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                Querying Bursa Malaysia multiples & position ledger...
+              <div
+                className="jom-panel-subtle px-3.5 py-2.5 font-tabular text-xs flex items-center gap-2"
+                style={{ color: 'var(--ink-secondary)' }}
+              >
+                <Loader2 size={13} className="animate-spin" />
+                <span>SYNTHESIS IN PROGRESS...</span>
               </div>
             </div>
           )}
@@ -442,6 +438,7 @@ export function ChatbotModal({
                 key={index}
                 type="button"
                 className="jom-btn py-1 px-2.5 text-xs"
+                disabled={isTyping}
                 onClick={() => handleSendMessage(reply)}
               >
                 {reply}
@@ -463,7 +460,7 @@ export function ChatbotModal({
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isTyping ? 'Compiling response...' : t.placeholder}
+            placeholder={isTyping ? 'SYNTHESIS IN PROGRESS...' : t.placeholder}
             disabled={isTyping}
             className="jom-input flex-1"
           />
