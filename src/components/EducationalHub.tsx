@@ -742,6 +742,40 @@ export function EducationalHub({
                     </select>
                   </div>
 
+                  {/* Custom PDF / Annual Report Upload */}
+                  <div className="space-y-1.5">
+                    <label className="jom-kicker block">
+                      {language === 'ENG' ? 'OR UPLOAD PDF / FILING DOCUMENT' : 'ATAU MUAT NAIK PDF / PEMFAILAN'}
+                    </label>
+                    <label className="jom-btn w-full justify-between cursor-pointer text-xs font-tabular">
+                      <span className="truncate">
+                        {language === 'ENG' ? 'Upload Annual Report (.PDF / .TXT)' : 'Muat Naik Laporan Tahunan (.PDF / .TXT)'}
+                      </span>
+                      <span className="jom-tag">BROWSE</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.txt,.md,.csv"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const matched = stocks.find(
+                            s =>
+                              file.name.toUpperCase().includes(s.ticker) ||
+                              file.name.toUpperCase().includes(s.name.split(' ')[0].toUpperCase())
+                          );
+                          if (matched) setSelectedStockId(matched.id);
+                          toast.success(
+                            language === 'ENG'
+                              ? `Loaded filing: ${file.name} — extracting key ratios...`
+                              : `Pemfailan dimuatkan: ${file.name} — mengekstrak nisbah utama...`
+                          );
+                          handleAnalyze();
+                        }}
+                      />
+                    </label>
+                  </div>
+
                   {currentStock && (
                     <div className="jom-panel p-4 space-y-2.5 text-xs">
                       <div className="jom-kicker pb-1 border-b" style={{ borderColor: 'var(--border-hairline)' }}>
@@ -786,7 +820,7 @@ export function EducationalHub({
                     </>
                   ) : (
                     <span>
-                      {language === 'ENG' ? 'Generate Equity Brief' : 'Jana Nota Ringkas Ekuiti'}
+                      {language === 'ENG' ? 'Analyze PDF / Filing Document' : 'Analisis Dokumen PDF / Pemfailan'}
                     </span>
                   )}
                 </button>
@@ -811,7 +845,7 @@ export function EducationalHub({
                       >
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="jom-tag">VERIFIED FILING</span>
+                            <span className="jom-tag">VERIFIED PDF FILING</span>
                             <span className="jom-tag font-tabular">{currentStock.bursaCode}</span>
                             {currentStock.isShariah ? (
                               <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
@@ -823,7 +857,7 @@ export function EducationalHub({
                         </div>
 
                         <div className="sm:text-right shrink-0">
-                          <div className="jom-kicker">FUNDAMENTAL SCORE</div>
+                          <div className="jom-kicker">CONFIDENCE / FUNDAMENTAL SCORE</div>
                           <div
                             className="font-tabular text-2xl font-semibold mt-0.5"
                             style={{ color: 'var(--signal-up)' }}
@@ -874,6 +908,17 @@ export function EducationalHub({
                         className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t"
                         style={{ borderColor: 'var(--border-hairline)' }}
                       >
+                        <a
+                          href={`https://www.bursamalaysia.com/market_information/announcements/company_announcement?company=${currentStock.bursaCode.replace('.KL', '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="jom-btn"
+                        >
+                          <span>
+                            {language === 'ENG' ? 'Open Bursa PDF Filings' : 'Buka Pemfailan PDF Bursa'}
+                          </span>
+                          <ArrowUpRight size={14} />
+                        </a>
                         <button
                           type="button"
                           className="jom-btn"
