@@ -195,11 +195,72 @@ function extractReadableTextFromPdfBuffer(buffer: ArrayBuffer): string {
     .slice(0, 12000);
 }
 
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB hard cap for browser safety
+let lastAiRequestTimestamp = 0;
+const MIN_REQUEST_INTERVAL_MS = 1200; // Rate-limit cooldown against rapid clicking
+
+/**
+ * Safeguard: Evaluates user input for prompt injection, off-topic abuse, or
+ * requests for guaranteed/speculative financial tips (SC Malaysia educational compliance).
+ */
+export function evaluateQuerySafeguards(
+  prompt: string,
+  language: 'ENG' | 'BM'
+): { blocked: boolean; response?: string } {
+  const clean = (prompt || '').trim();
+  if (clean.length > 1500) {
+    return {
+      blocked: true,
+      response:
+        language === 'ENG'
+          ? 'SAFEGUARD NOTICE: Query exceeds the 1,500-character limit. Please submit a concise Bursa Malaysia equity or portfolio question.'
+          : 'NOTIS KESELAMATAN: Pertanyaan melebihi had 1,500 aksara. Sila kemukakan soalan ekuiti atau portfolio Bursa Malaysia yang ringkas.'
+    };
+  }
+
+  // 1. Prompt Injection / System Override Detection
+  const injectionPattern =
+    /ignore (all |previous |above )?(instructions|prompts|rules)|system prompt|you are now|act as a|forget your instructions|<script|javascript:/i;
+  if (injectionPattern.test(clean)) {
+    return {
+      blocked: true,
+      response:
+        language === 'ENG'
+          ? 'SAFEGUARD NOTICE: System instruction override detected. JomAI is restricted strictly to Bursa Malaysia (KLSE) equity analysis, SAC Shariah screening, and educational portfolio diagnostics.'
+          : 'NOTIS KESELAMATAN: Cubaan mengubah arahan sistem dikesan. JomAI dihadkan khusus kepada analisis ekuiti Bursa Malaysia (KLSE), saringan Syariah MPS, dan diagnostik portfolio pendidikan.'
+    };
+  }
+
+  // 2. Speculative / Guaranteed Return / Insider Tip Guardrail (SC Malaysia Educational Compliance)
+  const speculativePattern =
+    /guaranteed (profit|return|win)|100% sure|insider (tip|info)|pump and dump|get rich quick|confirm naik|gerenti untung/i;
+  if (speculativePattern.test(clean)) {
+    return {
+      blocked: true,
+      response:
+        language === 'ENG'
+          ? 'REGULATORY & EDUCATIONAL SAFEGUARD:\n' +
+            '01 / No Guaranteed Returns: Equity investments on Bursa Malaysia carry market risk; no security guarantees capital gains.\n' +
+            '02 / Educational Mandate: JomINVEST is a financial literacy simulator, not a licensed investment advisor under the Securities Commission Malaysia (CMSRL).\n' +
+            '03 / Objective Framework: Instead of speculative tips, evaluate audited P/E multiples, Debt-to-Equity gearing, and single-tier dividend sustainability.'
+          : 'PERLINDUNGAN KAWAL SELIA & PENDIDIKAN:\n' +
+            '01 / Tiada Pulangan Dijamin: Pelaburan ekuiti di Bursa Malaysia melibatkan risiko pasaran; tiada saham yang menjamin keuntungan.\n' +
+            '02 / Mandat Pendidikan: JomINVEST ialah simulator literasi kewangan, bukan penasihat pelaburan berlesen di bawah Suruhanjaya Sekuriti Malaysia (CMSRL).\n' +
+            '03 / Rangka Kerja Objektif: Gunakan gandaan P/E teraudit, nisbah Hutang-ke-Ekuiti, dan kemampanan dividen.'
+    };
+  }
+
+  return { blocked: false };
+}
+
 /**
  * Extracts text from uploaded .pdf, .txt, .md, .csv, or .json documents.
  * Uses pdf.js for multi-page PDF parsing with a deterministic offline binary fallback.
  */
 export async function extractTextFromDocument(file: File): Promise<string> {
+  if (!file || file.size > MAX_FILE_SIZE_BYTES) {
+    throw new Error('File exceeds the 10 MB safety limit.');
+  }
   const lowerName = (file.name || '').toLowerCase();
   const isPlainText =
     lowerName.endsWith('.txt') ||
@@ -819,6 +880,19 @@ export async function generateJomAIResponse(
   context: AIContext
 ): Promise<AIChatResponse> {
   const cleanPrompt = (prompt || '').trim();
+  const safeguard = evaluateQuerySafeguards(cleanPrompt, context.language);
+  if (safeguard.blocked && safeguard.response) {
+    return {
+      text: safeguard.response,
+      provider: 'QUANT_ENGINE',
+      referencedTickers: []
+    };
+  }
+
+  const now = Date.now();
+  const isRateLimited = now - lastAiRequestTimestamp < MIN_REQUEST_INTERVAL_MS;
+  lastAiRequestTimestamp = now;
+
   const matchedStocks = findReferencedStocks(cleanPrompt, context.stocks);
   const mandate = normalizeRiskMandate(context.riskProfile);
 
@@ -869,7 +943,7 @@ export async function generateJomAIResponse(
     ? `Recent Conversation:\n${recentHistoryBlock}\n\nCurrent Investor Query: ${cleanPrompt}`
     : cleanPrompt;
 
-  const llmResult = await callLLM(systemPrompt, userPrompt);
+  const llmResult = isRateLimited ? null : await callLLM(systemPrompt, userPrompt);
   if (llmResult) {
     const combinedMatches = findReferencedStocks(
       `${cleanPrompt} ${llmResult.text}`,
