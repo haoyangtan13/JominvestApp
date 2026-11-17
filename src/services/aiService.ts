@@ -330,10 +330,74 @@ interface LLMCallResult {
   provider: 'API_KEY_LLM' | 'LIVE_CLOUD_LLM';
 }
 
-async function callLLM(systemPrompt: string, userPrompt: string): Promise<LLMCallResult | null> {
-  const apiKey = getStoredAIApiKey();
+const AI_RESPONSE_CACHE_KEY = 'jominvest_ai_cache_v1';
+const AI_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours to conserve free Gemini 15 RPM quota
 
-  // Tier 1: User-configured API Key (Gemini, Groq, or OpenAI-compatible)
+function getCachedAIResponse(cacheKey: string): LLMCallResult | null {
+  try {
+    const raw = localStorage.getItem(AI_RESPONSE_CACHE_KEY);
+    if (!raw) return null;
+    const store = JSON.parse(raw);
+    const entry = store[cacheKey];
+    if (entry && Date.now() - entry.ts < AI_CACHE_TTL_MS && typeof entry.text === 'string') {
+      return { text: entry.text, provider: entry.provider || 'API_KEY_LLM' };
+    }
+  } catch {
+    // Ignore storage read errors
+  }
+  return null;
+}
+
+function setCachedAIResponse(cacheKey: string, result: LLMCallResult): void {
+  try {
+    const raw = localStorage.getItem(AI_RESPONSE_CACHE_KEY);
+    const store = raw ? JSON.parse(raw) : {};
+    const keys = Object.keys(store);
+    if (keys.length > 60) {
+      delete store[keys[0]];
+    }
+    store[cacheKey] = { text: result.text, provider: result.provider, ts: Date.now() };
+    localStorage.setItem(AI_RESPONSE_CACHE_KEY, JSON.stringify(store));
+  } catch {
+    // Ignore storage write errors
+  }
+}
+
+async function callLLM(systemPrompt: string, userPrompt: string): Promise<LLMCallResult | null> {
+  const cacheKey = `${systemPrompt.slice(0, 120)}::${userPrompt.slice(-300)}`;
+  const cached = getCachedAIResponse(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  // Tier 1A: Centralized Backend Gemini Endpoint (/api/gemini) so all users share the app's Gemini AI
+  try {
+    const proxyCtrl = new AbortController();
+    const proxyTimeout = setTimeout(() => proxyCtrl.abort(), 7500);
+    const proxyRes = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt, userPrompt }),
+      signal: proxyCtrl.signal
+    });
+    clearTimeout(proxyTimeout);
+    if (proxyRes.ok) {
+      const proxyData = await proxyRes.json();
+      if (typeof proxyData?.text === 'string' && proxyData.text.trim().length > 15) {
+        const result: LLMCallResult = {
+          text: sanitizeInstitutionalText(proxyData.text),
+          provider: 'API_KEY_LLM'
+        };
+        setCachedAIResponse(cacheKey, result);
+        return result;
+      }
+    }
+  } catch {
+    // Fall through if /api/gemini serverless route is not running
+  }
+
+  // Tier 1B: App-level VITE_GEMINI_API_KEY configured in .env
+  const apiKey = getStoredAIApiKey();
   if (apiKey.length > 0) {
     try {
       const controller = new AbortController();
@@ -358,45 +422,12 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<LLMCal
           const data = await res.json();
           const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (typeof candidateText === 'string' && candidateText.trim().length > 15) {
-            return {
+            const result: LLMCallResult = {
               text: sanitizeInstitutionalText(candidateText),
               provider: 'API_KEY_LLM'
             };
-          }
-        }
-      } else {
-        const isGroq = apiKey.startsWith('gsk_');
-        const endpoint = isGroq
-          ? 'https://api.groq.com/openai/v1/chat/completions'
-          : 'https://api.openai.com/v1/chat/completions';
-        const model = isGroq ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini';
-
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.25,
-            max_tokens: 900
-          }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-          const data = await res.json();
-          const messageText = data?.choices?.[0]?.message?.content;
-          if (typeof messageText === 'string' && messageText.trim().length > 15) {
-            return {
-              text: sanitizeInstitutionalText(messageText),
-              provider: 'API_KEY_LLM'
-            };
+            setCachedAIResponse(cacheKey, result);
+            return result;
           }
         }
       }

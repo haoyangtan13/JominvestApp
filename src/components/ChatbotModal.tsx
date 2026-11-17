@@ -1,13 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Key, ArrowUpRight, Loader2 } from 'lucide-react';
+import { X, Send, ArrowUpRight, Loader2 } from 'lucide-react';
 import { stocks as defaultStocks, type StockData } from '../data/stocks';
 import type { PortfolioItem, Screen } from '../App';
-import {
-  getStoredAIApiKey,
-  setStoredAIApiKey,
-  generateJomAIResponse
-} from '../services/aiService';
-import { toast } from 'sonner';
+import { generateJomAIResponse } from '../services/aiService';
 
 export interface ChatbotModalProps {
   isOpen: boolean;
@@ -65,19 +60,6 @@ export function ChatbotModal({
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // AI Engine & API Key Configuration State
-  const [showKeyConfig, setShowKeyConfig] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState<string>(() => getStoredAIApiKey());
-  const [hasActiveKey, setHasActiveKey] = useState<boolean>(() => Boolean(getStoredAIApiKey()));
-
-  useEffect(() => {
-    if (isOpen) {
-      const currentKey = getStoredAIApiKey();
-      setApiKeyInput(currentKey);
-      setHasActiveKey(Boolean(currentKey));
-    }
-  }, [isOpen]);
-
   const texts = {
     ENG: {
       kicker: 'JOMAI · BURSA RESEARCH COPILOT',
@@ -117,41 +99,6 @@ export function ChatbotModal({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
-
-  const getProviderBadgeLabel = (
-    provider?: 'API_KEY_LLM' | 'LIVE_CLOUD_LLM' | 'QUANT_ENGINE'
-  ): string => {
-    if (provider === 'API_KEY_LLM') return 'LIVE LLM';
-    if (provider === 'LIVE_CLOUD_LLM') return 'CLOUD AI';
-    return 'KLSE QUANT ENGINE';
-  };
-
-  const handleSaveApiKey = () => {
-    const trimmed = apiKeyInput.trim();
-    setStoredAIApiKey(trimmed);
-    setHasActiveKey(Boolean(trimmed));
-    setShowKeyConfig(false);
-    toast.success(
-      trimmed
-        ? language === 'ENG'
-          ? 'AI API Key saved. Live LLM synthesis active.'
-          : 'Kunci API AI disimpan. Sintesis LLM langsung aktif.'
-        : language === 'ENG'
-        ? 'Switched to Auto Cloud / Quant Engine.'
-        : 'Beralih ke Enjin Awan / Kuantitatif Automatik.'
-    );
-  };
-
-  const handleClearApiKey = () => {
-    setApiKeyInput('');
-    setStoredAIApiKey('');
-    setHasActiveKey(false);
-    toast.success(
-      language === 'ENG'
-        ? 'API Key cleared. Using Auto Cloud / Quant Engine.'
-        : 'Kunci API dipadamkan. Menggunakan Enjin Awan / Kuantitatif.'
-    );
-  };
 
   const handleSendMessage = async (rawQuery: string) => {
     const queryText = rawQuery.trim();
@@ -257,83 +204,20 @@ export function ChatbotModal({
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="jom-kicker">{t.kicker}</span>
-              <span className={`jom-tag ${hasActiveKey ? 'jom-tag-up' : 'jom-tag-shariah'}`}>
-                {hasActiveKey ? 'API KEY ACTIVE' : 'AUTO CLOUD / QUANT ENGINE'}
-              </span>
+              <span className="jom-tag jom-tag-shariah">KLSE DATA LINKED</span>
             </div>
             <h3 className="font-editorial text-2xl">{t.title}</h3>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowKeyConfig(prev => !prev)}
-              className={`jom-btn py-1.5 px-2.5 text-xs ${showKeyConfig ? 'jom-btn-inverse' : ''}`}
-              title="Configure AI Engine & API Key"
-            >
-              <Key size={13} />
-              <span>{language === 'ENG' ? 'API Key / Engine' : 'Kunci API'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="jom-btn py-1.5 px-2.5"
-              title="Close Copilot Drawer"
-            >
-              <X size={15} />
-            </button>
-          </div>
-        </div>
-
-        {/* Expandable AI Engine & API Key Configuration Bar */}
-        {showKeyConfig && (
-          <div
-            className="p-4 border-b space-y-2.5 text-xs"
-            style={{
-              borderColor: 'var(--border-hairline)',
-              backgroundColor: 'var(--bg-subtle)'
-            }}
+          <button
+            type="button"
+            onClick={onClose}
+            className="jom-btn py-1.5 px-2.5 shrink-0"
+            title="Close Copilot Drawer"
           >
-            <div className="flex items-center justify-between">
-              <span className="jom-kicker">
-                {language === 'ENG'
-                  ? 'AI ENGINE & OPTIONAL LLM API KEY'
-                  : 'ENJIN AI & KUNCI API LLM PILIHAN'}
-              </span>
-              <span className="jom-tag font-tabular">
-                {hasActiveKey ? 'API KEY ACTIVE' : 'AUTO CLOUD / QUANT ENGINE'}
-              </span>
-            </div>
-            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-              {language === 'ENG'
-                ? 'Paste an optional Gemini (AIza...), Groq (gsk_...), or OpenAI (sk-...) API key for direct LLM synthesis, or leave blank to use the built-in Cloud AI & KLSE Quant Engine.'
-                : 'Masukkan kunci API Gemini (AIza...), Groq (gsk_...), atau OpenAI (sk-...) untuk sintesis LLM terus, atau biarkan kosong untuk Enjin Awan & Kuantitatif KLSE.'}
-            </p>
-            <div className="flex items-center gap-1.5">
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={e => setApiKeyInput(e.target.value)}
-                placeholder="AIza... / gsk_... / sk-..."
-                className="jom-input flex-1 font-tabular text-xs"
-              />
-              <button
-                type="button"
-                onClick={handleSaveApiKey}
-                className="jom-btn jom-btn-primary py-1.5 px-3 text-xs"
-              >
-                {language === 'ENG' ? 'Save Key' : 'Simpan'}
-              </button>
-              <button
-                type="button"
-                onClick={handleClearApiKey}
-                className="jom-btn py-1.5 px-2.5 text-xs"
-              >
-                {language === 'ENG' ? 'Clear' : 'Padam'}
-              </button>
-            </div>
-          </div>
-        )}
+            <X size={15} />
+          </button>
+        </div>
 
         {/* Message Stream */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -350,7 +234,7 @@ export function ChatbotModal({
                   </span>
                   {!isUser && (
                     <span className="jom-tag font-tabular">
-                      {getProviderBadgeLabel(message.provider)}
+                      JOMAI VERIFIED
                     </span>
                   )}
                 </div>
