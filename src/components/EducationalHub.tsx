@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Play,
   Clock,
   Loader2,
   ArrowUpRight,
@@ -10,7 +9,6 @@ import {
   RefreshCw,
   FileText
 } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import {
   AreaChart,
   Area,
@@ -279,7 +277,7 @@ const learningItems: EducationalItem[] = [
   },
   {
     id: 'tut-chart',
-    code: 'Video 1',
+    code: 'Lesson 4',
     type: 'tutorial',
     titleEng: 'How to Read P/E Ratios & Compare Stock Health Scores',
     titleBm: 'Cara Membaca Nisbah P/E & Membandingkan Skor Kesihatan Saham',
@@ -287,7 +285,7 @@ const learningItems: EducationalItem[] = [
       'A step-by-step walkthrough on checking whether a stock is reasonably priced compared to its industry peers.',
     descBm:
       'Panduan langkah demi langkah untuk menyemak sama ada harga saham berpatutan berbanding rakan seindustri.',
-    meta: '8 min video guide',
+    meta: '5 min read',
     badge: 'Stock Valuation',
     contentEng: [
       'When you open a company on the Stock Overview page, start by looking at its recent price trend alongside how much profit the business actually earns.',
@@ -302,7 +300,7 @@ const learningItems: EducationalItem[] = [
     takeawaysEng: [
       'A lower P/E than industry peers can signal a bargain—just check that debt levels are healthy',
       'Compare banks with banks and tech stocks with tech stocks for a fair apples-to-apples check',
-      'Use the 30-Second Annual Report Cheat Sheet to confirm revenue and profit are growing'
+      'Use the Annual Report Reader to confirm revenue and profit are growing'
     ],
     takeawaysBm: [
       'Nisbah P/E rendah berbanding rakan sektor boleh menandakan harga saham berpatutan',
@@ -344,7 +342,7 @@ const learningItems: EducationalItem[] = [
   },
   {
     id: 'tut-risk-mgmt',
-    code: 'Video 2',
+    code: 'Lesson 5',
     type: 'tutorial',
     titleEng: 'Smart Position Sizing & Avoiding Debt Traps',
     titleBm: 'Saiz Pegangan Bijak & Mengelak Perangkap Hutang',
@@ -352,17 +350,17 @@ const learningItems: EducationalItem[] = [
       'Learn how to protect your portfolio by checking company debt levels and keeping any single sector under 60%.',
     descBm:
       'Pelajari cara melindungi portfolio anda dengan menyemak tahap hutang syarikat dan mengelakkan tumpuan berlebihan.',
-    meta: '10 min video guide',
-    badge: 'Risk Coaching',
+    meta: '5 min read',
+    badge: 'Risk Management',
     contentEng: [
       'Great investors focus on protecting their downside first. A helpful beginner habit is keeping any single company under 25% of your portfolio and any single industry under 60%.',
       'Before buying, glance at the Debt-to-Equity ratio on the Stock Overview page. Non-bank companies with lower debt (<0.6x) have a much easier time weathering interest rate changes.',
-      'Visit your Diversification Coach on the Portfolio page anytime to see your sector breakdown and sell half of oversized winners to lock in gains.'
+      'Visit your Portfolio Balance Check anytime to see your sector breakdown and trim oversized positions.'
     ],
     contentBm: [
       'Pelabur bijak mengutamakan perlindungan modal. Tabiat yang baik ialah menghadkan pendedahan kepada 25% bagi satu syarikat dan maksimum 60% bagi satu sektor.',
       'Sebelum membeli, semak nisbah Hutang-ke-Ekuiti (D/E). Syarikat bukan kewangan dengan hutang rendah (<0.6x) mempunyai kedudukan kewangan lebih kukuh.',
-      'Gunakan Jurulatih Kepelbagaian di halaman Portfolio anda untuk memantau pecahan sektor pada bila-bila masa.'
+      'Gunakan Semakan Imbangan Portfolio anda untuk memantau pecahan sektor pada bila-bila masa.'
     ],
     takeawaysEng: [
       'Keep any single Bursa industry under 60% of your total invested stocks',
@@ -383,8 +381,8 @@ const learningItems: EducationalItem[] = [
         correctIndex: 1
       },
       {
-        qEng: 'When does the Diversification Coach flag a heavy sector concentration?',
-        qBm: 'Bilakah Jurulatih Kepelbagaian memberi peringatan tumpuan sektor?',
+        qEng: 'When should you consider diversifying into another industry?',
+        qBm: 'Bilakah anda patut mempelbagaikan pelaburan ke dalam industri lain?',
         optionsEng: [
           'When more than 60% of your stock investments are in a single sector',
           'When you own stocks across 4 different sectors',
@@ -401,6 +399,8 @@ const learningItems: EducationalItem[] = [
   }
 ];
 
+type LearnTab = 'reader' | 'news' | 'calculator' | 'lessons';
+
 export function EducationalHub({
   navigateTo,
   language,
@@ -408,7 +408,7 @@ export function EducationalHub({
   setSelectedStock,
   addXP
 }: EducationalHubProps) {
-  const [activeTab, setActiveTab] = useState<'tools' | 'curriculum' | 'briefings'>('tools');
+  const [activeTab, setActiveTab] = useState<LearnTab>('reader');
 
   // Wealth & Benchmark Model State
   const [monthlyInvest, setMonthlyInvest] = useState(500);
@@ -474,7 +474,7 @@ export function EducationalHub({
               'Reading Bursa Annual Report...',
               'Highlighting Revenue & Profit Trends...',
               'Checking Dividends & Shariah Status...',
-              'Building Your 30-Second Cheat Sheet...'
+              'Building Your 30-Second Summary...'
             ]
           : [
               'Membaca Laporan Tahunan Bursa...',
@@ -490,35 +490,6 @@ export function EducationalHub({
       return () => clearInterval(interval);
     }
   }, [isScanning, language]);
-
-  const texts = {
-    ENG: {
-      kicker: 'Learn & Research Hub',
-      title: 'Bite-Sized Research Tools & 5-Minute Lessons',
-      subtitle:
-        'Turn long Bursa annual reports into a 30-second cheat sheet, check today’s market mood, compare stocks vs. EPF, and earn XP with quick lessons.',
-      tabTools: 'AI Research Tools',
-      tabCurriculum: '5-Minute Lessons',
-      tabBriefings: 'Video Guides',
-      openModule: 'Start Lesson & Quiz (+25 XP)',
-      openBriefing: 'Watch Guide & Quiz (+25 XP)',
-      reviewModule: 'Completed · Review Notes'
-    },
-    BM: {
-      kicker: 'Hab Belajar & Penyelidikan',
-      title: 'Alat Penyelidikan AI & Pelajaran 5 Minit',
-      subtitle:
-        'Tukarkan laporan tahunan Bursa kepada ringkasan 30 saat, semak mood pasaran hari ini, bandingkan saham vs KWSP, dan kumpul XP.',
-      tabTools: 'Alat Penyelidikan AI',
-      tabCurriculum: 'Pelajaran 5 Minit',
-      tabBriefings: 'Panduan Video',
-      openModule: 'Mula Pelajaran & Kuiz (+25 XP)',
-      openBriefing: 'Tonton Panduan & Kuiz (+25 XP)',
-      reviewModule: 'Selesai · Ulang Kaji'
-    }
-  };
-
-  const t = texts[language];
 
   const currentStock = useMemo(() => {
     return stocks.find(s => s.id === selectedStockId) || stocks[0];
@@ -597,12 +568,6 @@ export function EducationalHub({
   }, [currentStock, language, uploadedFileName, uploadedText]);
 
   const activeReport = aiReport || dynamicReport;
-
-  const getProviderLabel = (provider?: 'API_KEY_LLM' | 'LIVE_CLOUD_LLM' | 'QUANT_ENGINE') => {
-    if (provider === 'API_KEY_LLM') return 'Live AI Summary';
-    if (provider === 'LIVE_CLOUD_LLM') return 'JomAI Cloud';
-    return 'JomRingkas AI';
-  };
 
   // 10-Year Compounding & Malaysian Benchmark Model
   const wealthData = useMemo(() => {
@@ -689,8 +654,8 @@ export function EducationalHub({
     setUploadedFileName(file.name);
     toast.success(
       language === 'ENG'
-        ? `Loaded ${file.name} — building your 30-second cheat sheet...`
-        : `Dimuatkan ${file.name} — membina ringkasan 30 saat anda...`
+        ? `Loaded ${file.name} — building your summary...`
+        : `Dimuatkan ${file.name} — membina ringkasan anda...`
     );
 
     const extracted = await extractTextFromDocument(file);
@@ -712,10 +677,10 @@ export function EducationalHub({
   const handleExportSummary = () => {
     if (!currentStock || !activeReport) return;
     const textReport = [
-      `JOMRINGKAS — 30-SECOND ANNUAL REPORT CHEAT SHEET`,
+      `JOMRINGKAS — ANNUAL REPORT SUMMARY`,
       `Company: ${currentStock.name} (${currentStock.ticker} / ${currentStock.bursaCode})`,
       `Current Price: RM ${currentStock.price} (${currentStock.changePercent}) | Sector: ${currentStock.sector}`,
-      `Summary Engine: ${getProviderLabel(activeReport.provider)} | Health Score: ${activeReport.score} / 100`,
+      `Health Score: ${activeReport.score} / 100`,
       ...(uploadedText.trim() || activeReport.extractedExcerpt
         ? [
             ``,
@@ -724,13 +689,13 @@ export function EducationalHub({
           ]
         : []),
       ``,
-      `1. What's Going Well (Growth)`,
+      `1. What's Going Well`,
       activeReport.growth,
       ``,
-      `2. What to Watch Out For (Risks)`,
+      `2. Risks to Watch`,
       activeReport.risk,
       ``,
-      `3. Dividends & Shariah Status`,
+      `3. Dividends & Shariah`,
       activeReport.dividend
     ].join('\n');
 
@@ -742,11 +707,11 @@ export function EducationalHub({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${currentStock.ticker}_JomRingkas_Cheat_Sheet.txt`;
+    a.download = `${currentStock.ticker}_JomRingkas_Summary.txt`;
     a.click();
     URL.revokeObjectURL(url);
 
-    addXP(15, `Saved ${currentStock.ticker} Cheat Sheet`);
+    addXP(15, `Saved ${currentStock.ticker} Summary`);
   };
 
   const openLearningModal = (item: EducationalItem) => {
@@ -786,9 +751,6 @@ export function EducationalHub({
     }
   };
 
-  const articleItems = learningItems.filter(i => i.type === 'article');
-  const tutorialItems = learningItems.filter(i => i.type === 'tutorial');
-
   const marketBreadth: MarketBreadthSummary = useMemo(
     () => computeMarketBreadth(stocks, newsItems),
     [stocks, newsItems]
@@ -800,22 +762,10 @@ export function EducationalHub({
     return language === 'ENG' ? 'Neutral' : 'Neutral';
   };
 
-  const getImpactTagClass = (impact: BursaNewsItem['impact']) => {
-    if (impact === 'CONSTRUCTIVE') return 'jom-tag jom-tag-up';
-    if (impact === 'CAUTIOUS') return 'jom-tag jom-tag-down';
-    return 'jom-tag';
-  };
-
   const getFriendlyRegimeLabel = (regime: MarketBreadthSummary['regime']) => {
     if (regime === 'CONSTRUCTIVE') return language === 'ENG' ? 'Bullish Mood' : 'Mood Positif';
     if (regime === 'FEAR') return language === 'ENG' ? 'Cautious Mood' : 'Mood Berhati-hati';
     return language === 'ENG' ? 'Steady / Neutral' : 'Stabil / Neutral';
-  };
-
-  const getRegimeTagClass = (regime: MarketBreadthSummary['regime']) => {
-    if (regime === 'CONSTRUCTIVE') return 'jom-tag jom-tag-up';
-    if (regime === 'FEAR') return 'jom-tag jom-tag-down';
-    return 'jom-tag jom-tag-warn';
   };
 
   const excerptToDisplay =
@@ -826,694 +776,578 @@ export function EducationalHub({
     : { initials: 'JM', avatarClass: 'jom-avatar jom-avatar-emerald' };
 
   return (
-    <div className="jom-container space-y-8">
-      {/* Friendly Consumer Header */}
-      <div
-        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b"
-        style={{ borderColor: 'var(--border-hairline)' }}
-      >
-        <div className="space-y-1.5">
-          <div className="jom-kicker">{t.kicker}</div>
-          <h1 className="font-editorial text-4xl">{t.title}</h1>
-          <p className="text-sm max-w-2xl" style={{ color: 'var(--ink-secondary)' }}>
-            {t.subtitle}
-          </p>
-        </div>
+    <div className="rh-page space-y-8">
+      {/* Single Clean Header + 4-Tab Horizontal Chip Row */}
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">
+          {language === 'ENG' ? 'Learn & Research Tools' : 'Alat Belajar & Penyelidikan'}
+        </h1>
 
-        <div className="jom-segmented shrink-0">
+        <div className="rh-chip-row">
           <button
             type="button"
-            className={activeTab === 'tools' ? 'active' : ''}
-            onClick={() => setActiveTab('tools')}
+            className={`rh-chip ${activeTab === 'reader' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reader')}
           >
-            {t.tabTools}
+            {language === 'ENG' ? 'Annual Report Reader' : 'Pembaca Laporan Tahunan'}
           </button>
           <button
             type="button"
-            className={activeTab === 'curriculum' ? 'active' : ''}
-            onClick={() => setActiveTab('curriculum')}
+            className={`rh-chip ${activeTab === 'news' ? 'active' : ''}`}
+            onClick={() => setActiveTab('news')}
           >
-            {t.tabCurriculum} ({articleItems.length})
+            {language === 'ENG' ? 'Market News' : 'Berita Pasaran'}
           </button>
           <button
             type="button"
-            className={activeTab === 'briefings' ? 'active' : ''}
-            onClick={() => setActiveTab('briefings')}
+            className={`rh-chip ${activeTab === 'calculator' ? 'active' : ''}`}
+            onClick={() => setActiveTab('calculator')}
           >
-            {t.tabBriefings} ({tutorialItems.length})
+            {language === 'ENG' ? 'Wealth Calculator' : 'Kalkulator Kekayaan'}
+          </button>
+          <button
+            type="button"
+            className={`rh-chip ${activeTab === 'lessons' ? 'active' : ''}`}
+            onClick={() => setActiveTab('lessons')}
+          >
+            {language === 'ENG' ? 'Short Lessons' : 'Pelajaran Ringkas'}
           </button>
         </div>
       </div>
 
-      {/* TAB 1: AI RESEARCH TOOLS */}
-      {activeTab === 'tools' && (
-        <div className="space-y-8">
-          {/* 1. JomRingkas — 30-Second Annual Report Cheat Sheet */}
-          <section className="jom-panel overflow-hidden">
-            <div className="grid md:grid-cols-12">
-              {/* Left 4 cols: Company Picker & Friendly File Dropzone */}
-              <div
-                className="md:col-span-4 p-6 border-b md:border-b-0 md:border-r flex flex-col justify-between space-y-6"
-                style={{
-                  borderColor: 'var(--border-hairline)',
-                  backgroundColor: 'var(--bg-elevated)'
-                }}
-              >
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="jom-kicker">JomRingkas AI Summarizer</span>
-                      <span className="jom-tag jom-tag-shariah font-tabular">
-                        {stocks.length} Bursa Companies
-                      </span>
-                    </div>
-                    <h2 className="font-editorial text-2xl">
-                      {language === 'ENG'
-                        ? '30-Second Annual Report Cheat Sheet'
-                        : 'Ringkasan Laporan Tahunan 30 Saat'}
-                    </h2>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                      {language === 'ENG'
-                        ? 'Skip the 200-page PDF! Pick any Bursa company or upload a report to get 3 plain-English takeaways.'
-                        : 'Tidak perlu baca ratusan muka surat! Pilih syarikat Bursa atau muat naik PDF untuk 3 intipati mudah.'}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="jom-kicker block">
-                      {language === 'ENG' ? 'Choose a Bursa Company' : 'Pilih Syarikat Bursa'}
-                    </label>
-                    <select
-                      className="jom-input font-tabular w-full"
-                      value={selectedStockId}
-                      onChange={e => {
-                        setSelectedStockId(e.target.value);
-                        setAiReport(null);
-                        setScanComplete(true);
-                      }}
-                    >
-                      {stocks.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.ticker} ({s.bursaCode}) — {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Friendly File Dropzone & Paste Announcement */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="jom-kicker block">
-                        {language === 'ENG'
-                          ? 'Upload a Bursa Annual Report PDF or paste an announcement'
-                          : 'Muat naik PDF Laporan Tahunan atau tampal pengumuman'}
-                      </label>
-                    </div>
-                    <label className="jom-btn w-full justify-between cursor-pointer text-xs">
-                      <span className="truncate flex items-center gap-1.5">
-                        <FileText size={14} />
-                        <span className="truncate">
-                          {uploadedFileName ||
-                            (language === 'ENG'
-                              ? 'Choose PDF / TXT file from your device'
-                              : 'Pilih fail PDF / TXT dari peranti anda')}
-                        </span>
-                      </span>
-                      <span className="jom-tag">Browse</span>
-                      <input
-                        type="file"
-                        accept=".pdf,.txt,.md,.csv"
-                        className="hidden"
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          handleFileUpload(file);
-                        }}
-                      />
-                    </label>
-
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setCustomPasteOpen(prev => !prev)}
-                        className="jom-kicker underline cursor-pointer"
-                      >
-                        {customPasteOpen
-                          ? language === 'ENG'
-                            ? 'Hide text box'
-                            : 'Tutup ruangan teks'
-                          : language === 'ENG'
-                          ? 'Or paste announcement text instead'
-                          : 'Atau tampal teks pengumuman'}
-                      </button>
-                    </div>
-
-                    {customPasteOpen && (
-                      <div className="space-y-1.5 pt-1">
-                        <textarea
-                          rows={3}
-                          value={uploadedText}
-                          onChange={e => {
-                            setUploadedText(e.target.value);
-                            if (!uploadedFileName && e.target.value.trim()) {
-                              setUploadedFileName('Pasted_Bursa_Filing.txt');
-                            }
-                          }}
-                          placeholder={
-                            language === 'ENG'
-                              ? 'Paste a quarterly announcement, earnings release, or annual report paragraph here...'
-                              : 'Tampal pengumuman suku tahunan atau petikan laporan tahunan di sini...'
-                          }
-                          className="jom-input w-full text-xs"
-                        />
-                        {(uploadedFileName || uploadedText) && (
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={handleClearCustomDocument}
-                              className="jom-btn py-1 px-2.5 text-xs"
-                            >
-                              {language === 'ENG' ? 'Clear Document' : 'Padam Dokumen'}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {currentStock && (
-                    <div className="jom-panel p-4 space-y-2.5 text-xs">
-                      <div
-                        className="jom-kicker pb-1 border-b"
-                        style={{ borderColor: 'var(--border-hairline)' }}
-                      >
-                        {language === 'ENG' ? 'Quick Snapshot' : 'Ringkasan Pantas'}
-                      </div>
-                      <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>
-                          {language === 'ENG' ? 'Share Price (24h)' : 'Harga Saham (24j)'}
-                        </span>
-                        <span className="font-semibold">
-                          RM {currentStock.price} ({currentStock.changePercent})
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>
-                          {language === 'ENG' ? 'P/E · Dividend Yield' : 'P/E · Hasil Dividen'}
-                        </span>
-                        <span className="font-semibold">
-                          {currentStock.peRatio}x · {currentStock.dividendYield}
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>
-                          {language === 'ENG' ? 'Debt-to-Equity' : 'Hutang-ke-Ekuiti'}
-                        </span>
-                        <span className="font-semibold">{currentStock.debtEquity}</span>
-                      </div>
-                      <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>
-                          {language === 'ENG' ? 'Yearly Revenue / Profit' : 'Hasil / Untung Tahunan'}
-                        </span>
-                        <span className="font-semibold">
-                          {currentStock.revenue} / {currentStock.netProfit}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleAnalyze}
-                  disabled={isScanning}
-                  className="jom-btn jom-btn-primary w-full"
-                >
-                  {isScanning ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>{loadingText}</span>
-                    </>
-                  ) : (
-                    <span>
-                      {language === 'ENG'
-                        ? 'Generate 30-Second Cheat Sheet'
-                        : 'Jana Ringkasan 30 Saat'}
-                    </span>
-                  )}
-                </button>
+      {/* TAB 1: ANNUAL REPORT READER (JomRingkas) */}
+      {activeTab === 'reader' && (
+        <div className="rh-split">
+          {/* Left Rail: Company Selector + PDF/Text Upload Card */}
+          <aside className="rh-rail space-y-4">
+            <div className="rh-card space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-base font-bold">
+                  {language === 'ENG' ? 'Annual Report Reader' : 'Pembaca Laporan Tahunan'}
+                </h2>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG'
+                    ? 'Pick a Bursa Malaysia company or upload an annual report PDF for a plain-English summary.'
+                    : 'Pilih syarikat Bursa Malaysia atau muat naik PDF laporan tahunan untuk ringkasan mudah.'}
+                </p>
               </div>
 
-              {/* Right 8 cols: 3 Scannable Takeaway Cards */}
-              <div className="md:col-span-8 p-6 flex flex-col justify-between">
-                {isScanning ? (
-                  <div className="py-20 text-center space-y-3">
-                    <Loader2
-                      size={24}
-                      className="animate-spin mx-auto"
-                      style={{ color: 'var(--accent-brand)' }}
-                    />
-                    <div className="text-sm font-semibold">{loadingText}</div>
-                  </div>
-                ) : (
-                  scanComplete &&
-                  activeReport &&
-                  currentStock && (
-                    <div className="space-y-6">
-                      {/* Cheat Sheet Header */}
-                      <div
-                        className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b"
-                        style={{ borderColor: 'var(--border-hairline)' }}
-                      >
-                        <div className="flex items-start gap-3.5">
-                          <div className={`${currentMonogram.avatarClass} jom-avatar-lg`}>
-                            {currentMonogram.initials}
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="jom-tag">
-                                {activeReport.sourceLabel || 'Annual Report Summary'}
-                              </span>
-                              <span className="jom-tag font-tabular">{currentStock.bursaCode}</span>
-                              {currentStock.isShariah ? (
-                                <span className="jom-tag jom-tag-shariah">Shariah-Compliant</span>
-                              ) : (
-                                <span className="jom-tag">Conventional</span>
-                              )}
-                              <span className="jom-tag font-tabular">
-                                {getProviderLabel(activeReport.provider)}
-                              </span>
-                            </div>
-                            <h3 className="font-editorial text-2xl">{activeReport.title}</h3>
-                          </div>
-                        </div>
-
-                        <div className="sm:text-right shrink-0">
-                          <div className="jom-kicker">
-                            {language === 'ENG' ? 'Overall Health Score' : 'Skor Kesihatan Syarikat'}
-                          </div>
-                          <div
-                            className="font-tabular text-2xl font-semibold mt-0.5"
-                            style={{ color: 'var(--signal-up)' }}
-                          >
-                            {activeReport.score} / 100
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Extracted Document Excerpt Box */}
-                      {excerptToDisplay && (
-                        <div
-                          className="jom-panel-subtle p-4 space-y-1.5"
-                          style={{ borderLeft: '3px solid var(--accent-brand)' }}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="jom-kicker">
-                              {language === 'ENG' ? 'Excerpt from Uploaded Filing' : 'Petikan Dokumen'}
-                              {uploadedFileName ? ` · ${uploadedFileName}` : ''}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={handleClearCustomDocument}
-                              className="jom-kicker underline cursor-pointer"
-                            >
-                              {language === 'ENG' ? 'Clear' : 'Padam'}
-                            </button>
-                          </div>
-                          <p
-                            className="text-xs leading-relaxed"
-                            style={{ color: 'var(--ink-secondary)' }}
-                          >
-                            "{excerptToDisplay}"
-                          </p>
-                        </div>
-                      )}
-
-                      {/* 3 Clean, Scannable Takeaway Cards */}
-                      <div className="space-y-4">
-                        <div className="jom-panel-subtle p-4 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="jom-kicker" style={{ color: 'var(--signal-up)' }}>
-                              {language === 'ENG'
-                                ? "What's Going Well (Growth)"
-                                : 'Apa Yang Positif (Pertumbuhan)'}
-                            </span>
-                            <span className="jom-tag jom-tag-up">Growth Drivers</span>
-                          </div>
-                          <p
-                            className="text-xs sm:text-sm leading-relaxed"
-                            style={{ color: 'var(--ink-primary)' }}
-                          >
-                            {activeReport.growth}
-                          </p>
-                        </div>
-
-                        <div className="jom-panel-subtle p-4 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="jom-kicker" style={{ color: 'var(--signal-warn)' }}>
-                              {language === 'ENG'
-                                ? 'What to Watch Out For (Risks)'
-                                : 'Perkara Perlu Diperhatikan (Risiko)'}
-                            </span>
-                            <span className="jom-tag jom-tag-warn">Key Risks & Valuation</span>
-                          </div>
-                          <p
-                            className="text-xs sm:text-sm leading-relaxed"
-                            style={{ color: 'var(--ink-primary)' }}
-                          >
-                            {activeReport.risk}
-                          </p>
-                        </div>
-
-                        <div className="jom-panel-subtle p-4 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="jom-kicker" style={{ color: 'var(--accent-brand)' }}>
-                              {language === 'ENG'
-                                ? 'Dividends & Shariah Status'
-                                : 'Dividen & Status Syariah'}
-                            </span>
-                            <span className="jom-tag jom-tag-shariah">Payout & Compliance</span>
-                          </div>
-                          <p
-                            className="text-xs sm:text-sm leading-relaxed"
-                            style={{ color: 'var(--ink-primary)' }}
-                          >
-                            {activeReport.dividend}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Cheat Sheet Actions */}
-                      <div
-                        className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t"
-                        style={{ borderColor: 'var(--border-hairline)' }}
-                      >
-                        <a
-                          href={`https://www.bursamalaysia.com/market_information/announcements/company_announcement?company=${currentStock.bursaCode.replace('.KL', '')}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="jom-btn"
-                        >
-                          <span>
-                            {language === 'ENG'
-                              ? 'Official Bursa Announcements'
-                              : 'Pengumuman Rasmi Bursa'}
-                          </span>
-                          <ArrowUpRight size={14} />
-                        </a>
-                        <button
-                          type="button"
-                          className="jom-btn"
-                          onClick={() => {
-                            setSelectedStock(currentStock);
-                            navigateTo('stock-details');
-                          }}
-                        >
-                          <span>
-                            {language === 'ENG' ? 'View Stock Overview' : 'Lihat Gambaran Saham'}
-                          </span>
-                          <ArrowUpRight size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          className="jom-btn jom-btn-primary"
-                          onClick={handleExportSummary}
-                        >
-                          <Download size={14} />
-                          <span>
-                            {language === 'ENG'
-                              ? 'Save Cheat Sheet (+15 XP)'
-                              : 'Simpan Ringkasan (+15 XP)'}
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* 2. JomSentimen — Visual Bursa Market Mood & Clean News Story Cards */}
-          <section className="jom-panel overflow-hidden">
-            <div className="grid md:grid-cols-12">
-              {/* Left 5 cols: Visual Bursa Market Mood Card */}
-              <div
-                className="md:col-span-5 p-6 border-b md:border-b-0 md:border-r flex flex-col justify-between space-y-6"
-                style={{ borderColor: 'var(--border-hairline)' }}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="jom-kicker">JomSentimen Market Pulse</span>
-                    <span className={getRegimeTagClass(marketBreadth.regime)}>
-                      {getFriendlyRegimeLabel(marketBreadth.regime)}
-                    </span>
-                  </div>
-                  <h2 className="font-editorial text-2xl">
-                    {language === 'ENG' ? 'Bursa Market Mood' : 'Mood Pasaran Bursa'}
-                  </h2>
-                  <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG'
-                      ? 'See at a glance whether Malaysian investors are feeling optimistic (Bullish), steady, or cautious today.'
-                      : 'Lihat sepintas lalu sama ada pelabur Malaysia berasa optimis (Bullish), stabil, atau berhati-hati hari ini.'}
-                  </p>
-                </div>
-
-                {/* Clean SVG Market Mood Gauge */}
-                <div className="flex flex-col items-center py-2">
-                  <div className="relative w-60 h-28">
-                    <svg viewBox="0 0 200 100" className="w-full h-full overflow-visible">
-                      <path
-                        d="M 20 95 A 80 80 0 0 1 180 95"
-                        fill="none"
-                        stroke="var(--border-hairline)"
-                        strokeWidth="12"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M 20 95 A 80 80 0 0 1 65 30"
-                        fill="none"
-                        stroke="var(--signal-down)"
-                        strokeWidth="12"
-                      />
-                      <path
-                        d="M 67 29 A 80 80 0 0 1 133 29"
-                        fill="none"
-                        stroke="var(--signal-warn)"
-                        strokeWidth="12"
-                      />
-                      <path
-                        d="M 135 30 A 80 80 0 0 1 180 95"
-                        fill="none"
-                        stroke="var(--signal-up)"
-                        strokeWidth="12"
-                      />
-                      <g
-                        style={{
-                          transform: `rotate(${(marketBreadth.score / 100) * 180 - 90}deg)`,
-                          transformOrigin: '100px 95px',
-                          transition: 'transform 0.45s ease'
-                        }}
-                      >
-                        <line
-                          x1="100"
-                          y1="95"
-                          x2="100"
-                          y2="24"
-                          stroke="var(--ink-primary)"
-                          strokeWidth="2.5"
-                        />
-                        <circle cx="100" cy="95" r="4.5" fill="var(--ink-primary)" />
-                      </g>
-                    </svg>
-                  </div>
-
-                  <div className="flex justify-between w-60 text-xs font-semibold mt-1">
-                    <span style={{ color: 'var(--signal-down)' }}>
-                      {language === 'ENG' ? 'Cautious' : 'Berhati-hati'}
-                    </span>
-                    <span style={{ color: 'var(--signal-warn)' }}>Neutral</span>
-                    <span style={{ color: 'var(--signal-up)' }}>
-                      {language === 'ENG' ? 'Bullish' : 'Positif'}
-                    </span>
-                  </div>
-
-                  <div className="text-center mt-4">
-                    <div className="jom-kicker">
-                      {language === 'ENG' ? 'Today’s Mood Score' : 'Skor Mood Hari Ini'}
-                    </div>
-                    <div className="font-tabular text-2xl font-semibold mt-0.5">
-                      {marketBreadth.score} / 100 · {getFriendlyRegimeLabel(marketBreadth.regime)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Friendly Market Pulse Strip */}
-                <div
-                  className="grid grid-cols-3 gap-2 pt-2 border-t"
-                  style={{ borderColor: 'var(--border-hairline)' }}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold block" style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? 'Company' : 'Syarikat'}
+                </label>
+                <select
+                  className="jom-input font-tabular w-full"
+                  value={selectedStockId}
+                  onChange={e => {
+                    setSelectedStockId(e.target.value);
+                    setAiReport(null);
+                    setScanComplete(true);
+                  }}
                 >
-                  <div className="jom-panel-subtle p-2.5">
-                    <div className="jom-kicker">
-                      {language === 'ENG' ? 'Up / Down' : 'Naik / Turun'}
-                    </div>
-                    <div className="font-tabular text-xs font-semibold mt-1">
-                      {marketBreadth.advancers} / {marketBreadth.decliners}
-                    </div>
-                  </div>
-                  <div className="jom-panel-subtle p-2.5">
-                    <div className="jom-kicker">
-                      {language === 'ENG' ? 'Fund Flow' : 'Aliran Dana'}
-                    </div>
-                    <div
-                      className="font-tabular text-xs font-semibold mt-1"
-                      style={{
-                        color: marketBreadth.netFlowLabel.startsWith('-')
-                          ? 'var(--signal-down)'
-                          : 'var(--signal-up)'
-                      }}
-                    >
-                      {marketBreadth.netFlowLabel}
-                    </div>
-                  </div>
-                  <div className="jom-panel-subtle p-2.5">
-                    <div className="jom-kicker">BNM OPR</div>
-                    <div className="font-tabular text-xs font-semibold mt-1">
-                      {marketBreadth.oprRate}
-                    </div>
-                  </div>
-                </div>
+                  {stocks.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.ticker} ({s.bursaCode}) — {s.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Right 7 cols: Clean News Story Cards */}
-              <div className="md:col-span-7 p-6 flex flex-col justify-between space-y-4">
-                <div
-                  className="pb-4 border-b flex items-center justify-between gap-2"
-                  style={{ borderColor: 'var(--border-hairline)' }}
-                >
-                  <div>
-                    <div className="jom-kicker">
-                      {language === 'ENG' ? 'Malaysian Market Stories' : 'Berita Pasaran Malaysia'}
-                    </div>
-                    <h3 className="font-editorial text-xl">
-                      {language === 'ENG'
-                        ? 'What’s Moving Bursa Stocks Today'
-                        : 'Apa Yang Menggerakkan Saham Bursa Hari Ini'}
-                    </h3>
-                  </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold block" style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG'
+                    ? 'Upload PDF or Paste Filing Text'
+                    : 'Muat Naik PDF atau Tampal Teks'}
+                </label>
+                <label className="jom-btn w-full justify-between cursor-pointer text-xs">
+                  <span className="truncate flex items-center gap-1.5">
+                    <FileText size={14} />
+                    <span className="truncate">
+                      {uploadedFileName ||
+                        (language === 'ENG'
+                          ? 'Choose PDF / TXT file'
+                          : 'Pilih fail PDF / TXT')}
+                    </span>
+                  </span>
+                  <span className="text-xs font-semibold" style={{ color: 'var(--accent-brand)' }}>
+                    Browse
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.txt,.md,.csv"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      handleFileUpload(file);
+                    }}
+                  />
+                </label>
+
+                <div className="flex justify-end">
                   <button
                     type="button"
-                    onClick={() => loadBursaNewsWire(true)}
-                    disabled={isRefreshingNews}
-                    className="jom-btn py-1.5 px-3 text-xs"
+                    onClick={() => setCustomPasteOpen(prev => !prev)}
+                    className="text-xs underline cursor-pointer"
+                    style={{ color: 'var(--ink-secondary)' }}
                   >
-                    <RefreshCw size={12} className={isRefreshingNews ? 'animate-spin' : ''} />
-                    <span>{language === 'ENG' ? 'Refresh Stories' : 'Segar Semula'}</span>
+                    {customPasteOpen
+                      ? language === 'ENG'
+                        ? 'Hide text box'
+                        : 'Tutup ruangan teks'
+                      : language === 'ENG'
+                      ? 'Or paste announcement text'
+                      : 'Atau tampal teks pengumuman'}
                   </button>
                 </div>
 
-                <div className="space-y-3 flex-1">
-                  {newsItems.map(news => {
-                    const matchedStock = stocks.find(s => s.ticker === news.ticker);
-                    const monogram = getStockMonogram(news.ticker, matchedStock?.sector);
-                    return (
-                      <div
-                        key={news.id}
-                        onClick={() => {
-                          if (matchedStock) {
-                            setSelectedStock(matchedStock);
-                            navigateTo('stock-details');
-                          }
-                        }}
-                        className="jom-panel-subtle p-4 cursor-pointer transition-all hover:border-[var(--border-strong)] flex items-start justify-between gap-3.5"
-                        style={{ border: '1px solid var(--border-hairline)' }}
-                      >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className={monogram.avatarClass}>{monogram.initials}</div>
-                          <div className="space-y-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-xs">{news.source}</span>
-                              <span
-                                className="font-tabular text-xs"
-                                style={{ color: 'var(--ink-muted)' }}
-                              >
-                                · {news.timeAgo} · {news.ticker}
-                              </span>
-                            </div>
-                            <p
-                              className="text-xs sm:text-sm leading-relaxed"
-                              style={{ color: 'var(--ink-primary)' }}
-                            >
-                              {news.headline}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={getImpactTagClass(news.impact)}>
-                            {getFriendlySentimentLabel(news.impact)}
-                          </span>
-                          {news.url && (
-                            <a
-                              href={news.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              className="jom-btn py-1 px-2 text-xs"
-                              title={
-                                language === 'ENG'
-                                  ? 'Read full article'
-                                  : 'Baca artikel penuh'
-                              }
-                            >
-                              <ArrowUpRight size={12} />
-                            </a>
-                          )}
-                        </div>
+                {customPasteOpen && (
+                  <div className="space-y-2 pt-1">
+                    <textarea
+                      rows={3}
+                      value={uploadedText}
+                      onChange={e => {
+                        setUploadedText(e.target.value);
+                        if (!uploadedFileName && e.target.value.trim()) {
+                          setUploadedFileName('Pasted_Bursa_Filing.txt');
+                        }
+                      }}
+                      placeholder={
+                        language === 'ENG'
+                          ? 'Paste quarterly announcement or annual report text here...'
+                          : 'Tampal pengumuman suku tahunan atau laporan tahunan di sini...'
+                      }
+                      className="jom-input w-full text-xs"
+                    />
+                    {(uploadedFileName || uploadedText) && (
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleClearCustomDocument}
+                          className="jom-btn py-1 px-2.5 text-xs"
+                        >
+                          {language === 'ENG' ? 'Clear' : 'Padam'}
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 3. Stocks vs. EPF (KWSP) & FD Wealth Calculator */}
-          <section className="jom-panel p-6 space-y-6">
-            <div
-              className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b"
-              style={{ borderColor: 'var(--border-hairline)' }}
-            >
-              <div>
-                <div className="jom-kicker">
-                  {language === 'ENG'
-                    ? '10-Year Compounding Simulator'
-                    : 'Simulator Kompaun 10 Tahun'}
-                </div>
-                <h2 className="font-editorial text-2xl mt-0.5">
-                  {language === 'ENG'
-                    ? 'Stocks vs. EPF (KWSP) & FD Wealth Calculator'
-                    : 'Kalkulator Kekayaan: Saham vs. KWSP & Deposit Tetap (FD)'}
-                </h2>
-                <p className="text-xs mt-1" style={{ color: 'var(--ink-secondary)' }}>
-                  {language === 'ENG'
-                    ? 'See how investing a fixed Ringgit amount every month compares against EPF/ASB (5.5% p.a.) and Fixed Deposits (3.0% p.a.) over 10 years.'
-                    : 'Lihat bagaimana melabur jumlah RM tetap setiap bulan berbanding KWSP/ASB (5.5% setahun) dan Deposit Tetap (3.0% setahun) selama 10 tahun.'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="jom-tag jom-tag-shariah font-tabular">
-                  Est. {(4 + riskLevel * 0.8 - (inflationAdjusted ? 3 : 0)).toFixed(1)}% / yr
-                </span>
-                {inflationAdjusted && (
-                  <span className="jom-tag jom-tag-warn">Inflation-Adjusted (-3%)</span>
+                    )}
+                  </div>
                 )}
               </div>
+
+              <button
+                type="button"
+                onClick={handleAnalyze}
+                disabled={isScanning}
+                className="jom-btn jom-btn-primary w-full text-xs"
+              >
+                {isScanning ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>{loadingText}</span>
+                  </>
+                ) : (
+                  <span>
+                    {language === 'ENG' ? 'Summarize Report' : 'Ringkaskan Laporan'}
+                  </span>
+                )}
+              </button>
+            </div>
+          </aside>
+
+          {/* Right Main: Clean 3-Section Summary in .rh-card */}
+          <div className="rh-main">
+            {isScanning ? (
+              <div className="rh-card py-20 text-center space-y-3">
+                <Loader2
+                  size={24}
+                  className="animate-spin mx-auto"
+                  style={{ color: 'var(--accent-brand)' }}
+                />
+                <div className="text-sm font-semibold">{loadingText}</div>
+              </div>
+            ) : (
+              scanComplete &&
+              activeReport &&
+              currentStock && (
+                <div className="rh-card space-y-6">
+                  <div
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b"
+                    style={{ borderColor: 'var(--border-hairline)' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={currentMonogram.avatarClass}>
+                        {currentMonogram.initials}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold">{activeReport.title}</h3>
+                        <div className="text-xs font-tabular" style={{ color: 'var(--ink-secondary)' }}>
+                          {currentStock.bursaCode} · RM {currentStock.price} ({currentStock.changePercent}) ·{' '}
+                          {currentStock.sector}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="sm:text-right font-tabular">
+                      <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                        {language === 'ENG' ? 'Health Score' : 'Skor Kesihatan'}
+                      </div>
+                      <div
+                        className="text-xl font-bold"
+                        style={{ color: 'var(--signal-up)' }}
+                      >
+                        {activeReport.score} / 100
+                      </div>
+                    </div>
+                  </div>
+
+                  {excerptToDisplay && (
+                    <div
+                      className="p-3.5 rounded-xl space-y-1 text-xs"
+                      style={{
+                        backgroundColor: 'var(--bg-subtle)',
+                        borderLeft: '3px solid var(--accent-brand)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">
+                          {uploadedFileName || (language === 'ENG' ? 'Uploaded Excerpt' : 'Petikan Dokumen')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleClearCustomDocument}
+                          className="underline cursor-pointer"
+                          style={{ color: 'var(--ink-secondary)' }}
+                        >
+                          {language === 'ENG' ? 'Clear' : 'Padam'}
+                        </button>
+                      </div>
+                      <p className="leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                        "{excerptToDisplay}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 3 Clean Summary Sections */}
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <h4 className="text-sm font-bold" style={{ color: 'var(--signal-up)' }}>
+                        {language === 'ENG' ? "What's Going Well" : 'Apa Yang Positif'}
+                      </h4>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                        {activeReport.growth}
+                      </p>
+                    </div>
+
+                    <div
+                      className="pt-4 border-t space-y-1.5"
+                      style={{ borderColor: 'var(--border-hairline)' }}
+                    >
+                      <h4 className="text-sm font-bold" style={{ color: 'var(--signal-warn)' }}>
+                        {language === 'ENG' ? 'Risks to Watch' : 'Risiko Perlu Diperhatikan'}
+                      </h4>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                        {activeReport.risk}
+                      </p>
+                    </div>
+
+                    <div
+                      className="pt-4 border-t space-y-1.5"
+                      style={{ borderColor: 'var(--border-hairline)' }}
+                    >
+                      <h4 className="text-sm font-bold" style={{ color: 'var(--accent-brand)' }}>
+                        {language === 'ENG' ? 'Dividends & Shariah' : 'Dividen & Syariah'}
+                      </h4>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                        {activeReport.dividend}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t"
+                    style={{ borderColor: 'var(--border-hairline)' }}
+                  >
+                    <button
+                      type="button"
+                      className="jom-btn text-xs"
+                      onClick={() => {
+                        setSelectedStock(currentStock);
+                        navigateTo('stock-details');
+                      }}
+                    >
+                      <span>{language === 'ENG' ? 'Open Stock Page' : 'Buka Halaman Saham'}</span>
+                      <ArrowUpRight size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="jom-btn jom-btn-primary text-xs"
+                      onClick={handleExportSummary}
+                    >
+                      <Download size={13} />
+                      <span>
+                        {language === 'ENG' ? 'Save Summary (+15 XP)' : 'Simpan Ringkasan (+15 XP)'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: MARKET NEWS (JomSentimen) */}
+      {activeTab === 'news' && (
+        <div className="rh-split">
+          {/* Left Rail: Market Mood Score (0-100) & Advancers/Decliners */}
+          <aside className="rh-rail space-y-4">
+            <div className="rh-card space-y-5">
+              <div className="space-y-1">
+                <h2 className="text-base font-bold">
+                  {language === 'ENG' ? 'Market Mood' : 'Mood Pasaran'}
+                </h2>
+                <p className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                  {getFriendlyRegimeLabel(marketBreadth.regime)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="rh-hero-num">{marketBreadth.score} / 100</div>
+                <div
+                  className="w-full h-2.5 rounded-full overflow-hidden"
+                  style={{ backgroundColor: 'var(--bg-subtle)' }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${marketBreadth.score}%`,
+                      backgroundColor: 'var(--accent-brand)'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div
+                className="pt-4 border-t space-y-2.5 text-xs font-tabular"
+                style={{ borderColor: 'var(--border-hairline)' }}
+              >
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG' ? 'Advancers' : 'Saham Naik'}
+                  </span>
+                  <span className="font-semibold" style={{ color: 'var(--signal-up)' }}>
+                    {marketBreadth.advancers}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG' ? 'Decliners' : 'Saham Turun'}
+                  </span>
+                  <span className="font-semibold" style={{ color: 'var(--signal-down)' }}>
+                    {marketBreadth.decliners}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG' ? 'Net Fund Flow' : 'Aliran Dana'}
+                  </span>
+                  <span className="font-semibold">{marketBreadth.netFlowLabel}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--ink-secondary)' }}>BNM OPR</span>
+                  <span className="font-semibold">{marketBreadth.oprRate}</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Right Main: Clean Vertical List of Malaysian Financial News Items */}
+          <div className="rh-main space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">
+                {language === 'ENG' ? 'Malaysian Market News' : 'Berita Pasaran Malaysia'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => loadBursaNewsWire(true)}
+                disabled={isRefreshingNews}
+                className="jom-btn py-1.5 px-3 text-xs"
+              >
+                <RefreshCw size={12} className={isRefreshingNews ? 'animate-spin' : ''} />
+                <span>{language === 'ENG' ? 'Refresh' : 'Segar Semula'}</span>
+              </button>
             </div>
 
-            <div className="grid lg:grid-cols-12 gap-6 items-center">
-              {/* Left 8 cols: Recharts AreaChart */}
-              <div className="lg:col-span-8 h-[300px] w-full">
+            <div className="rh-stock-list">
+              {newsItems.map(news => {
+                const matchedStock = stocks.find(s => s.ticker === news.ticker);
+                const monogram = getStockMonogram(news.ticker, matchedStock?.sector);
+                const sentimentColor =
+                  news.impact === 'CONSTRUCTIVE'
+                    ? 'var(--signal-up)'
+                    : news.impact === 'CAUTIOUS'
+                    ? 'var(--signal-down)'
+                    : 'var(--ink-secondary)';
+
+                return (
+                  <div
+                    key={news.id}
+                    className="rh-stock-row"
+                    onClick={() => {
+                      if (matchedStock) {
+                        setSelectedStock(matchedStock);
+                        navigateTo('stock-details');
+                      }
+                    }}
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className={monogram.avatarClass}>{monogram.initials}</div>
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-semibold">{news.source}</span>
+                          <span className="font-tabular" style={{ color: 'var(--ink-muted)' }}>
+                            · {news.timeAgo} · {news.ticker}
+                          </span>
+                        </div>
+                        <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                          {news.headline}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-semibold" style={{ color: sentimentColor }}>
+                        {getFriendlySentimentLabel(news.impact)}
+                      </span>
+                      {news.url && (
+                        <a
+                          href={news.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="jom-btn py-1 px-2 text-xs"
+                        >
+                          <ArrowUpRight size={12} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: WEALTH CALCULATOR */}
+      {activeTab === 'calculator' && (
+        <div className="rh-split">
+          {/* Left Rail: 2 Sliders (Monthly Contribution & Target Return) */}
+          <aside className="rh-rail space-y-4">
+            <div className="rh-card space-y-5">
+              <h2 className="text-base font-bold">
+                {language === 'ENG' ? '10-Year Plan Inputs' : 'Input Pelan 10 Tahun'}
+              </h2>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG' ? 'Monthly Contribution' : 'Simpanan Bulanan'}
+                  </span>
+                  <span className="font-tabular font-semibold">
+                    RM {monthlyInvest.toLocaleString()} / mo
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="100"
+                  max="5000"
+                  step="100"
+                  value={monthlyInvest}
+                  onChange={e => setMonthlyInvest(parseInt(e.target.value))}
+                  className="w-full cursor-pointer accent-[#059669]"
+                />
+                <div
+                  className="flex justify-between font-tabular text-xs"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  <span>RM 100</span>
+                  <span>RM 5,000</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG' ? 'Target Stock Return' : 'Sasaran Pulangan Saham'}
+                  </span>
+                  <span className="font-tabular font-semibold" style={{ color: 'var(--accent-brand)' }}>
+                    {(4 + riskLevel * 0.8).toFixed(1)}% / yr
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={riskLevel}
+                  onChange={e => setRiskLevel(parseInt(e.target.value))}
+                  className="w-full cursor-pointer accent-[#059669]"
+                />
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                  {riskLevel <= 3
+                    ? 'Conservative: Steady utilities & REIT dividends (4.8%–6.4% yearly).'
+                    : riskLevel <= 7
+                    ? 'Balanced: Mix of Malaysian banks and steady growth leaders (7.2%–9.6% yearly).'
+                    : 'Growth: Faster-growing infrastructure & tech leaders (10.4%–12.0% yearly).'}
+                </p>
+              </div>
+
+              <div
+                className="flex items-center justify-between pt-4 border-t text-xs"
+                style={{ borderColor: 'var(--border-hairline)' }}
+              >
+                <span style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? 'Adjust for Inflation (-3%/yr)' : 'Laraskan Inflasi (-3%/thn)'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setInflationAdjusted(!inflationAdjusted)}
+                  className={`jom-btn py-1 px-3 text-xs font-tabular ${
+                    inflationAdjusted ? 'jom-btn-primary' : ''
+                  }`}
+                >
+                  {inflationAdjusted
+                    ? language === 'ENG'
+                      ? 'On'
+                      : 'Aktif'
+                    : language === 'ENG'
+                    ? 'Off'
+                    : 'Matikan'}
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          {/* Right Main: 10-Year Comparison Chart + EPF (5.5%) & FD (3.0%) Comparison Bars */}
+          <div className="rh-main space-y-6">
+            <div className="rh-card space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                <div>
+                  <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG'
+                      ? `Projected 10-Year Bursa Portfolio (Total contributed: RM ${finalInvested.toLocaleString()})`
+                      : `Unjuran 10 Tahun Portfolio Bursa (Jumlah simpanan: RM ${finalInvested.toLocaleString()})`}
+                  </div>
+                  <div className="rh-hero-num mt-1">RM {finalWealth.toLocaleString()}</div>
+                </div>
+                <div className="text-xs font-tabular font-semibold" style={{ color: 'var(--signal-up)' }}>
+                  +RM {(finalWealth - finalInvested).toLocaleString()}{' '}
+                  {language === 'ENG' ? 'compounded gain' : 'keuntungan kompaun'}
+                </div>
+              </div>
+
+              <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={wealthData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
                     <defs>
@@ -1561,7 +1395,7 @@ export function EducationalHub({
                     />
                     <Area
                       type="monotone"
-                      name="EPF (KWSP) / ASB (5.5%)"
+                      name="EPF / KWSP (5.5%)"
                       dataKey="epfAsb"
                       stroke="#475569"
                       strokeWidth={2}
@@ -1576,333 +1410,143 @@ export function EducationalHub({
                       strokeDasharray="4 4"
                       fillOpacity={0}
                     />
-                    <Area
-                      type="monotone"
-                      name="Total Cash Saved"
-                      dataKey="invested"
-                      stroke="#94A3B8"
-                      strokeWidth={1.25}
-                      strokeDasharray="2 2"
-                      fillOpacity={0}
-                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* Right 4 cols: Friendly Sliders */}
-              <div className="lg:col-span-4 jom-panel-subtle p-5 space-y-5">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="jom-kicker">
-                      {language === 'ENG' ? 'Monthly Savings' : 'Simpanan Bulanan'}
+              {/* EPF (5.5%) & FD (3.0%) Comparison Bars */}
+              <div
+                className="pt-4 border-t space-y-3 text-xs font-tabular"
+                style={{ borderColor: 'var(--border-hairline)' }}
+              >
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">
+                      Bursa Stock Strategy ({(4 + riskLevel * 0.8 - (inflationAdjusted ? 3 : 0)).toFixed(1)}%/yr)
                     </span>
-                    <span className="font-tabular text-sm font-semibold">
-                      RM {monthlyInvest.toLocaleString()} / mo
+                    <span className="font-bold" style={{ color: 'var(--accent-brand)' }}>
+                      RM {finalWealth.toLocaleString()}
                     </span>
                   </div>
-                  <input
-                    type="range"
-                    min="100"
-                    max="5000"
-                    step="100"
-                    value={monthlyInvest}
-                    onChange={e => setMonthlyInvest(parseInt(e.target.value))}
-                    className="w-full cursor-pointer accent-[#059669]"
-                  />
                   <div
-                    className="flex justify-between font-tabular text-xs"
-                    style={{ color: 'var(--ink-muted)' }}
+                    className="w-full h-2 rounded-full overflow-hidden"
+                    style={{ backgroundColor: 'var(--bg-subtle)' }}
                   >
-                    <span>RM 100</span>
-                    <span>Total put in: RM {finalInvested.toLocaleString()}</span>
-                    <span>RM 5,000</span>
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: '100%', backgroundColor: 'var(--accent-brand)' }}
+                    />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="jom-kicker">
-                      {language === 'ENG' ? 'Investor Style & Return' : 'Gaya Pelabur & Pulangan'}
-                    </span>
-                    <span className="jom-tag font-tabular">
-                      {(4 + riskLevel * 0.8).toFixed(1)}% / yr
-                    </span>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--ink-secondary)' }}>EPF / KWSP Benchmark (5.5%/yr)</span>
+                    <span className="font-semibold">RM {finalEpf.toLocaleString()}</span>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="1"
-                    value={riskLevel}
-                    onChange={e => setRiskLevel(parseInt(e.target.value))}
-                    className="w-full cursor-pointer accent-[#059669]"
-                  />
-                  <p className="text-xs leading-relaxed pt-1" style={{ color: 'var(--ink-secondary)' }}>
-                    {riskLevel <= 3
-                      ? 'Conservative Style: Focuses on steady utilities & REIT dividends (4.8%–6.4% yearly).'
-                      : riskLevel <= 7
-                      ? 'Balanced Style: Mixes Malaysian banks with steady growth leaders (7.2%–9.6% yearly).'
-                      : 'Explorer Style: Focuses on faster-growing tech, infrastructure & data center stocks (10.4%–12.0% yearly).'}
-                  </p>
+                  <div
+                    className="w-full h-2 rounded-full overflow-hidden"
+                    style={{ backgroundColor: 'var(--bg-subtle)' }}
+                  >
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, Math.round((finalEpf / Math.max(1, finalWealth)) * 100))}%`,
+                        backgroundColor: 'var(--ink-secondary)'
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <div
-                  className="flex items-center justify-between pt-4 border-t"
-                  style={{ borderColor: 'var(--border-hairline)' }}
-                >
-                  <div>
-                    <div className="text-xs font-semibold">
-                      {language === 'ENG' ? 'Adjust for Inflation' : 'Laraskan Untuk Inflasi'}
-                    </div>
-                    <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                      {language === 'ENG'
-                        ? 'Show real buying power (-3% inflation/yr)'
-                        : 'Tunjukkan kuasa beli sebenar (-3% setahun)'}
-                    </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--ink-secondary)' }}>Fixed Deposit (3.0%/yr)</span>
+                    <span className="font-semibold">RM {finalFd.toLocaleString()}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setInflationAdjusted(!inflationAdjusted)}
-                    className={`jom-btn py-1 px-3 text-xs font-tabular ${
-                      inflationAdjusted ? 'jom-btn-primary' : ''
-                    }`}
+                  <div
+                    className="w-full h-2 rounded-full overflow-hidden"
+                    style={{ backgroundColor: 'var(--bg-subtle)' }}
                   >
-                    {inflationAdjusted
-                      ? language === 'ENG'
-                        ? 'On (-3%)'
-                        : 'Aktif (-3%)'
-                      : language === 'ENG'
-                      ? 'Off'
-                      : 'Matikan'}
-                  </button>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, Math.round((finalFd / Math.max(1, finalWealth)) * 100))}%`,
+                        backgroundColor: 'var(--signal-warn)'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* 3-Card Comparison Strip Below */}
-            <div className="jom-ledger-strip">
-              <div className="jom-ledger-cell space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="jom-kicker">
-                    {language === 'ENG' ? 'Bursa Stock Strategy' : 'Strategi Saham Bursa'}
-                  </span>
-                  <span className="jom-tag jom-tag-up font-tabular">
-                    +RM {(finalWealth - finalInvested).toLocaleString()} profit
-                  </span>
-                </div>
-                <div className="font-tabular text-2xl font-semibold">
-                  RM {finalWealth.toLocaleString()}
-                </div>
-                <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  from RM {finalInvested.toLocaleString()} total savings
-                </div>
-              </div>
-
-              <div className="jom-ledger-cell space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="jom-kicker">EPF (KWSP) / ASB (5.5% / yr)</span>
-                  <span className="jom-tag font-tabular">
-                    +RM {(finalEpf - finalInvested).toLocaleString()}
-                  </span>
-                </div>
-                <div className="font-tabular text-2xl font-semibold">
-                  RM {finalEpf.toLocaleString()}
-                </div>
-                <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  Stocks difference: {finalWealth >= finalEpf ? '+' : ''}RM{' '}
-                  {(finalWealth - finalEpf).toLocaleString()}
-                </div>
-              </div>
-
-              <div className="jom-ledger-cell space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="jom-kicker">Fixed Deposit (3.0% / yr)</span>
-                  <span className="jom-tag font-tabular">
-                    +RM {(finalFd - finalInvested).toLocaleString()}
-                  </span>
-                </div>
-                <div className="font-tabular text-2xl font-semibold">
-                  RM {finalFd.toLocaleString()}
-                </div>
-                <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  Stocks difference: +RM {(finalWealth - finalFd).toLocaleString()}
-                </div>
-              </div>
-            </div>
-          </section>
+          </div>
         </div>
       )}
 
-      {/* TAB 2: 5-MINUTE LESSONS */}
-      {activeTab === 'curriculum' && (
-        <div className="grid md:grid-cols-3 gap-6">
-          {articleItems.map(article => {
-            const isDone = completedQuizzes.includes(article.id);
+      {/* TAB 4: SHORT LESSONS */}
+      {activeTab === 'lessons' && (
+        <div className="rh-grid-3">
+          {learningItems.map(item => {
+            const isDone = completedQuizzes.includes(item.id);
             return (
               <div
-                key={article.id}
-                onClick={() => openLearningModal(article)}
-                className="jom-panel p-6 flex flex-col justify-between cursor-pointer transition-colors hover:border-[var(--border-strong)] space-y-6"
+                key={item.id}
+                onClick={() => openLearningModal(item)}
+                className="rh-card flex flex-col justify-between cursor-pointer space-y-5"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="jom-tag font-tabular">{article.code}</span>
-                      <span className="jom-tag jom-tag-shariah">{article.badge}</span>
-                    </div>
-                    {isDone ? (
-                      <span className="jom-tag jom-tag-up">Completed</span>
-                    ) : (
-                      <span
-                        className="font-tabular text-xs flex items-center gap-1"
-                        style={{ color: 'var(--ink-muted)' }}
-                      >
-                        <Clock size={12} />
-                        {article.meta}
-                      </span>
-                    )}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between text-xs font-tabular" style={{ color: 'var(--ink-muted)' }}>
+                    <span>{item.code}</span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={12} />
+                      {item.meta}
+                    </span>
                   </div>
 
-                  <h3 className="font-editorial text-2xl">
-                    {language === 'ENG' ? article.titleEng : article.titleBm}
+                  <h3 className="text-base font-bold">
+                    {language === 'ENG' ? item.titleEng : item.titleBm}
                   </h3>
 
                   <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? article.descEng : article.descBm}
+                    {language === 'ENG' ? item.descEng : item.descBm}
                   </p>
                 </div>
 
-                <div className="pt-4 border-t" style={{ borderColor: 'var(--border-hairline)' }}>
-                  <button
-                    type="button"
-                    className={`jom-btn w-full ${isDone ? '' : 'jom-btn-primary'}`}
-                    onClick={e => {
-                      e.stopPropagation();
-                      openLearningModal(article);
-                    }}
-                  >
-                    {isDone ? (
-                      <>
-                        <Check size={14} />
-                        <span>{t.reviewModule}</span>
-                      </>
-                    ) : (
-                      <span>{t.openModule}</span>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={`jom-btn w-full text-xs ${isDone ? '' : 'jom-btn-primary'}`}
+                  onClick={e => {
+                    e.stopPropagation();
+                    openLearningModal(item);
+                  }}
+                >
+                  {isDone ? (
+                    <>
+                      <Check size={14} />
+                      <span>{language === 'ENG' ? 'Completed · Review' : 'Selesai · Ulang Kaji'}</span>
+                    </>
+                  ) : (
+                    <span>{language === 'ENG' ? 'Start Lesson (+25 XP)' : 'Mula Pelajaran (+25 XP)'}</span>
+                  )}
+                </button>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* TAB 3: VIDEO GUIDES */}
-      {activeTab === 'briefings' && (
-        <div className="grid md:grid-cols-2 gap-6">
-          {tutorialItems.map((tutorial, index) => {
-            const isDone = completedQuizzes.includes(tutorial.id);
-            return (
-              <div
-                key={tutorial.id}
-                onClick={() => openLearningModal(tutorial)}
-                className="jom-panel overflow-hidden flex flex-col justify-between cursor-pointer transition-colors hover:border-[var(--border-strong)]"
-              >
-                <div>
-                  <div
-                    className="relative aspect-video bg-black/10 overflow-hidden border-b"
-                    style={{ borderColor: 'var(--border-hairline)' }}
-                  >
-                    <ImageWithFallback
-                      src={
-                        index % 2 === 0
-                          ? 'https://images.unsplash.com/photo-1579226905180-636b76d96082?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
-                          : 'https://images.unsplash.com/photo-1668092547893-6402c0387885?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
-                      }
-                      alt="Video guide thumbnail"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center border"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-hairline)',
-                          color: 'var(--accent-brand)'
-                        }}
-                      >
-                        <Play size={18} className="ml-0.5" fill="currentColor" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="jom-tag font-tabular">{tutorial.code}</span>
-                        <span className="jom-tag jom-tag-shariah">{tutorial.badge}</span>
-                      </div>
-                      {isDone ? (
-                        <span className="jom-tag jom-tag-up">Completed</span>
-                      ) : (
-                        <span
-                          className="font-tabular text-xs"
-                          style={{ color: 'var(--ink-muted)' }}
-                        >
-                          {tutorial.meta}
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="font-editorial text-2xl">
-                      {language === 'ENG' ? tutorial.titleEng : tutorial.titleBm}
-                    </h3>
-
-                    <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                      {language === 'ENG' ? tutorial.descEng : tutorial.descBm}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="px-6 pb-6">
-                  <button
-                    type="button"
-                    className={`jom-btn w-full ${isDone ? '' : 'jom-btn-primary'}`}
-                    onClick={e => {
-                      e.stopPropagation();
-                      openLearningModal(tutorial);
-                    }}
-                  >
-                    <Play size={13} />
-                    <span>{isDone ? t.reviewModule : t.openBriefing}</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* LESSON & QUIZ MODAL */}
+      {/* INTERACTIVE LESSON & QUIZ MODAL */}
       {activeLearningItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="jom-panel w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="rh-card w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
             <div
-              className="sticky top-0 z-10 p-6 border-b flex items-start justify-between gap-4"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-hairline)'
-              }}
+              className="flex items-start justify-between gap-4 pb-4 border-b"
+              style={{ borderColor: 'var(--border-hairline)' }}
             >
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="jom-tag font-tabular">{activeLearningItem.code}</span>
-                  <span className="jom-tag jom-tag-shariah">{activeLearningItem.badge}</span>
-                  <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                    {activeLearningItem.meta}
-                  </span>
+                <div className="text-xs font-tabular" style={{ color: 'var(--ink-muted)' }}>
+                  {activeLearningItem.code} · {activeLearningItem.meta}
                 </div>
-                <h2 className="font-editorial text-2xl">
+                <h2 className="text-xl font-bold">
                   {language === 'ENG'
                     ? activeLearningItem.titleEng
                     : activeLearningItem.titleBm}
@@ -1918,133 +1562,122 @@ export function EducationalHub({
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Lesson Content */}
-              <div
-                className="space-y-3 text-sm leading-relaxed"
-                style={{ color: 'var(--ink-primary)' }}
+            <div className="space-y-3 text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+              {(language === 'ENG'
+                ? activeLearningItem.contentEng
+                : activeLearningItem.contentBm
+              ).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+
+            <div
+              className="p-4 rounded-xl space-y-2"
+              style={{ backgroundColor: 'var(--bg-subtle)' }}
+            >
+              <div className="text-xs font-bold">
+                {language === 'ENG' ? 'Key Takeaways' : 'Intipati Penting'}
+              </div>
+              <ul
+                className="list-disc list-inside text-xs space-y-1.5"
+                style={{ color: 'var(--ink-secondary)' }}
               >
                 {(language === 'ENG'
-                  ? activeLearningItem.contentEng
-                  : activeLearningItem.contentBm
-                ).map((para, i) => (
-                  <p key={i}>{para}</p>
+                  ? activeLearningItem.takeawaysEng
+                  : activeLearningItem.takeawaysBm
+                ).map((item, i) => (
+                  <li key={i}>{item}</li>
                 ))}
-              </div>
+              </ul>
+            </div>
 
-              {/* Key Takeaways */}
-              <div className="jom-panel-subtle p-4 space-y-2">
-                <div className="jom-kicker">
-                  {language === 'ENG' ? 'Key Takeaways to Remember' : 'Intipati Penting'}
-                </div>
-                <ul
-                  className="list-disc list-inside text-xs space-y-1.5"
-                  style={{ color: 'var(--ink-secondary)' }}
-                >
-                  {(language === 'ENG'
-                    ? activeLearningItem.takeawaysEng
-                    : activeLearningItem.takeawaysBm
-                  ).map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+            <div
+              className="pt-4 border-t space-y-4"
+              style={{ borderColor: 'var(--border-hairline)' }}
+            >
+              <h4 className="text-base font-bold">
+                {language === 'ENG'
+                  ? 'Quick Quiz (+25 XP)'
+                  : 'Kuiz Ringkas (+25 XP)'}
+              </h4>
 
-              {/* Quick 2-Question Check-In */}
-              <div className="jom-panel p-5 space-y-4">
-                <div
-                  className="flex items-center justify-between pb-3 border-b"
-                  style={{ borderColor: 'var(--border-hairline)' }}
-                >
-                  <div>
-                    <div className="jom-kicker">
-                      {language === 'ENG' ? 'Quick Knowledge Check' : 'Kuiz Ringkas'}
+              {activeLearningItem.quiz.map((q, qIdx) => {
+                const options = language === 'ENG' ? q.optionsEng : q.optionsBm;
+                return (
+                  <div key={qIdx} className="space-y-2">
+                    <p className="text-xs font-semibold">
+                      {qIdx + 1}. {language === 'ENG' ? q.qEng : q.qBm}
+                    </p>
+                    <div className="space-y-1.5">
+                      {options.map((opt, optIdx) => {
+                        const isSelected = quizAnswers[qIdx] === optIdx;
+                        const isCorrect = q.correctIndex === optIdx;
+
+                        let borderColor = 'var(--border-hairline)';
+                        let bgColor = 'var(--bg-surface)';
+
+                        if (isSelected) {
+                          borderColor = 'var(--accent-brand)';
+                          bgColor = 'var(--accent-brand-subtle)';
+                        }
+                        if (quizSubmitted) {
+                          if (isCorrect) {
+                            borderColor = 'var(--signal-up)';
+                            bgColor = 'var(--signal-up-bg)';
+                          } else if (isSelected && !isCorrect) {
+                            borderColor = 'var(--signal-down)';
+                            bgColor = 'var(--signal-down-bg)';
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={optIdx}
+                            type="button"
+                            onClick={() => {
+                              setQuizSubmitted(false);
+                              setQuizAnswers(prev => ({ ...prev, [qIdx]: optIdx }));
+                            }}
+                            className="w-full text-left text-xs p-3 rounded-xl border transition-colors flex items-center justify-between"
+                            style={{ borderColor, backgroundColor: bgColor }}
+                          >
+                            <span>{opt}</span>
+                            {quizSubmitted && isCorrect && (
+                              <span className="font-semibold" style={{ color: 'var(--signal-up)' }}>
+                                ✓
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <h4 className="font-editorial text-xl">
-                      {language === 'ENG'
-                        ? 'Answer 2 Questions to Earn +25 XP'
-                        : 'Jawab 2 Soalan Untuk Kumpul +25 XP'}
-                    </h4>
                   </div>
-                  <span className="jom-tag jom-tag-shariah font-tabular">+25 XP</span>
-                </div>
+                );
+              })}
 
-                {activeLearningItem.quiz.map((q, qIdx) => {
-                  const options = language === 'ENG' ? q.optionsEng : q.optionsBm;
-                  return (
-                    <div key={qIdx} className="space-y-2">
-                      <p className="text-xs font-semibold">
-                        {qIdx + 1}. {language === 'ENG' ? q.qEng : q.qBm}
-                      </p>
-                      <div className="space-y-1.5">
-                        {options.map((opt, optIdx) => {
-                          const isSelected = quizAnswers[qIdx] === optIdx;
-                          const isCorrect = q.correctIndex === optIdx;
-
-                          let borderColor = 'var(--border-hairline)';
-                          let bgColor = 'var(--bg-surface)';
-
-                          if (isSelected) {
-                            borderColor = 'var(--accent-brand)';
-                            bgColor = 'var(--accent-brand-subtle)';
-                          }
-                          if (quizSubmitted) {
-                            if (isCorrect) {
-                              borderColor = 'var(--signal-up)';
-                              bgColor = 'var(--signal-up-bg)';
-                            } else if (isSelected && !isCorrect) {
-                              borderColor = 'var(--signal-down)';
-                              bgColor = 'var(--signal-down-bg)';
-                            }
-                          }
-
-                          return (
-                            <button
-                              key={optIdx}
-                              type="button"
-                              onClick={() => {
-                                setQuizSubmitted(false);
-                                setQuizAnswers(prev => ({ ...prev, [qIdx]: optIdx }));
-                              }}
-                              className="w-full text-left text-xs p-3 rounded-xl border transition-colors flex items-center justify-between"
-                              style={{ borderColor, backgroundColor: bgColor }}
-                            >
-                              <span>{opt}</span>
-                              {quizSubmitted && isCorrect && (
-                                <span className="jom-tag jom-tag-up">Correct</span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                <div
-                  className="flex justify-end gap-2.5 pt-3 border-t"
-                  style={{ borderColor: 'var(--border-hairline)' }}
+              <div
+                className="flex justify-end gap-2.5 pt-3 border-t"
+                style={{ borderColor: 'var(--border-hairline)' }}
+              >
+                <button
+                  type="button"
+                  className="jom-btn text-xs"
+                  onClick={() => setActiveLearningItem(null)}
                 >
-                  <button
-                    type="button"
-                    className="jom-btn"
-                    onClick={() => setActiveLearningItem(null)}
-                  >
-                    {language === 'ENG' ? 'Close' : 'Tutup'}
-                  </button>
-                  <button
-                    type="button"
-                    className="jom-btn jom-btn-primary"
-                    disabled={
-                      Object.keys(quizAnswers).length < activeLearningItem.quiz.length
-                    }
-                    onClick={handleQuizSubmit}
-                  >
-                    {language === 'ENG'
-                      ? 'Check Answers & Claim +25 XP'
-                      : 'Semak Jawapan & Tuntut +25 XP'}
-                  </button>
-                </div>
+                  {language === 'ENG' ? 'Close' : 'Tutup'}
+                </button>
+                <button
+                  type="button"
+                  className="jom-btn jom-btn-primary text-xs"
+                  disabled={
+                    Object.keys(quizAnswers).length < activeLearningItem.quiz.length
+                  }
+                  onClick={handleQuizSubmit}
+                >
+                  {language === 'ENG'
+                    ? 'Check Answers (+25 XP)'
+                    : 'Semak Jawapan (+25 XP)'}
+                </button>
               </div>
             </div>
           </div>

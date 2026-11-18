@@ -43,8 +43,8 @@ export function ChatbotModal({
 
   const initialGreeting =
     language === 'ENG'
-      ? `Hi ${firstName}! I’m JomAI, your Bursa Malaysia study buddy. I’m connected to all ${stocks.length} Bursa companies and your practice portfolio. Ask me about any stock, compare dividends, check your diversification, or see which companies are Shariah-compliant!`
-      : `Hai ${firstName}! Saya JomAI, rakan belajar Bursa Malaysia anda. Saya dihubungkan dengan ${stocks.length} syarikat Bursa dan portfolio latihan anda. Tanya saya tentang mana-mana saham, perbandingan dividen, kepelbagaian portfolio, atau status patuh Syariah!`;
+      ? `Hi ${firstName}! I’m JomAI, your Bursa Malaysia study buddy. Ask me about any stock, compare dividends, check your diversification, or see which companies are Shariah-compliant.`
+      : `Hai ${firstName}! Saya JomAI, rakan belajar Bursa Malaysia anda. Tanya saya tentang mana-mana saham, perbandingan dividen, kepelbagaian portfolio, atau status patuh Syariah.`;
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -62,10 +62,8 @@ export function ChatbotModal({
 
   const texts = {
     ENG: {
-      kicker: 'JomAI Study Buddy',
-      title: 'Ask JomAI — Your Bursa Study Buddy',
+      title: 'Ask JomAI',
       placeholder: 'Ask about a stock (e.g. Maybank, Tenaga), dividends, or your portfolio...',
-      quickPromptsLabel: 'Popular Starter Questions',
       quickReplies: [
         'Is Maybank or CIMB better for dividends?',
         'Check my portfolio diversification',
@@ -74,10 +72,8 @@ export function ChatbotModal({
       ]
     },
     BM: {
-      kicker: 'Rakan Belajar JomAI',
-      title: 'Tanya JomAI — Rakan Belajar Bursa Anda',
+      title: 'Tanya JomAI',
       placeholder: 'Tanya tentang saham (cth. Maybank, Tenaga), dividen, atau portfolio anda...',
-      quickPromptsLabel: 'Soalan Permulaan Popular',
       quickReplies: [
         'Adakah Maybank atau CIMB lebih baik untuk dividen?',
         'Semak kepelbagaian portfolio saya',
@@ -176,13 +172,11 @@ export function ChatbotModal({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
         onClick={onClose}
       />
 
-      {/* Slide-Over Study Buddy Drawer */}
       <aside
         className="fixed inset-y-0 right-0 z-50 w-full max-w-md border-l flex flex-col shadow-2xl"
         style={{
@@ -191,22 +185,19 @@ export function ChatbotModal({
           color: 'var(--ink-primary)'
         }}
       >
-        {/* Drawer Header */}
         <div
-          className="p-5 border-b flex items-start justify-between gap-3"
+          className="p-4 border-b flex items-center justify-between gap-3"
           style={{
-            borderColor: 'var(--border-hairline)',
-            backgroundColor: 'var(--bg-elevated)'
+            borderColor: 'var(--border-hairline)'
           }}
         >
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             <div className="jom-avatar jom-avatar-emerald">AI</div>
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="jom-kicker">{t.kicker}</span>
-                <span className="jom-tag jom-tag-shariah">Live Bursa Data</span>
-              </div>
-              <h3 className="font-editorial text-xl">{t.title}</h3>
+            <div>
+              <h3 className="text-base font-bold">{t.title}</h3>
+              <p className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                {language === 'ENG' ? 'Bursa Malaysia Assistant' : 'Pembantu Bursa Malaysia'}
+              </p>
             </div>
           </div>
 
@@ -220,8 +211,7 @@ export function ChatbotModal({
           </button>
         </div>
 
-        {/* Message Stream */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message, index) => {
             const isUser = message.role === 'user';
             return (
@@ -229,20 +219,6 @@ export function ChatbotModal({
                 key={index}
                 className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
               >
-                <div className="flex items-center gap-2 mb-1 px-0.5">
-                  <span className="jom-kicker">
-                    {isUser
-                      ? language === 'ENG'
-                        ? 'You'
-                        : 'Anda'
-                      : 'JomAI'}
-                  </span>
-                  {!isUser && (
-                    <span className="jom-tag jom-tag-shariah">
-                      {language === 'ENG' ? 'Plain-English Guide' : 'Panduan Mudah'}
-                    </span>
-                  )}
-                </div>
                 <div
                   className={`max-w-[92%] rounded-2xl p-3.5 border text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
                     message.isTabular ? 'font-tabular' : ''
@@ -264,11 +240,10 @@ export function ChatbotModal({
                   {message.content}
                 </div>
 
-                {/* Clickable Referenced Stock Chips */}
                 {!isUser &&
                   message.referencedTickers &&
                   message.referencedTickers.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
+                    <div className="rh-chip-row mt-2">
                       {message.referencedTickers.map(ticker => {
                         const matchedStock = stocks.find(s => s.ticker === ticker);
                         return (
@@ -276,12 +251,7 @@ export function ChatbotModal({
                             key={ticker}
                             type="button"
                             onClick={() => handleTickerPillClick(ticker)}
-                            className="jom-tag jom-tag-shariah font-tabular cursor-pointer transition-opacity hover:opacity-80 flex items-center gap-1"
-                            title={
-                              matchedStock
-                                ? `${matchedStock.name} (RM ${matchedStock.price})`
-                                : ticker
-                            }
+                            className="rh-chip font-tabular flex items-center gap-1 text-xs"
                           >
                             <span>
                               {ticker}
@@ -299,9 +269,8 @@ export function ChatbotModal({
 
           {isTyping && (
             <div className="flex flex-col items-start">
-              <div className="jom-kicker mb-1">JomAI</div>
               <div
-                className="jom-panel-subtle px-3.5 py-2.5 text-xs flex items-center gap-2"
+                className="rh-card px-3.5 py-2.5 text-xs flex items-center gap-2"
                 style={{ color: 'var(--ink-secondary)' }}
               >
                 <Loader2 size={13} className="animate-spin" />
@@ -316,21 +285,19 @@ export function ChatbotModal({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Starter Question Pills */}
         <div
-          className="px-5 py-3 border-t space-y-2"
+          className="px-4 py-3 border-t"
           style={{
             borderColor: 'var(--border-hairline)',
             backgroundColor: 'var(--bg-elevated)'
           }}
         >
-          <div className="jom-kicker">{t.quickPromptsLabel}</div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="rh-chip-row">
             {t.quickReplies.map((reply, index) => (
               <button
                 key={index}
                 type="button"
-                className="jom-btn py-1 px-2.5 text-xs"
+                className="rh-chip text-xs"
                 disabled={isTyping}
                 onClick={() => handleSendMessage(reply)}
               >
@@ -340,7 +307,6 @@ export function ChatbotModal({
           </div>
         </div>
 
-        {/* Input Bar */}
         <div
           className="p-4 border-t flex items-center gap-2"
           style={{

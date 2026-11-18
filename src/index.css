@@ -3242,3 +3242,7 @@ body {
   width: 100%;
   margin: 1.75rem 0;
 }
+
+.mt-3 {
+  margin-top: 0.75rem;
+}

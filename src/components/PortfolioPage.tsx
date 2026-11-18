@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Plus, ArrowUpRight } from 'lucide-react';
+import { useMemo } from 'react';
+import { Plus } from 'lucide-react';
 import type { Screen, PortfolioItem, StockData, TradeRecord } from '../App';
 
 interface PortfolioPageProps {
@@ -72,94 +72,48 @@ export function PortfolioPage({
   setSelectedStock,
   onTopUpCash
 }: PortfolioPageProps) {
-  const [activeTab, setActiveTab] = useState<'holdings' | 'history'>('holdings');
-
   const texts = {
     ENG: {
-      kicker: 'Practice Portfolio & Wealth Coach',
-      title: 'My Bursa Portfolio',
-      subtitle:
-        'Track your practice holdings, sector diversification, and estimated passive dividend income in plain English.',
-      creditBtn: '+ Top Up RM 5,000 Practice Cash',
-      netLiquidity: 'Total Portfolio Value',
-      marketValueHoldings: 'Invested in Stocks',
-      buyingPower: 'Available Practice Cash',
-      projDividend: 'Est. Annual Dividends',
-      perYear: '/yr',
-      perMonth: '/mo',
-      costBasisLabel: 'Total Cost',
-      coachKicker: 'Guided Portfolio Check-Up',
-      coachTitle: 'Diversification Coach & Passive Income',
-      col1Title: 'Diversification Coach',
-      col2Title: 'Passive Dividend Income Estimator',
-      col3Title: 'Shariah & Investor Style Fit',
-      openPositions: 'My Stock Holdings',
-      contractNotes: 'Trade History',
-      colSecurity: 'Company',
-      colSector: 'Sector',
-      colQty: 'Shares Owned',
-      colAvgCost: 'Avg Buy Price',
-      colLastPrice: 'Current Price',
-      colMarketVal: 'Total Value',
-      colUnrealized: 'Total Return',
-      colActions: 'Quick Actions',
-      trimHalf: 'Sell Half',
-      closePos: 'Sell All',
-      emptyHoldingsTitle: 'Your portfolio is 100% in cash right now',
+      totalPortfolioLabel: 'Total Portfolio Value',
+      investedStocksLabel: 'Invested Stocks',
+      availableCashLabel: 'Available Cash',
+      holdingsTitle: 'Holdings',
+      recentOrdersTitle: 'Recent Orders',
+      sellHalfBtn: 'Sell Half',
+      sellBtn: 'Sell',
+      emptyHoldingsTitle: 'No stocks in your portfolio yet',
       emptyHoldingsDesc:
-        'You have plenty of practice cash ready! Explore Malaysian companies on the Home screen to make your first simulated investment.',
-      exploreMarket: 'Explore Bursa Stocks',
-      colSide: 'Order Type',
-      colExecPrice: 'Fill Price',
-      colFees: 'Bursa Fees',
-      colNetSettlement: 'Total Amount',
-      colTimestamp: 'Time',
-      emptyHistoryTitle: 'No practice trades yet',
-      emptyHistoryDesc:
-        'Every time you practice buying or selling a stock, your trade receipt and Bursa fee breakdown will appear here.'
+        'Use your practice cash to buy shares in Malaysian companies and track your gains and dividends here.',
+      exploreMarket: 'Explore Stocks',
+      emptyHistoryText: 'Your practice buy and sell orders will appear here.',
+      cashDividendsTitle: 'Cash & Dividends',
+      topUpBtn: '+ Add RM 5,000 Practice Cash',
+      annualDivLabel: 'Estimated Annual Dividends',
+      monthlyDivLabel: 'Monthly Equivalent',
+      balanceCheckTitle: 'Portfolio Balance Check',
+      sectorConcentrationLabel: 'Sector Concentration',
+      shariahShareLabel: 'Shariah-Compliant Share'
     },
     BM: {
-      kicker: 'Portfolio Latihan & Jurulatih Kekayaan',
-      title: 'Portfolio Bursa Saya',
-      subtitle:
-        'Pantau pegangan saham latihan anda, kepelbagaian sektor, dan anggaran pendapatan dividen pasif dengan mudah.',
-      creditBtn: '+ Tambah RM 5,000 Tunai Latihan',
-      netLiquidity: 'Jumlah Nilai Portfolio',
-      marketValueHoldings: 'Dilaburkan Dalam Saham',
-      buyingPower: 'Tunai Latihan Tersedia',
-      projDividend: 'Anggaran Dividen Tahunan',
-      perYear: '/thn',
-      perMonth: '/bln',
-      costBasisLabel: 'Jumlah Kos',
-      coachKicker: 'Semakan Kesihatan Portfolio',
-      coachTitle: 'Jurulatih Kepelbagaian & Pendapatan Pasif',
-      col1Title: 'Jurulatih Kepelbagaian',
-      col2Title: 'Penganggar Pendapatan Dividen Pasif',
-      col3Title: 'Status Syariah & Gaya Pelabur',
-      openPositions: 'Pegangan Saham Saya',
-      contractNotes: 'Sejarah Dagangan',
-      colSecurity: 'Syarikat',
-      colSector: 'Sektor',
-      colQty: 'Unit Dimiliki',
-      colAvgCost: 'Harga Beli Purata',
-      colLastPrice: 'Harga Semasa',
-      colMarketVal: 'Jumlah Nilai',
-      colUnrealized: 'Jumlah Pulangan',
-      colActions: 'Tindakan Pantas',
-      trimHalf: 'Jual Separuh',
-      closePos: 'Jual Semua',
-      emptyHoldingsTitle: 'Portfolio anda masih 100% tunai',
+      totalPortfolioLabel: 'Jumlah Nilai Portfolio',
+      investedStocksLabel: 'Saham Dilabur',
+      availableCashLabel: 'Tunai Tersedia',
+      holdingsTitle: 'Pegangan Saham',
+      recentOrdersTitle: 'Pesanan Terkini',
+      sellHalfBtn: 'Jual Separuh',
+      sellBtn: 'Jual',
+      emptyHoldingsTitle: 'Belum ada saham dalam portfolio anda',
       emptyHoldingsDesc:
-        'Anda mempunyai tunai latihan yang sedia digunakan! Terokai syarikat Malaysia di skrin Utama untuk membuat pelaburan latihan pertama anda.',
-      exploreMarket: 'Terokai Saham Bursa',
-      colSide: 'Jenis Pesanan',
-      colExecPrice: 'Harga Pelaksanaan',
-      colFees: 'Yuran Bursa',
-      colNetSettlement: 'Jumlah Bersih',
-      colTimestamp: 'Masa',
-      emptyHistoryTitle: 'Belum ada rekod dagangan latihan',
-      emptyHistoryDesc:
-        'Setiap kali anda berlatih membeli atau menjual saham, resit dagangan dan pecahan yuran Bursa akan dipaparkan di sini.'
+        'Gunakan tunai latihan anda untuk membeli saham syarikat Malaysia dan jejak pulangan serta dividen di sini.',
+      exploreMarket: 'Teroka Saham',
+      emptyHistoryText: 'Rekod pesanan belian dan jualan latihan anda akan dipaparkan di sini.',
+      cashDividendsTitle: 'Tunai & Dividen',
+      topUpBtn: '+ Tambah RM 5,000 Tunai Latihan',
+      annualDivLabel: 'Anggaran Dividen Tahunan',
+      monthlyDivLabel: 'Bersamaan Bulanan',
+      balanceCheckTitle: 'Semakan Imbangan Portfolio',
+      sectorConcentrationLabel: 'Tumpuan Sektor',
+      shariahShareLabel: 'Peratusan Patuh Syariah'
     }
   };
 
@@ -173,7 +127,7 @@ export function PortfolioPage({
     return portfolio.reduce((acc, item) => acc + item.averagePrice * item.quantity, 0);
   }, [portfolio]);
 
-  const totalNetLiquidity = holdingsValue + cashBalance;
+  const totalValue = holdingsValue + cashBalance;
   const unrealizedPL = holdingsValue - totalCostBasis;
   const unrealizedPLPercent = totalCostBasis > 0 ? (unrealizedPL / totalCostBasis) * 100 : 0;
 
@@ -205,728 +159,384 @@ export function PortfolioPage({
       .sort((a, b) => b.value - a.value);
   }, [portfolio]);
 
-  const diagnostics = useMemo(() => {
-    if (portfolio.length === 0 || holdingsValue <= 0) {
-      return {
-        diversificationTag: language === 'ENG' ? 'Ready to Start' : 'Sedia Bermula',
-        diversificationTagClass: 'jom-tag',
-        diversificationText:
-          language === 'ENG'
-            ? 'You have not bought any stocks yet. A great rule of thumb for beginners is spreading your money across at least 3 different industries (like Banking, Utilities, and Tech).'
-            : 'Anda belum membeli sebarang saham lagi. Petua terbaik untuk pemula ialah mempelbagaikan wang anda merentasi sekurang-kurangnya 3 industri berbeza.',
-        shariahPct: 0,
-        shariahValue: 0,
-        shariahText:
-          language === 'ENG'
-            ? 'RM 0.00 in Shariah-compliant stocks so far. Look for the green Shariah badge on the Home screen if you want halal-screened counters.'
-            : 'RM 0.00 dalam saham patuh Syariah setakat ini. Cari lencana hijau Syariah di skrin Utama untuk pilihan patuh Syariah.',
-        mandateTag: language === 'ENG' ? 'Cash Mode' : 'Mod Tunai',
-        mandateTagClass: 'jom-tag',
-        avgGrowthScore: 0,
-        avgDivScore: 0,
-        riskText:
-          language === 'ENG'
-            ? `Your profile is set to ${userProfile}. Pick your first stock to see how well your portfolio matches your goals.`
-            : `Profil anda ialah ${userProfile}. Pilih saham pertama anda untuk melihat keserasian dengan matlamat anda.`
-      };
-    }
-
-    const topSector = sectorData[0];
-    const numSectors = sectorData.length;
-    let diversificationTag = language === 'ENG' ? 'Getting There' : 'Sederhana';
-    let diversificationTagClass = 'jom-tag';
-    let diversificationText = '';
-
-    if (topSector && topSector.percentage > 60) {
-      diversificationTag = language === 'ENG' ? 'Heavy in 1 Sector' : 'Tertumpu 1 Sektor';
-      diversificationTagClass = 'jom-tag jom-tag-warn';
-      diversificationText =
-        language === 'ENG'
-          ? `${topSector.percentage}% of your stock investments are in ${topSector.name}. Adding a company from another industry helps protect your portfolio if one sector slows down.`
-          : `${topSector.percentage}% daripada pelaburan saham anda berada dalam ${topSector.name}. Menambah syarikat daripada industri lain membantu mengurangkan risiko.`;
-    } else if (numSectors >= 3) {
-      diversificationTag = language === 'ENG' ? 'Well Diversified' : 'Pelbagai & Kukuh';
-      diversificationTagClass = 'jom-tag jom-tag-up';
-      diversificationText =
-        language === 'ENG'
-          ? `Nice work! Your money is spread across ${numSectors} sectors (largest is ${topSector.name} at ${topSector.percentage}%). You are not overly reliant on any single industry.`
-          : `Bagus! Pelaburan anda diagihkan merentasi ${numSectors} sektor (terbesar ialah ${topSector.name} pada ${topSector.percentage}%).`;
-    } else {
-      diversificationTag = language === 'ENG' ? 'Good Start' : 'Permulaan Baik';
-      diversificationTagClass = 'jom-tag';
-      diversificationText =
-        language === 'ENG'
-          ? `You are invested in ${numSectors} sector(s), led by ${topSector.name} (${topSector.percentage}%). Adding 1 or 2 more sectors will give you a smoother ride.`
-          : `Anda melabur dalam ${numSectors} sektor, diketuai oleh ${topSector.name} (${topSector.percentage}%). Tambah 1 atau 2 lagi sektor untuk lebih seimbang.`;
-    }
-
+  const shariahPct = useMemo(() => {
+    if (holdingsValue <= 0) return 0;
     const shariahValue = portfolio.reduce((acc, item) => {
       return acc + (item.stock.isShariah ? parseFloat(item.stock.price) * item.quantity : 0);
     }, 0);
-    const shariahPct = Math.round((shariahValue / holdingsValue) * 100);
-    const shariahText =
-      language === 'ENG'
-        ? `${shariahPct}% (RM ${shariahValue.toLocaleString('en-MY', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })}) of your invested stocks are certified Shariah-compliant by SC Malaysia.`
-        : `${shariahPct}% (RM ${shariahValue.toLocaleString('en-MY', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })}) daripada saham anda disahkan patuh Syariah oleh SC Malaysia.`;
+    return Math.round((shariahValue / holdingsValue) * 100);
+  }, [portfolio, holdingsValue]);
 
-    const avgGrowthScore =
-      portfolio.reduce((acc, item) => {
-        const weight = (parseFloat(item.stock.price) * item.quantity) / holdingsValue;
-        return acc + item.stock.radarScores.growth * weight;
-      }, 0) || 0;
-    const avgDivScore =
-      portfolio.reduce((acc, item) => {
-        const weight = (parseFloat(item.stock.price) * item.quantity) / holdingsValue;
-        return acc + item.stock.radarScores.dividend * weight;
-      }, 0) || 0;
+  const topSector = sectorData[0];
 
-    const isAggressiveProfile =
-      userProfile.toLowerCase().includes('aggressive') ||
-      userProfile.toLowerCase().includes('explorer');
-    const isConservativeProfile =
-      userProfile.toLowerCase().includes('conservative') ||
-      userProfile.toLowerCase().includes('guardian');
-
-    let mandateTag = language === 'ENG' ? 'Great Match' : 'Padanan Baik';
-    let mandateTagClass = 'jom-tag jom-tag-up';
-    let riskText = '';
-
-    if (isAggressiveProfile) {
-      if (avgGrowthScore >= 65) {
-        mandateTag = language === 'ENG' ? 'Matches Your Goal' : 'Selaras Matlamat';
-        mandateTagClass = 'jom-tag jom-tag-up';
-        riskText =
-          language === 'ENG'
-            ? `Your holdings fit your ${userProfile} style well, with a strong Growth Score of ${avgGrowthScore.toFixed(0)}/100.`
-            : `Pegangan anda selaras dengan gaya ${userProfile}, dengan Skor Pertumbuhan ${avgGrowthScore.toFixed(0)}/100.`;
-      } else {
-        mandateTag = language === 'ENG' ? 'More Cautious' : 'Lebih Defensif';
-        mandateTagClass = 'jom-tag jom-tag-warn';
-        riskText =
-          language === 'ENG'
-            ? `Your profile is ${userProfile}, but your stocks are mostly defensive right now (Growth Score: ${avgGrowthScore.toFixed(0)}/100). Explore growth names like GAMUDA, INARI, or YTLPOWR.`
-            : `Profil anda ialah ${userProfile}, tetapi pilihan semasa lebih defensif (Skor Pertumbuhan: ${avgGrowthScore.toFixed(0)}/100). Cuba lihat GAMUDA atau INARI.`;
-      }
-    } else if (isConservativeProfile) {
-      if (avgDivScore >= 70) {
-        mandateTag = language === 'ENG' ? 'Matches Your Goal' : 'Selaras Matlamat';
-        mandateTagClass = 'jom-tag jom-tag-up';
-        riskText =
-          language === 'ENG'
-            ? `Fits your ${userProfile} style nicely! Your Dividend Score of ${avgDivScore.toFixed(0)}/100 gives you steady passive cash flow.`
-            : `Sesuai dengan gaya ${userProfile}! Skor Dividen ${avgDivScore.toFixed(0)}/100 memberi aliran pendapatan pasif yang stabil.`;
-      } else {
-        mandateTag = language === 'ENG' ? 'Higher Risk' : 'Risiko Lebih Tinggi';
-        mandateTagClass = 'jom-tag jom-tag-warn';
-        riskText =
-          language === 'ENG'
-            ? `A bit fast-moving for ${userProfile} (Dividend Score: ${avgDivScore.toFixed(0)}/100). Consider steady dividend payers like MAYBANK or TENAGA.`
-            : `Agak berisiko untuk ${userProfile} (Skor Dividen: ${avgDivScore.toFixed(0)}/100). Pertimbangkan pembayar dividen stabil seperti MAYBANK atau TENAGA.`;
-      }
-    } else {
-      mandateTag = language === 'ENG' ? 'Balanced Fit' : 'Seimbang';
-      mandateTagClass = 'jom-tag jom-tag-up';
-      riskText =
-        language === 'ENG'
-          ? `Well-balanced for ${userProfile}! Your Growth (${avgGrowthScore.toFixed(0)}/100) and Dividend (${avgDivScore.toFixed(0)}/100) scores complement each other.`
-          : `Seimbang untuk ${userProfile}! Skor Pertumbuhan (${avgGrowthScore.toFixed(0)}/100) dan Dividen (${avgDivScore.toFixed(0)}/100) saling melengkapi.`;
+  const guidanceSentence = useMemo(() => {
+    if (portfolio.length === 0 || holdingsValue <= 0) {
+      return language === 'ENG'
+        ? `Your style is set to ${userProfile} — try spreading your first picks across 3 different Bursa industries.`
+        : `Gaya anda ialah ${userProfile} — cuba agihkan pilihan pertama anda merentasi 3 industri Bursa berbeza.`;
     }
-
-    return {
-      diversificationTag,
-      diversificationTagClass,
-      diversificationText,
-      shariahPct,
-      shariahValue,
-      shariahText,
-      mandateTag,
-      mandateTagClass,
-      avgGrowthScore,
-      avgDivScore,
-      riskText
-    };
-  }, [portfolio, holdingsValue, sectorData, userProfile, language]);
+    if (topSector && topSector.percentage > 60) {
+      return language === 'ENG'
+        ? `${topSector.percentage}% of your stocks are in ${topSector.name}; adding another industry helps reduce single-sector risk.`
+        : `${topSector.percentage}% saham anda berada dalam ${topSector.name}; menambah industri lain membantu mengurangkan risiko.`;
+    }
+    return language === 'ENG'
+      ? `Well balanced across ${sectorData.length} industry sector(s) with ${shariahPct}% in Shariah-compliant companies.`
+      : `Seimbang merentasi ${sectorData.length} sektor industri dengan ${shariahPct}% dalam syarikat patuh Syariah.`;
+  }, [portfolio.length, holdingsValue, topSector, sectorData.length, shariahPct, userProfile, language]);
 
   const formatRM = (val: number) =>
     val.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const investedPct = totalNetLiquidity > 0 ? Math.round((holdingsValue / totalNetLiquidity) * 100) : 0;
+  const investedPct = totalValue > 0 ? Math.round((holdingsValue / totalValue) * 100) : 0;
   const cashPct = Math.max(0, 100 - investedPct);
 
   return (
-    <div className="jom-container space-y-8">
-      {/* Friendly Consumer Header */}
-      <div
-        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b"
-        style={{ borderColor: 'var(--border-hairline)' }}
-      >
-        <div className="space-y-1.5">
-          <div className="jom-kicker">{t.kicker}</div>
-          <h1 className="font-editorial text-4xl">{t.title}</h1>
-          <p className="text-sm max-w-2xl" style={{ color: 'var(--ink-secondary)' }}>
-            {t.subtitle}
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={() => onTopUpCash(5000)}
-            className="jom-btn jom-btn-primary"
-          >
-            <Plus size={14} />
-            <span>{t.creditBtn}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Origin-Style Plain-English Verdict Banner */}
-      <div className="jom-hero-verdict p-6 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="jom-tag jom-tag-shariah">
-                {language === 'ENG' ? 'Portfolio Takeaway' : 'Ringkasan Portfolio'}
-              </span>
-              <span className="jom-tag">{userProfile}</span>
-            </div>
-            <h2 className="font-editorial text-2xl pt-1">
-              {portfolio.length > 0
-                ? language === 'ENG'
-                  ? `You have ${portfolio.length} active stock${portfolio.length > 1 ? 's' : ''} worth RM ${formatRM(holdingsValue)}, generating ~RM ${formatRM(annualDividend)}/yr in passive dividends.`
-                  : `Anda mempunyai ${portfolio.length} saham aktif bernilai RM ${formatRM(holdingsValue)}, menjana ~RM ${formatRM(annualDividend)}/thn dalam dividen pasif.`
-                : language === 'ENG'
-                ? `You have RM ${formatRM(cashBalance)} in practice cash ready to build your first Bursa portfolio.`
-                : `Anda mempunyai RM ${formatRM(cashBalance)} tunai latihan sedia untuk membina portfolio Bursa pertama anda.`}
-            </h2>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-right">
-              <div className="jom-kicker">
-                {language === 'ENG' ? 'Stocks vs. Cash Mix' : 'Campuran Saham vs Tunai'}
+    <div className="rh-page">
+      <div className="rh-split">
+        {/* Left Main Column */}
+        <div className="rh-main space-y-8">
+          {/* Unboxed Total Portfolio Value + Allocation Bar */}
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <div className="text-sm font-medium" style={{ color: 'var(--ink-secondary)' }}>
+                {t.totalPortfolioLabel}
               </div>
-              <div className="font-tabular text-sm font-semibold">
-                {investedPct}% {language === 'ENG' ? 'Stocks' : 'Saham'} · {cashPct}%{' '}
-                {language === 'ENG' ? 'Cash' : 'Tunai'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Visual Allocation Bar */}
-        <div
-          className="w-full h-2.5 rounded-full overflow-hidden flex"
-          style={{ backgroundColor: 'var(--bg-subtle)' }}
-        >
-          <div
-            className="h-full transition-all duration-300"
-            style={{
-              width: `${investedPct}%`,
-              backgroundColor: 'var(--accent-brand)'
-            }}
-          />
-        </div>
-      </div>
-
-      {/* 4-Card Summary Strip */}
-      <div className="jom-ledger-strip">
-        <div className="jom-ledger-cell space-y-1.5">
-          <div className="jom-kicker">{t.netLiquidity}</div>
-          <div className="font-tabular text-2xl font-semibold">
-            RM {formatRM(totalNetLiquidity)}
-          </div>
-          <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-            {portfolio.length} {language === 'ENG' ? 'companies owned' : 'syarikat dimiliki'} ·{' '}
-            {investedPct}% {language === 'ENG' ? 'invested' : 'dilabur'}
-          </div>
-        </div>
-
-        <div className="jom-ledger-cell space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="jom-kicker">{t.marketValueHoldings}</span>
-            <span
-              className={`jom-tag font-tabular ${
-                unrealizedPL >= 0 ? 'jom-tag-up' : 'jom-tag-down'
-              }`}
-            >
-              {unrealizedPL >= 0 ? '+' : ''}
-              {unrealizedPLPercent.toFixed(2)}%
-            </span>
-          </div>
-          <div className="font-tabular text-2xl font-semibold">
-            RM {formatRM(holdingsValue)}
-          </div>
-          <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-            {t.costBasisLabel}: RM {formatRM(totalCostBasis)} (
-            <span
-              style={{
-                color: unrealizedPL >= 0 ? 'var(--signal-up)' : 'var(--signal-down)'
-              }}
-            >
-              {unrealizedPL >= 0 ? '+' : ''}RM {formatRM(unrealizedPL)}
-            </span>
-            )
-          </div>
-        </div>
-
-        <div className="jom-ledger-cell space-y-1.5">
-          <div className="jom-kicker">{t.buyingPower}</div>
-          <div
-            className="font-tabular text-2xl font-semibold"
-            style={{ color: 'var(--signal-up)' }}
-          >
-            RM {formatRM(cashBalance)}
-          </div>
-          <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-            {cashPct}% {language === 'ENG' ? 'in practice cash wallet' : 'dalam dompet tunai latihan'}
-          </div>
-        </div>
-
-        <div className="jom-ledger-cell space-y-1.5">
-          <div className="jom-kicker">{t.projDividend}</div>
-          <div className="font-tabular text-2xl font-semibold">
-            RM {formatRM(annualDividend)}
-            <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-muted)' }}>
-              {t.perYear}
-            </span>
-          </div>
-          <div className="font-tabular text-xs" style={{ color: 'var(--ink-secondary)' }}>
-            ~RM {formatRM(monthlyDividend)} {t.perMonth} ·{' '}
-            {holdingsValue > 0
-              ? `${((annualDividend / holdingsValue) * 100).toFixed(2)}% ${
-                  language === 'ENG' ? 'avg yield' : 'purata hasil'
-                }`
-              : '0.00%'}
-          </div>
-        </div>
-      </div>
-
-      {/* Friendly Diversification Coach & Passive Dividend Estimator */}
-      <section className="jom-panel p-6 space-y-5">
-        <div
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b"
-          style={{ borderColor: 'var(--border-hairline)' }}
-        >
-          <div>
-            <div className="jom-kicker">{t.coachKicker}</div>
-            <h2 className="font-editorial text-2xl mt-0.5">{t.coachTitle}</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="jom-tag">{userProfile}</span>
-            {sectorData.length > 0 && (
-              <span className="jom-tag font-tabular">
-                {sectorData.length} {language === 'ENG' ? 'Sectors Owned' : 'Sektor Dimiliki'}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-0 md:divide-x"
-          style={{ borderColor: 'var(--border-hairline)' }}
-        >
-          {/* Card 1: Diversification Coach */}
-          <div className="md:pr-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="jom-kicker">{t.col1Title}</span>
-              <span className={diagnostics.diversificationTagClass}>
-                {diagnostics.diversificationTag}
-              </span>
-            </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-              {diagnostics.diversificationText}
-            </p>
-            {sectorData.length > 0 && (
-              <div className="space-y-2 pt-1">
-                {sectorData.slice(0, 3).map(sec => (
-                  <div key={sec.name} className="space-y-1">
-                    <div className="flex justify-between text-xs font-tabular">
-                      <span style={{ color: 'var(--ink-secondary)' }}>{sec.name}</span>
-                      <span className="font-semibold">{sec.percentage}%</span>
-                    </div>
-                    <div
-                      className="w-full h-1.5 rounded-full overflow-hidden"
-                      style={{ backgroundColor: 'var(--bg-subtle)' }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${sec.percentage}%`,
-                          backgroundColor:
-                            sec.percentage > 60 ? 'var(--signal-warn)' : 'var(--accent-brand)'
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Card 2: Passive Dividend Income Estimator */}
-          <div className="md:px-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="jom-kicker">{t.col2Title}</span>
-              <span className="jom-tag jom-tag-up font-tabular">
-                {language === 'ENG' ? 'Tax-Exempt Payouts' : 'Dikecualikan Cukai'}
-              </span>
-            </div>
-            <div className="jom-panel-subtle p-3.5 space-y-1">
-              <div className="flex items-baseline justify-between">
-                <span className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                  {language === 'ENG' ? 'Estimated Yearly Cash' : 'Anggaran Tunai Tahunan'}
-                </span>
+              <div className="rh-hero-num">RM {formatRM(totalValue)}</div>
+              <div className="flex items-center gap-2 text-sm font-tabular">
                 <span
-                  className="font-tabular text-lg font-semibold"
-                  style={{ color: 'var(--signal-up)' }}
+                  className="font-semibold"
+                  style={{
+                    color: unrealizedPL >= 0 ? 'var(--signal-up)' : 'var(--signal-down)'
+                  }}
                 >
-                  RM {formatRM(annualDividend)}/yr
+                  {unrealizedPL >= 0 ? '+' : ''}RM {formatRM(unrealizedPL)} (
+                  {unrealizedPL >= 0 ? '+' : ''}
+                  {unrealizedPLPercent.toFixed(2)}%)
+                </span>
+                <span style={{ color: 'var(--ink-muted)' }}>
+                  {language === 'ENG' ? 'all-time return' : 'pulangan keseluruhan'}
                 </span>
               </div>
-              <div className="flex items-baseline justify-between text-xs font-tabular" style={{ color: 'var(--ink-muted)' }}>
-                <span>{language === 'ENG' ? 'Monthly equivalent' : 'Bersamaan bulanan'}</span>
-                <span>~RM {formatRM(monthlyDividend)}/mo</span>
-              </div>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-              {language === 'ENG'
-                ? 'Malaysian companies pay single-tier dividends that are 100% tax-free for everyday investors. Holding steady dividend payers builds passive cash flow.'
-                : 'Syarikat di Bursa Malaysia membayar dividen satu peringkat yang dikecualikan cukai sepenuhnya untuk pelabur individu.'}
-            </p>
-          </div>
 
-          {/* Card 3: Shariah & Investor Style Fit */}
-          <div className="md:pl-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="jom-kicker">{t.col3Title}</span>
-              <span className={diagnostics.mandateTagClass}>{diagnostics.mandateTag}</span>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs">
-                <span style={{ color: 'var(--ink-secondary)' }}>
-                  {language === 'ENG' ? 'Shariah-Compliant Share' : 'Peratusan Patuh Syariah'}
-                </span>
-                <span className="font-tabular font-semibold" style={{ color: 'var(--accent-brand)' }}>
-                  {diagnostics.shariahPct}%
-                </span>
+            {/* Clean Visual Allocation Bar (Invested Stocks vs Available Cash) */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-xs font-tabular">
+                <div>
+                  <span className="font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                    {t.investedStocksLabel}: RM {formatRM(holdingsValue)}
+                  </span>{' '}
+                  <span style={{ color: 'var(--ink-muted)' }}>({investedPct}%)</span>
+                </div>
+                <div>
+                  <span className="font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                    {t.availableCashLabel}: RM {formatRM(cashBalance)}
+                  </span>{' '}
+                  <span style={{ color: 'var(--ink-muted)' }}>({cashPct}%)</span>
+                </div>
               </div>
               <div
-                className="w-full h-1.5 rounded-full overflow-hidden"
+                className="w-full h-2.5 rounded-full overflow-hidden flex"
                 style={{ backgroundColor: 'var(--bg-subtle)' }}
               >
                 <div
-                  className="h-full transition-all duration-300 rounded-full"
+                  className="h-full transition-all duration-300"
                   style={{
-                    width: `${diagnostics.shariahPct}%`,
+                    width: `${investedPct}%`,
                     backgroundColor: 'var(--accent-brand)'
                   }}
                 />
               </div>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-              {diagnostics.riskText}
-            </p>
-            {portfolio.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div className="jom-panel-subtle p-2.5">
-                  <div className="jom-kicker">
-                    {language === 'ENG' ? 'Growth Score' : 'Skor Pertumbuhan'}
-                  </div>
-                  <div className="font-tabular text-sm font-semibold mt-0.5">
-                    {diagnostics.avgGrowthScore.toFixed(0)} / 100
-                  </div>
-                </div>
-                <div className="jom-panel-subtle p-2.5">
-                  <div className="jom-kicker">
-                    {language === 'ENG' ? 'Dividend Score' : 'Skor Dividen'}
-                  </div>
-                  <div className="font-tabular text-sm font-semibold mt-0.5">
-                    {diagnostics.avgDivScore.toFixed(0)} / 100
-                  </div>
+          </div>
+
+          {/* Holdings Section */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">
+                {t.holdingsTitle} ({portfolio.length})
+              </h2>
+            </div>
+
+            {portfolio.length > 0 ? (
+              <div className="rh-stock-list">
+                {portfolio.map((item, idx) => {
+                  const stock = item.stock;
+                  const currentPrice = parseFloat(stock.price);
+                  const marketVal = currentPrice * item.quantity;
+                  const profit = (currentPrice - item.averagePrice) * item.quantity;
+                  const returnPct =
+                    item.averagePrice > 0
+                      ? ((currentPrice - item.averagePrice) / item.averagePrice) * 100
+                      : 0;
+                  const isPositive = profit >= 0;
+                  const halfQty = Math.max(1, Math.floor(item.quantity / 2));
+                  const monogram = getStockMonogram(stock.ticker, stock.sector);
+
+                  return (
+                    <div
+                      key={`${stock.id}-${idx}`}
+                      className="rh-stock-row"
+                      onClick={() => {
+                        setSelectedStock(stock);
+                        navigateTo('stock-details');
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={monogram.avatarClass}>{monogram.initials}</div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">{stock.name}</span>
+                            <span
+                              className="text-xs font-tabular"
+                              style={{ color: 'var(--ink-muted)' }}
+                            >
+                              {stock.ticker}
+                            </span>
+                          </div>
+                          <div
+                            className="text-xs font-tabular mt-0.5"
+                            style={{ color: 'var(--ink-secondary)' }}
+                          >
+                            {item.quantity.toLocaleString()} sh · Avg RM {formatRM(item.averagePrice)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="text-right font-tabular">
+                          <div className="text-sm font-semibold">RM {formatRM(marketVal)}</div>
+                          <div
+                            className="text-xs font-medium"
+                            style={{
+                              color: isPositive ? 'var(--signal-up)' : 'var(--signal-down)'
+                            }}
+                          >
+                            {isPositive ? '+' : ''}RM {formatRM(profit)} ({isPositive ? '+' : ''}
+                            {returnPct.toFixed(2)}%)
+                          </div>
+                        </div>
+
+                        <div
+                          className="flex items-center gap-1.5"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {item.quantity > 1 && (
+                            <button
+                              type="button"
+                              className="jom-btn py-1 px-2.5 text-xs font-tabular"
+                              onClick={() => sellFromPortfolio(stock, halfQty)}
+                            >
+                              {t.sellHalfBtn}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="jom-btn py-1 px-2.5 text-xs"
+                            onClick={() => removeFromPortfolio(stock)}
+                          >
+                            {t.sellBtn}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rh-card text-center space-y-3">
+                <h3 className="text-base font-bold">{t.emptyHoldingsTitle}</h3>
+                <p className="text-xs max-w-md mx-auto" style={{ color: 'var(--ink-secondary)' }}>
+                  {t.emptyHoldingsDesc}
+                </p>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => navigateTo('dashboard')}
+                    className="jom-btn jom-btn-primary text-xs"
+                  >
+                    {t.exploreMarket}
+                  </button>
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* Holdings List & Trade History */}
-      <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="jom-segmented">
-            <button
-              type="button"
-              className={activeTab === 'holdings' ? 'active' : ''}
-              onClick={() => setActiveTab('holdings')}
-            >
-              {t.openPositions} ({portfolio.length})
-            </button>
-            <button
-              type="button"
-              className={activeTab === 'history' ? 'active' : ''}
-              onClick={() => setActiveTab('history')}
-            >
-              {t.contractNotes} ({tradeHistory.length})
-            </button>
-          </div>
-        </div>
+          {/* Recent Orders Section */}
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold">
+              {t.recentOrdersTitle} ({tradeHistory.length})
+            </h2>
 
-        {activeTab === 'holdings' ? (
-          portfolio.length > 0 ? (
-            <div className="jom-panel overflow-hidden">
-              <div className="jom-table-wrap">
-                <table className="jom-table">
-                  <thead>
-                    <tr>
-                      <th>{t.colSecurity}</th>
-                      <th>{t.colSector}</th>
-                      <th className="text-right">{t.colQty}</th>
-                      <th className="text-right">{t.colAvgCost}</th>
-                      <th className="text-right">{t.colLastPrice}</th>
-                      <th className="text-right">{t.colMarketVal}</th>
-                      <th className="text-right">{t.colUnrealized}</th>
-                      <th className="text-right">{t.colActions}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {portfolio.map((item, idx) => {
-                      const stock = item.stock;
-                      const currentPrice = parseFloat(stock.price);
-                      const marketVal = currentPrice * item.quantity;
-                      const profit = (currentPrice - item.averagePrice) * item.quantity;
-                      const returnPct =
-                        item.averagePrice > 0
-                          ? ((currentPrice - item.averagePrice) / item.averagePrice) * 100
-                          : 0;
-                      const isPositive = profit >= 0;
-                      const halfQty = Math.max(1, Math.floor(item.quantity / 2));
-                      const monogram = getStockMonogram(stock.ticker, stock.sector);
-
-                      return (
-                        <tr
-                          key={`${stock.id}-${idx}`}
-                          onClick={() => {
-                            setSelectedStock(stock);
-                            navigateTo('stock-details');
-                          }}
-                        >
-                          <td>
-                            <div className="flex items-center gap-3">
-                              <div className={monogram.avatarClass}>{monogram.initials}</div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-tabular font-semibold">{stock.ticker}</span>
-                                  <span
-                                    className="font-tabular text-xs"
-                                    style={{ color: 'var(--ink-muted)' }}
-                                  >
-                                    {stock.bursaCode}
-                                  </span>
-                                  {stock.isShariah && (
-                                    <span className="jom-tag jom-tag-shariah">Shariah</span>
-                                  )}
-                                </div>
-                                <div
-                                  className="text-xs mt-0.5 flex items-center gap-1"
-                                  style={{ color: 'var(--ink-secondary)' }}
-                                >
-                                  <span>{stock.name}</span>
-                                  <ArrowUpRight size={11} />
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="jom-tag">{stock.sector}</span>
-                          </td>
-                          <td className="text-right font-tabular">
-                            <div className="font-semibold">{item.quantity.toLocaleString()} sh</div>
-                            <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                              {(item.quantity / 100).toFixed(1)} lots
-                            </div>
-                          </td>
-                          <td className="text-right font-tabular">
-                            RM {formatRM(item.averagePrice)}
-                          </td>
-                          <td className="text-right font-tabular">
-                            RM {formatRM(currentPrice)}
-                          </td>
-                          <td className="text-right font-tabular font-semibold">
-                            RM {formatRM(marketVal)}
-                          </td>
-                          <td className="text-right font-tabular">
-                            <div
-                              className="font-semibold"
-                              style={{
-                                color: isPositive ? 'var(--signal-up)' : 'var(--signal-down)'
-                              }}
+            {tradeHistory.length > 0 ? (
+              <div className="rh-stock-list">
+                {tradeHistory.map(trade => {
+                  const monogram = getStockMonogram(trade.ticker);
+                  const isBuy = trade.type === 'BUY';
+                  return (
+                    <div
+                      key={trade.id}
+                      className="rh-stock-row"
+                      style={{ cursor: 'default' }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={monogram.avatarClass}>{monogram.initials}</div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">
+                              {isBuy
+                                ? language === 'ENG'
+                                  ? 'Bought'
+                                  : 'Beli'
+                                : language === 'ENG'
+                                ? 'Sold'
+                                : 'Jual'}{' '}
+                              {trade.ticker}
+                            </span>
+                            <span
+                              className="text-xs font-tabular"
+                              style={{ color: 'var(--ink-muted)' }}
                             >
-                              {isPositive ? '+' : ''}RM {formatRM(profit)}
-                            </div>
-                            <div className="mt-0.5">
-                              <span
-                                className={`jom-tag font-tabular ${
-                                  isPositive ? 'jom-tag-up' : 'jom-tag-down'
-                                }`}
-                              >
-                                {isPositive ? '+' : ''}
-                                {returnPct.toFixed(2)}%
-                              </span>
-                            </div>
-                          </td>
-                          <td
-                            className="text-right"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <div className="inline-flex items-center justify-end gap-1.5">
-                              {item.quantity > 1 && (
-                                <button
-                                  type="button"
-                                  className="jom-btn py-1 px-2.5 text-xs font-tabular"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    sellFromPortfolio(stock, halfQty);
-                                  }}
-                                >
-                                  {t.trimHalf} ({halfQty})
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className="jom-btn jom-btn-danger py-1 px-2.5 text-xs"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  removeFromPortfolio(stock);
-                                }}
-                              >
-                                {t.closePos}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="jom-panel p-12 text-center space-y-4">
-              <div className="jom-kicker">
-                {language === 'ENG' ? 'Ready for Your First Trade' : 'Sedia Untuk Dagangan Pertama'}
-              </div>
-              <h3 className="font-editorial text-2xl">{t.emptyHoldingsTitle}</h3>
-              <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--ink-secondary)' }}>
-                {t.emptyHoldingsDesc}
-              </p>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => navigateTo('dashboard')}
-                  className="jom-btn jom-btn-primary"
-                >
-                  {t.exploreMarket}
-                </button>
-              </div>
-            </div>
-          )
-        ) : tradeHistory.length > 0 ? (
-          <div className="jom-panel overflow-hidden">
-            <div className="jom-table-wrap">
-              <table className="jom-table">
-                <thead>
-                  <tr>
-                    <th>{t.colSide}</th>
-                    <th>{t.colSecurity}</th>
-                    <th className="text-right">{t.colQty}</th>
-                    <th className="text-right">{t.colExecPrice}</th>
-                    <th className="text-right">{t.colFees}</th>
-                    <th className="text-right">{t.colNetSettlement}</th>
-                    <th className="text-right">{t.colTimestamp}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tradeHistory.map(trade => {
-                    const monogram = getStockMonogram(trade.ticker);
-                    return (
-                      <tr key={trade.id} style={{ cursor: 'default' }}>
-                        <td>
-                          <span
-                            className={`jom-tag font-tabular ${
-                              trade.type === 'BUY' ? 'jom-tag-up' : 'jom-tag-warn'
-                            }`}
-                          >
-                            {trade.type === 'BUY'
-                              ? language === 'ENG'
-                                ? 'Bought'
-                                : 'Beli'
-                              : language === 'ENG'
-                              ? 'Sold'
-                              : 'Jual'}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-3">
-                            <div className={monogram.avatarClass}>{monogram.initials}</div>
-                            <div>
-                              <div className="font-tabular font-semibold">{trade.ticker}</div>
-                              <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                                {trade.stockName}
-                              </div>
-                            </div>
+                              {trade.quantity.toLocaleString()} sh @ RM {formatRM(trade.pricePerShare)}
+                            </span>
                           </div>
-                        </td>
-                        <td className="text-right font-tabular">
-                          {trade.quantity.toLocaleString()} sh
-                        </td>
-                        <td className="text-right font-tabular">
-                          RM {formatRM(trade.pricePerShare)}
-                        </td>
-                        <td
-                          className="text-right font-tabular"
-                          style={{ color: 'var(--ink-secondary)' }}
-                        >
-                          RM {formatRM(trade.totalFees)}
-                        </td>
-                        <td
-                          className="text-right font-tabular font-semibold"
+                          <div
+                            className="text-xs font-tabular mt-0.5"
+                            style={{ color: 'var(--ink-muted)' }}
+                          >
+                            {trade.timestamp} · Fees RM {formatRM(trade.totalFees)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right font-tabular shrink-0">
+                        <div
+                          className="text-sm font-semibold"
                           style={{
-                            color:
-                              trade.type === 'BUY' ? 'var(--ink-primary)' : 'var(--signal-up)'
+                            color: isBuy ? 'var(--ink-primary)' : 'var(--signal-up)'
                           }}
                         >
-                          {trade.type === 'BUY' ? '-' : '+'}RM {formatRM(trade.netAmount)}
-                        </td>
-                        <td
-                          className="text-right font-tabular text-xs"
-                          style={{ color: 'var(--ink-muted)' }}
-                        >
-                          {trade.timestamp}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          {isBuy ? '-' : '+'}RM {formatRM(trade.netAmount)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rh-card text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                {t.emptyHistoryText}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Right Sticky Rail */}
+        <aside className="rh-rail space-y-4">
+          {/* Cash & Dividends Card */}
+          <div className="rh-card space-y-4">
+            <h3 className="text-base font-bold">{t.cashDividendsTitle}</h3>
+
+            <div className="space-y-1">
+              <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                {t.availableCashLabel}
+              </div>
+              <div
+                className="text-2xl font-bold font-tabular"
+                style={{ color: 'var(--signal-up)' }}
+              >
+                RM {formatRM(cashBalance)}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onTopUpCash(5000)}
+              className="jom-btn jom-btn-primary w-full text-xs"
+            >
+              <Plus size={14} />
+              <span>{t.topUpBtn}</span>
+            </button>
+
+            <div
+              className="pt-4 border-t space-y-2 text-xs"
+              style={{ borderColor: 'var(--border-hairline)' }}
+            >
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.annualDivLabel}</span>
+                <span className="font-tabular font-semibold" style={{ color: 'var(--signal-up)' }}>
+                  RM {formatRM(annualDividend)}/yr
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.monthlyDivLabel}</span>
+                <span className="font-tabular font-semibold">
+                  RM {formatRM(monthlyDividend)}/mo
+                </span>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="jom-panel p-12 text-center space-y-3">
-            <div className="jom-kicker">
-              {language === 'ENG' ? 'Practice Trade Receipts' : 'Resit Dagangan Latihan'}
+
+          {/* Portfolio Balance Check Card */}
+          <div className="rh-card space-y-4">
+            <h3 className="text-base font-bold">{t.balanceCheckTitle}</h3>
+
+            {/* Sector Concentration Progress Bars */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: 'var(--ink-secondary)' }}>
+                  {t.sectorConcentrationLabel}
+                </span>
+                <span className="font-tabular font-semibold">
+                  {topSector ? `${topSector.name} (${topSector.percentage}%)` : '0%'}
+                </span>
+              </div>
+              <div
+                className="w-full h-2 rounded-full overflow-hidden"
+                style={{ backgroundColor: 'var(--bg-subtle)' }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${topSector ? topSector.percentage : 0}%`,
+                    backgroundColor:
+                      topSector && topSector.percentage > 60
+                        ? 'var(--signal-warn)'
+                        : 'var(--accent-brand)'
+                  }}
+                />
+              </div>
             </div>
-            <h3 className="font-editorial text-2xl">{t.emptyHistoryTitle}</h3>
-            <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--ink-secondary)' }}>
-              {t.emptyHistoryDesc}
+
+            {/* Shariah % Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: 'var(--ink-secondary)' }}>{t.shariahShareLabel}</span>
+                <span className="font-tabular font-semibold" style={{ color: 'var(--accent-brand)' }}>
+                  {shariahPct}%
+                </span>
+              </div>
+              <div
+                className="w-full h-2 rounded-full overflow-hidden"
+                style={{ backgroundColor: 'var(--bg-subtle)' }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${shariahPct}%`,
+                    backgroundColor: 'var(--accent-brand)'
+                  }}
+                />
+              </div>
+            </div>
+
+            <p className="text-xs leading-relaxed pt-1" style={{ color: 'var(--ink-secondary)' }}>
+              {guidanceSentence}
             </p>
           </div>
-        )}
-      </section>
+        </aside>
+      </div>
     </div>
   );
 }
