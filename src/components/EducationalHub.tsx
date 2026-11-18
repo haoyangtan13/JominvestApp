@@ -771,73 +771,178 @@ export function EducationalHub({
   const excerptToDisplay =
     activeReport?.extractedExcerpt || (uploadedText.trim() ? uploadedText.trim().slice(0, 260) : '');
 
-  const currentMonogram = currentStock
-    ? getStockMonogram(currentStock.ticker, currentStock.sector)
-    : { initials: 'JM', avatarClass: 'jom-avatar jom-avatar-emerald' };
 
   return (
     <div className="rh-page space-y-8">
-      {/* Single Clean Header + 4-Tab Horizontal Chip Row */}
+      {/* Header + Underline Tabs */}
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">
-          {language === 'ENG' ? 'Learn & Research Tools' : 'Alat Belajar & Penyelidikan'}
+        <h1 className="text-xl font-semibold">
+          {language === 'ENG' ? 'Learn & Research' : 'Belajar & Penyelidikan'}
         </h1>
 
-        <div className="rh-chip-row">
+        <div className="rh-tabs">
           <button
             type="button"
-            className={`rh-chip ${activeTab === 'reader' ? 'active' : ''}`}
+            className={`rh-tab ${activeTab === 'reader' ? 'active' : ''}`}
             onClick={() => setActiveTab('reader')}
           >
-            {language === 'ENG' ? 'Annual Report Reader' : 'Pembaca Laporan Tahunan'}
+            {language === 'ENG' ? 'Annual Report Reader' : 'Laporan Tahunan'}
           </button>
           <button
             type="button"
-            className={`rh-chip ${activeTab === 'news' ? 'active' : ''}`}
+            className={`rh-tab ${activeTab === 'news' ? 'active' : ''}`}
             onClick={() => setActiveTab('news')}
           >
             {language === 'ENG' ? 'Market News' : 'Berita Pasaran'}
           </button>
           <button
             type="button"
-            className={`rh-chip ${activeTab === 'calculator' ? 'active' : ''}`}
+            className={`rh-tab ${activeTab === 'calculator' ? 'active' : ''}`}
             onClick={() => setActiveTab('calculator')}
           >
             {language === 'ENG' ? 'Wealth Calculator' : 'Kalkulator Kekayaan'}
           </button>
           <button
             type="button"
-            className={`rh-chip ${activeTab === 'lessons' ? 'active' : ''}`}
+            className={`rh-tab ${activeTab === 'lessons' ? 'active' : ''}`}
             onClick={() => setActiveTab('lessons')}
           >
-            {language === 'ENG' ? 'Short Lessons' : 'Pelajaran Ringkas'}
+            {language === 'ENG' ? 'Lessons' : 'Pelajaran'}
           </button>
         </div>
       </div>
 
-      {/* TAB 1: ANNUAL REPORT READER (JomRingkas) */}
+      {/* TAB 1: ANNUAL REPORT READER */}
       {activeTab === 'reader' && (
         <div className="rh-split">
-          {/* Left Rail: Company Selector + PDF/Text Upload Card */}
-          <aside className="rh-rail space-y-4">
-            <div className="rh-card space-y-4">
+          {/* Main Left: Clean 3-Section Report Summary */}
+          <div className="rh-main">
+            {isScanning ? (
+              <div className="py-16 text-center space-y-2">
+                <Loader2
+                  size={20}
+                  className="animate-spin mx-auto"
+                  style={{ color: 'var(--ink-muted)' }}
+                />
+                <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>{loadingText}</div>
+              </div>
+            ) : (
+              scanComplete &&
+              activeReport &&
+              currentStock && (
+                <div className="space-y-8">
+                  <div
+                    className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 pb-4 border-b"
+                    style={{ borderColor: 'var(--border-hairline)' }}
+                  >
+                    <div>
+                      <h2 className="text-lg font-semibold">{activeReport.title}</h2>
+                      <div className="text-xs font-tabular mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                        {currentStock.bursaCode} · RM {currentStock.price} ({currentStock.changePercent}) ·{' '}
+                        {currentStock.sector}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        className="rh-link-btn"
+                        onClick={() => {
+                          setSelectedStock(currentStock);
+                          navigateTo('stock-details');
+                        }}
+                      >
+                        {language === 'ENG' ? 'View stock →' : 'Lihat saham →'}
+                      </button>
+                      <button
+                        type="button"
+                        className="jom-btn text-xs py-1 px-2.5"
+                        onClick={handleExportSummary}
+                      >
+                        <Download size={12} />
+                        <span>{language === 'ENG' ? 'Export (.txt)' : 'Simpan (.txt)'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {excerptToDisplay && (
+                    <div
+                      className="p-3.5 rounded text-xs space-y-1"
+                      style={{ backgroundColor: 'var(--bg-subtle)' }}
+                    >
+                      <div className="flex items-center justify-between font-medium">
+                        <span>
+                          {uploadedFileName || (language === 'ENG' ? 'Document excerpt' : 'Petikan dokumen')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleClearCustomDocument}
+                          className="rh-link-btn"
+                        >
+                          {language === 'ENG' ? 'Clear' : 'Padam'}
+                        </button>
+                      </div>
+                      <p className="leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                        "{excerptToDisplay}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 3 Clean Summary Sections */}
+                  <div className="space-y-6">
+                    <div className="space-y-1.5">
+                      <h3 className="text-sm font-semibold">
+                        {language === 'ENG' ? '1. Business & Earnings' : '1. Perniagaan & Pendapatan'}
+                      </h3>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                        {activeReport.growth}
+                      </p>
+                    </div>
+
+                    <div
+                      className="pt-5 border-t space-y-1.5"
+                      style={{ borderColor: 'var(--border-hairline)' }}
+                    >
+                      <h3 className="text-sm font-semibold">
+                        {language === 'ENG' ? '2. Valuation & Key Risks' : '2. Penilaian & Risiko Utama'}
+                      </h3>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                        {activeReport.risk}
+                      </p>
+                    </div>
+
+                    <div
+                      className="pt-5 border-t space-y-1.5"
+                      style={{ borderColor: 'var(--border-hairline)' }}
+                    >
+                      <h3 className="text-sm font-semibold">
+                        {language === 'ENG' ? '3. Dividends & Shariah Status' : '3. Dividen & Status Syariah'}
+                      </h3>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                        {activeReport.dividend}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+
+          {/* Right Rail: Company Selector & File Upload */}
+          <aside className="rh-rail space-y-5">
+            <div className="space-y-4">
               <div className="space-y-1">
-                <h2 className="text-base font-bold">
-                  {language === 'ENG' ? 'Annual Report Reader' : 'Pembaca Laporan Tahunan'}
-                </h2>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                  {language === 'ENG'
-                    ? 'Pick a Bursa Malaysia company or upload an annual report PDF for a plain-English summary.'
-                    : 'Pilih syarikat Bursa Malaysia atau muat naik PDF laporan tahunan untuk ringkasan mudah.'}
-                </p>
+                <h3 className="text-xs font-semibold" style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? 'Select Company or Filing' : 'Pilih Syarikat atau Dokumen'}
+                </h3>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold block" style={{ color: 'var(--ink-secondary)' }}>
+                <label className="text-xs block" style={{ color: 'var(--ink-muted)' }}>
                   {language === 'ENG' ? 'Company' : 'Syarikat'}
                 </label>
                 <select
-                  className="jom-input font-tabular w-full"
+                  className="jom-input font-tabular w-full text-xs"
                   value={selectedStockId}
                   onChange={e => {
                     setSelectedStockId(e.target.value);
@@ -847,30 +952,23 @@ export function EducationalHub({
                 >
                   {stocks.map(s => (
                     <option key={s.id} value={s.id}>
-                      {s.ticker} ({s.bursaCode}) — {s.name}
+                      {s.ticker} — {s.name}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold block" style={{ color: 'var(--ink-secondary)' }}>
-                  {language === 'ENG'
-                    ? 'Upload PDF or Paste Filing Text'
-                    : 'Muat Naik PDF atau Tampal Teks'}
+                <label className="text-xs block" style={{ color: 'var(--ink-muted)' }}>
+                  {language === 'ENG' ? 'Annual report PDF / text' : 'Fail PDF / teks laporan'}
                 </label>
                 <label className="jom-btn w-full justify-between cursor-pointer text-xs">
                   <span className="truncate flex items-center gap-1.5">
-                    <FileText size={14} />
+                    <FileText size={13} />
                     <span className="truncate">
                       {uploadedFileName ||
-                        (language === 'ENG'
-                          ? 'Choose PDF / TXT file'
-                          : 'Pilih fail PDF / TXT')}
+                        (language === 'ENG' ? 'Upload PDF or TXT' : 'Muat naik PDF / TXT')}
                     </span>
-                  </span>
-                  <span className="text-xs font-semibold" style={{ color: 'var(--accent-brand)' }}>
-                    Browse
                   </span>
                   <input
                     type="file"
@@ -884,22 +982,19 @@ export function EducationalHub({
                   />
                 </label>
 
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setCustomPasteOpen(prev => !prev)}
-                    className="text-xs underline cursor-pointer"
-                    style={{ color: 'var(--ink-secondary)' }}
-                  >
-                    {customPasteOpen
-                      ? language === 'ENG'
-                        ? 'Hide text box'
-                        : 'Tutup ruangan teks'
-                      : language === 'ENG'
-                      ? 'Or paste announcement text'
-                      : 'Atau tampal teks pengumuman'}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setCustomPasteOpen(prev => !prev)}
+                  className="rh-link-btn"
+                >
+                  {customPasteOpen
+                    ? language === 'ENG'
+                      ? 'Hide text input'
+                      : 'Tutup ruangan teks'
+                    : language === 'ENG'
+                    ? 'Or paste filing text'
+                    : 'Atau tampal teks laporan'}
+                </button>
 
                 {customPasteOpen && (
                   <div className="space-y-2 pt-1">
@@ -909,27 +1004,16 @@ export function EducationalHub({
                       onChange={e => {
                         setUploadedText(e.target.value);
                         if (!uploadedFileName && e.target.value.trim()) {
-                          setUploadedFileName('Pasted_Bursa_Filing.txt');
+                          setUploadedFileName('Pasted_Filing.txt');
                         }
                       }}
                       placeholder={
                         language === 'ENG'
-                          ? 'Paste quarterly announcement or annual report text here...'
-                          : 'Tampal pengumuman suku tahunan atau laporan tahunan di sini...'
+                          ? 'Paste quarterly or annual report excerpt...'
+                          : 'Tampal petikan laporan suku tahunan atau tahunan...'
                       }
                       className="jom-input w-full text-xs"
                     />
-                    {(uploadedFileName || uploadedText) && (
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleClearCustomDocument}
-                          className="jom-btn py-1 px-2.5 text-xs"
-                        >
-                          {language === 'ENG' ? 'Clear' : 'Padam'}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -938,615 +1022,360 @@ export function EducationalHub({
                 type="button"
                 onClick={handleAnalyze}
                 disabled={isScanning}
-                className="jom-btn jom-btn-primary w-full text-xs"
+                className="jom-btn jom-btn-primary w-full text-xs py-2"
               >
-                {isScanning ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>{loadingText}</span>
-                  </>
-                ) : (
-                  <span>
-                    {language === 'ENG' ? 'Summarize Report' : 'Ringkaskan Laporan'}
-                  </span>
-                )}
+                {isScanning ? loadingText : language === 'ENG' ? 'Summarize' : 'Ringkaskan'}
               </button>
             </div>
           </aside>
-
-          {/* Right Main: Clean 3-Section Summary in .rh-card */}
-          <div className="rh-main">
-            {isScanning ? (
-              <div className="rh-card py-20 text-center space-y-3">
-                <Loader2
-                  size={24}
-                  className="animate-spin mx-auto"
-                  style={{ color: 'var(--accent-brand)' }}
-                />
-                <div className="text-sm font-semibold">{loadingText}</div>
-              </div>
-            ) : (
-              scanComplete &&
-              activeReport &&
-              currentStock && (
-                <div className="rh-card space-y-6">
-                  <div
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b"
-                    style={{ borderColor: 'var(--border-hairline)' }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={currentMonogram.avatarClass}>
-                        {currentMonogram.initials}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold">{activeReport.title}</h3>
-                        <div className="text-xs font-tabular" style={{ color: 'var(--ink-secondary)' }}>
-                          {currentStock.bursaCode} · RM {currentStock.price} ({currentStock.changePercent}) ·{' '}
-                          {currentStock.sector}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="sm:text-right font-tabular">
-                      <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                        {language === 'ENG' ? 'Health Score' : 'Skor Kesihatan'}
-                      </div>
-                      <div
-                        className="text-xl font-bold"
-                        style={{ color: 'var(--signal-up)' }}
-                      >
-                        {activeReport.score} / 100
-                      </div>
-                    </div>
-                  </div>
-
-                  {excerptToDisplay && (
-                    <div
-                      className="p-3.5 rounded-xl space-y-1 text-xs"
-                      style={{
-                        backgroundColor: 'var(--bg-subtle)',
-                        borderLeft: '3px solid var(--accent-brand)'
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold">
-                          {uploadedFileName || (language === 'ENG' ? 'Uploaded Excerpt' : 'Petikan Dokumen')}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleClearCustomDocument}
-                          className="underline cursor-pointer"
-                          style={{ color: 'var(--ink-secondary)' }}
-                        >
-                          {language === 'ENG' ? 'Clear' : 'Padam'}
-                        </button>
-                      </div>
-                      <p className="leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                        "{excerptToDisplay}"
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 3 Clean Summary Sections */}
-                  <div className="space-y-5">
-                    <div className="space-y-1.5">
-                      <h4 className="text-sm font-bold" style={{ color: 'var(--signal-up)' }}>
-                        {language === 'ENG' ? "What's Going Well" : 'Apa Yang Positif'}
-                      </h4>
-                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                        {activeReport.growth}
-                      </p>
-                    </div>
-
-                    <div
-                      className="pt-4 border-t space-y-1.5"
-                      style={{ borderColor: 'var(--border-hairline)' }}
-                    >
-                      <h4 className="text-sm font-bold" style={{ color: 'var(--signal-warn)' }}>
-                        {language === 'ENG' ? 'Risks to Watch' : 'Risiko Perlu Diperhatikan'}
-                      </h4>
-                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                        {activeReport.risk}
-                      </p>
-                    </div>
-
-                    <div
-                      className="pt-4 border-t space-y-1.5"
-                      style={{ borderColor: 'var(--border-hairline)' }}
-                    >
-                      <h4 className="text-sm font-bold" style={{ color: 'var(--accent-brand)' }}>
-                        {language === 'ENG' ? 'Dividends & Shariah' : 'Dividen & Syariah'}
-                      </h4>
-                      <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                        {activeReport.dividend}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t"
-                    style={{ borderColor: 'var(--border-hairline)' }}
-                  >
-                    <button
-                      type="button"
-                      className="jom-btn text-xs"
-                      onClick={() => {
-                        setSelectedStock(currentStock);
-                        navigateTo('stock-details');
-                      }}
-                    >
-                      <span>{language === 'ENG' ? 'Open Stock Page' : 'Buka Halaman Saham'}</span>
-                      <ArrowUpRight size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      className="jom-btn jom-btn-primary text-xs"
-                      onClick={handleExportSummary}
-                    >
-                      <Download size={13} />
-                      <span>
-                        {language === 'ENG' ? 'Save Summary (+15 XP)' : 'Simpan Ringkasan (+15 XP)'}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
         </div>
       )}
 
-      {/* TAB 2: MARKET NEWS (JomSentimen) */}
+      {/* TAB 2: MARKET NEWS */}
       {activeTab === 'news' && (
         <div className="rh-split">
-          {/* Left Rail: Market Mood Score (0-100) & Advancers/Decliners */}
-          <aside className="rh-rail space-y-4">
-            <div className="rh-card space-y-5">
-              <div className="space-y-1">
-                <h2 className="text-base font-bold">
-                  {language === 'ENG' ? 'Market Mood' : 'Mood Pasaran'}
-                </h2>
-                <p className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                  {getFriendlyRegimeLabel(marketBreadth.regime)}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="rh-hero-num">{marketBreadth.score} / 100</div>
-                <div
-                  className="w-full h-2.5 rounded-full overflow-hidden"
-                  style={{ backgroundColor: 'var(--bg-subtle)' }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${marketBreadth.score}%`,
-                      backgroundColor: 'var(--accent-brand)'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div
-                className="pt-4 border-t space-y-2.5 text-xs font-tabular"
-                style={{ borderColor: 'var(--border-hairline)' }}
-              >
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? 'Advancers' : 'Saham Naik'}
-                  </span>
-                  <span className="font-semibold" style={{ color: 'var(--signal-up)' }}>
-                    {marketBreadth.advancers}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? 'Decliners' : 'Saham Turun'}
-                  </span>
-                  <span className="font-semibold" style={{ color: 'var(--signal-down)' }}>
-                    {marketBreadth.decliners}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? 'Net Fund Flow' : 'Aliran Dana'}
-                  </span>
-                  <span className="font-semibold">{marketBreadth.netFlowLabel}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--ink-secondary)' }}>BNM OPR</span>
-                  <span className="font-semibold">{marketBreadth.oprRate}</span>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* Right Main: Clean Vertical List of Malaysian Financial News Items */}
           <div className="rh-main space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">
-                {language === 'ENG' ? 'Malaysian Market News' : 'Berita Pasaran Malaysia'}
+              <h2 className="text-base font-semibold">
+                {language === 'ENG' ? 'Headlines' : 'Berita Terkini'}
               </h2>
               <button
                 type="button"
                 onClick={() => loadBursaNewsWire(true)}
                 disabled={isRefreshingNews}
-                className="jom-btn py-1.5 px-3 text-xs"
+                className="rh-link-btn flex items-center gap-1"
               >
                 <RefreshCw size={12} className={isRefreshingNews ? 'animate-spin' : ''} />
-                <span>{language === 'ENG' ? 'Refresh' : 'Segar Semula'}</span>
+                <span>{language === 'ENG' ? 'Refresh' : 'Segar semula'}</span>
               </button>
             </div>
 
-            <div className="rh-stock-list">
-              {newsItems.map(news => {
-                const matchedStock = stocks.find(s => s.ticker === news.ticker);
-                const monogram = getStockMonogram(news.ticker, matchedStock?.sector);
-                const sentimentColor =
-                  news.impact === 'CONSTRUCTIVE'
-                    ? 'var(--signal-up)'
-                    : news.impact === 'CAUTIOUS'
-                    ? 'var(--signal-down)'
-                    : 'var(--ink-secondary)';
-
-                return (
-                  <div
-                    key={news.id}
-                    className="rh-stock-row"
-                    onClick={() => {
-                      if (matchedStock) {
-                        setSelectedStock(matchedStock);
-                        navigateTo('stock-details');
-                      }
-                    }}
-                  >
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className={monogram.avatarClass}>{monogram.initials}</div>
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="font-semibold">{news.source}</span>
-                          <span className="font-tabular" style={{ color: 'var(--ink-muted)' }}>
-                            · {news.timeAgo} · {news.ticker}
-                          </span>
-                        </div>
-                        <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                          {news.headline}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-semibold" style={{ color: sentimentColor }}>
-                        {getFriendlySentimentLabel(news.impact)}
-                      </span>
-                      {news.url && (
-                        <a
-                          href={news.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="jom-btn py-1 px-2 text-xs"
-                        >
-                          <ArrowUpRight size={12} />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="jom-table-wrap">
+              <table className="jom-table">
+                <thead>
+                  <tr>
+                    <th>Headline</th>
+                    <th>Ticker</th>
+                    <th className="text-right">Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {newsItems.map(news => {
+                    const matchedStock = stocks.find(s => s.ticker === news.ticker);
+                    return (
+                      <tr
+                        key={news.id}
+                        onClick={() => {
+                          if (matchedStock) {
+                            setSelectedStock(matchedStock);
+                            navigateTo('stock-details');
+                          }
+                        }}
+                      >
+                        <td>
+                          <div className="text-sm font-medium">{news.headline}</div>
+                          <div className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                            {news.timeAgo} · {getFriendlySentimentLabel(news.impact)}
+                          </div>
+                        </td>
+                        <td className="font-tabular text-xs font-medium">{news.ticker}</td>
+                        <td className="text-right text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                          {news.url ? (
+                            <a
+                              href={news.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="hover:underline inline-flex items-center gap-1"
+                            >
+                              <span>{news.source}</span>
+                              <ArrowUpRight size={11} />
+                            </a>
+                          ) : (
+                            news.source
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
+
+          {/* Right Rail: Market Breadth */}
+          <aside className="rh-rail space-y-4">
+            <h3 className="text-xs font-semibold" style={{ color: 'var(--ink-secondary)' }}>
+              {language === 'ENG' ? 'Market Breadth' : ' keluasan Pasaran'}
+            </h3>
+
+            <div className="border-t" style={{ borderColor: 'var(--border-hairline)' }}>
+              <div className="rh-kv-row">
+                <span style={{ color: 'var(--ink-secondary)' }}>Sentiment</span>
+                <span className="font-medium">{getFriendlyRegimeLabel(marketBreadth.regime)}</span>
+              </div>
+              <div className="rh-kv-row">
+                <span style={{ color: 'var(--ink-secondary)' }}>Advancers</span>
+                <span className="font-tabular font-medium" style={{ color: 'var(--signal-up)' }}>
+                  {marketBreadth.advancers}
+                </span>
+              </div>
+              <div className="rh-kv-row">
+                <span style={{ color: 'var(--ink-secondary)' }}>Decliners</span>
+                <span className="font-tabular font-medium" style={{ color: 'var(--signal-down)' }}>
+                  {marketBreadth.decliners}
+                </span>
+              </div>
+              <div className="rh-kv-row">
+                <span style={{ color: 'var(--ink-secondary)' }}>Net Flow</span>
+                <span className="font-tabular font-medium">{marketBreadth.netFlowLabel}</span>
+              </div>
+              <div className="rh-kv-row">
+                <span style={{ color: 'var(--ink-secondary)' }}>BNM OPR</span>
+                <span className="font-tabular font-medium">{marketBreadth.oprRate}</span>
+              </div>
+            </div>
+          </aside>
         </div>
       )}
 
       {/* TAB 3: WEALTH CALCULATOR */}
       {activeTab === 'calculator' && (
         <div className="rh-split">
-          {/* Left Rail: 2 Sliders (Monthly Contribution & Target Return) */}
-          <aside className="rh-rail space-y-4">
-            <div className="rh-card space-y-5">
-              <h2 className="text-base font-bold">
-                {language === 'ENG' ? '10-Year Plan Inputs' : 'Input Pelan 10 Tahun'}
-              </h2>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? 'Monthly Contribution' : 'Simpanan Bulanan'}
-                  </span>
-                  <span className="font-tabular font-semibold">
-                    RM {monthlyInvest.toLocaleString()} / mo
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="100"
-                  max="5000"
-                  step="100"
-                  value={monthlyInvest}
-                  onChange={e => setMonthlyInvest(parseInt(e.target.value))}
-                  className="w-full cursor-pointer accent-[#059669]"
-                />
-                <div
-                  className="flex justify-between font-tabular text-xs"
-                  style={{ color: 'var(--ink-muted)' }}
-                >
-                  <span>RM 100</span>
-                  <span>RM 5,000</span>
-                </div>
+          <div className="rh-main space-y-6">
+            <div>
+              <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+                {language === 'ENG'
+                  ? `10-Year Projection (Total contributed: RM ${finalInvested.toLocaleString()})`
+                  : `Unjuran 10 Tahun (Jumlah caruman: RM ${finalInvested.toLocaleString()})`}
               </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? 'Target Stock Return' : 'Sasaran Pulangan Saham'}
-                  </span>
-                  <span className="font-tabular font-semibold" style={{ color: 'var(--accent-brand)' }}>
-                    {(4 + riskLevel * 0.8).toFixed(1)}% / yr
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  step="1"
-                  value={riskLevel}
-                  onChange={e => setRiskLevel(parseInt(e.target.value))}
-                  className="w-full cursor-pointer accent-[#059669]"
-                />
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                  {riskLevel <= 3
-                    ? 'Conservative: Steady utilities & REIT dividends (4.8%–6.4% yearly).'
-                    : riskLevel <= 7
-                    ? 'Balanced: Mix of Malaysian banks and steady growth leaders (7.2%–9.6% yearly).'
-                    : 'Growth: Faster-growing infrastructure & tech leaders (10.4%–12.0% yearly).'}
-                </p>
-              </div>
-
-              <div
-                className="flex items-center justify-between pt-4 border-t text-xs"
-                style={{ borderColor: 'var(--border-hairline)' }}
-              >
-                <span style={{ color: 'var(--ink-secondary)' }}>
-                  {language === 'ENG' ? 'Adjust for Inflation (-3%/yr)' : 'Laraskan Inflasi (-3%/thn)'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setInflationAdjusted(!inflationAdjusted)}
-                  className={`jom-btn py-1 px-3 text-xs font-tabular ${
-                    inflationAdjusted ? 'jom-btn-primary' : ''
-                  }`}
-                >
-                  {inflationAdjusted
-                    ? language === 'ENG'
-                      ? 'On'
-                      : 'Aktif'
-                    : language === 'ENG'
-                    ? 'Off'
-                    : 'Matikan'}
-                </button>
+              <div className="rh-hero-num mt-1">RM {finalWealth.toLocaleString()}</div>
+              <div className="text-xs font-tabular font-medium mt-1" style={{ color: 'var(--signal-up)' }}>
+                +RM {(finalWealth - finalInvested).toLocaleString()}{' '}
+                {language === 'ENG' ? 'compounded return' : 'pulangan kompaun'}
               </div>
             </div>
-          </aside>
 
-          {/* Right Main: 10-Year Comparison Chart + EPF (5.5%) & FD (3.0%) Comparison Bars */}
-          <div className="rh-main space-y-6">
-            <div className="rh-card space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-                <div>
-                  <div className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG'
-                      ? `Projected 10-Year Bursa Portfolio (Total contributed: RM ${finalInvested.toLocaleString()})`
-                      : `Unjuran 10 Tahun Portfolio Bursa (Jumlah simpanan: RM ${finalInvested.toLocaleString()})`}
-                  </div>
-                  <div className="rh-hero-num mt-1">RM {finalWealth.toLocaleString()}</div>
-                </div>
-                <div className="text-xs font-tabular font-semibold" style={{ color: 'var(--signal-up)' }}>
-                  +RM {(finalWealth - finalInvested).toLocaleString()}{' '}
-                  {language === 'ENG' ? 'compounded gain' : 'keuntungan kompaun'}
-                </div>
-              </div>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={wealthData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="var(--border-hairline)"
+                  />
+                  <XAxis
+                    dataKey="year"
+                    tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={v => `RM${(v / 1000).toFixed(0)}k`}
+                    tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={56}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => `RM ${value.toLocaleString()}`}
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-hairline)',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                  <Area
+                    type="monotone"
+                    name="Stock Portfolio"
+                    dataKey="wealth"
+                    stroke="var(--signal-up)"
+                    strokeWidth={2}
+                    fillOpacity={0}
+                    fill="transparent"
+                  />
+                  <Area
+                    type="monotone"
+                    name="EPF / KWSP (5.5%)"
+                    dataKey="epfAsb"
+                    stroke="var(--ink-secondary)"
+                    strokeWidth={1.5}
+                    fillOpacity={0}
+                    fill="transparent"
+                  />
+                  <Area
+                    type="monotone"
+                    name="Fixed Deposit (3.0%)"
+                    dataKey="fixedDeposit"
+                    stroke="var(--ink-muted)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    fillOpacity={0}
+                    fill="transparent"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={wealthData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="jomEquityGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#059669" stopOpacity={0.24} />
-                        <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="var(--border-hairline)"
-                    />
-                    <XAxis
-                      dataKey="year"
-                      tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tickFormatter={v => `RM${(v / 1000).toFixed(0)}k`}
-                      tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={58}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => `RM ${value.toLocaleString()}`}
-                      contentStyle={{
-                        backgroundColor: 'var(--bg-surface)',
-                        borderColor: 'var(--border-hairline)',
-                        borderRadius: '12px',
-                        fontSize: '12px'
-                      }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                    <Area
-                      type="monotone"
-                      name="Bursa Stock Strategy"
-                      dataKey="wealth"
-                      stroke="#059669"
-                      strokeWidth={2.5}
-                      fillOpacity={1}
-                      fill="url(#jomEquityGrad)"
-                    />
-                    <Area
-                      type="monotone"
-                      name="EPF / KWSP (5.5%)"
-                      dataKey="epfAsb"
-                      stroke="#475569"
-                      strokeWidth={2}
-                      fillOpacity={0}
-                    />
-                    <Area
-                      type="monotone"
-                      name="Fixed Deposit (3.0%)"
-                      dataKey="fixedDeposit"
-                      stroke="#D97706"
-                      strokeWidth={1.75}
-                      strokeDasharray="4 4"
-                      fillOpacity={0}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* EPF (5.5%) & FD (3.0%) Comparison Bars */}
-              <div
-                className="pt-4 border-t space-y-3 text-xs font-tabular"
-                style={{ borderColor: 'var(--border-hairline)' }}
-              >
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">
-                      Bursa Stock Strategy ({(4 + riskLevel * 0.8 - (inflationAdjusted ? 3 : 0)).toFixed(1)}%/yr)
-                    </span>
-                    <span className="font-bold" style={{ color: 'var(--accent-brand)' }}>
+            <div className="jom-table-wrap">
+              <table className="jom-table">
+                <thead>
+                  <tr>
+                    <th>Benchmark</th>
+                    <th className="text-right">Annual Rate</th>
+                    <th className="text-right">10-Year Value</th>
+                  </tr>
+                </thead>
+                <tbody className="font-tabular text-xs">
+                  <tr>
+                    <td className="font-medium">Selected Stock Strategy</td>
+                    <td className="text-right">
+                      {(4 + riskLevel * 0.8 - (inflationAdjusted ? 3 : 0)).toFixed(1)}%
+                    </td>
+                    <td className="text-right font-semibold" style={{ color: 'var(--signal-up)' }}>
                       RM {finalWealth.toLocaleString()}
-                    </span>
-                  </div>
-                  <div
-                    className="w-full h-2 rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'var(--bg-subtle)' }}
-                  >
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: '100%', backgroundColor: 'var(--accent-brand)' }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span style={{ color: 'var(--ink-secondary)' }}>EPF / KWSP Benchmark (5.5%/yr)</span>
-                    <span className="font-semibold">RM {finalEpf.toLocaleString()}</span>
-                  </div>
-                  <div
-                    className="w-full h-2 rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'var(--bg-subtle)' }}
-                  >
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.min(100, Math.round((finalEpf / Math.max(1, finalWealth)) * 100))}%`,
-                        backgroundColor: 'var(--ink-secondary)'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span style={{ color: 'var(--ink-secondary)' }}>Fixed Deposit (3.0%/yr)</span>
-                    <span className="font-semibold">RM {finalFd.toLocaleString()}</span>
-                  </div>
-                  <div
-                    className="w-full h-2 rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'var(--bg-subtle)' }}
-                  >
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.min(100, Math.round((finalFd / Math.max(1, finalWealth)) * 100))}%`,
-                        backgroundColor: 'var(--signal-warn)'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ color: 'var(--ink-secondary)' }}>EPF / KWSP Historical Average</td>
+                    <td className="text-right">{inflationAdjusted ? '2.5%' : '5.5%'}</td>
+                    <td className="text-right font-medium">RM {finalEpf.toLocaleString()}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ color: 'var(--ink-secondary)' }}>Bank Fixed Deposit</td>
+                    <td className="text-right">{inflationAdjusted ? '0.0%' : '3.0%'}</td>
+                    <td className="text-right font-medium">RM {finalFd.toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* TAB 4: SHORT LESSONS */}
-      {activeTab === 'lessons' && (
-        <div className="rh-grid-3">
-          {learningItems.map(item => {
-            const isDone = completedQuizzes.includes(item.id);
-            return (
-              <div
-                key={item.id}
-                onClick={() => openLearningModal(item)}
-                className="rh-card flex flex-col justify-between cursor-pointer space-y-5"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between text-xs font-tabular" style={{ color: 'var(--ink-muted)' }}>
-                    <span>{item.code}</span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={12} />
-                      {item.meta}
-                    </span>
-                  </div>
+          <aside className="rh-rail space-y-5">
+            <h3 className="text-xs font-semibold" style={{ color: 'var(--ink-secondary)' }}>
+              {language === 'ENG' ? 'Assumptions' : 'Andaian'}
+            </h3>
 
-                  <h3 className="text-base font-bold">
-                    {language === 'ENG' ? item.titleEng : item.titleBm}
-                  </h3>
-
-                  <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? item.descEng : item.descBm}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className={`jom-btn w-full text-xs ${isDone ? '' : 'jom-btn-primary'}`}
-                  onClick={e => {
-                    e.stopPropagation();
-                    openLearningModal(item);
-                  }}
-                >
-                  {isDone ? (
-                    <>
-                      <Check size={14} />
-                      <span>{language === 'ENG' ? 'Completed · Review' : 'Selesai · Ulang Kaji'}</span>
-                    </>
-                  ) : (
-                    <span>{language === 'ENG' ? 'Start Lesson (+25 XP)' : 'Mula Pelajaran (+25 XP)'}</span>
-                  )}
-                </button>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? 'Monthly contribution' : 'Simpanan bulanan'}
+                </span>
+                <span className="font-tabular font-medium">
+                  RM {monthlyInvest.toLocaleString()}
+                </span>
               </div>
-            );
-          })}
+              <input
+                type="range"
+                min="100"
+                max="5000"
+                step="100"
+                value={monthlyInvest}
+                onChange={e => setMonthlyInvest(parseInt(e.target.value))}
+                className="w-full cursor-pointer accent-[#059669]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? 'Target return' : 'Sasaran pulangan'}
+                </span>
+                <span className="font-tabular font-medium">
+                  {(4 + riskLevel * 0.8).toFixed(1)}% / yr
+                </span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="1"
+                value={riskLevel}
+                onChange={e => setRiskLevel(parseInt(e.target.value))}
+                className="w-full cursor-pointer accent-[#059669]"
+              />
+            </div>
+
+            <div
+              className="flex items-center justify-between pt-3 border-t text-xs"
+              style={{ borderColor: 'var(--border-hairline)' }}
+            >
+              <span style={{ color: 'var(--ink-secondary)' }}>
+                {language === 'ENG' ? 'Adjust for 3% inflation' : 'Laraskan inflasi 3%'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setInflationAdjusted(!inflationAdjusted)}
+                className="jom-btn py-1 px-2.5 text-xs font-tabular"
+              >
+                {inflationAdjusted ? 'On' : 'Off'}
+              </button>
+            </div>
+          </aside>
         </div>
       )}
 
-      {/* INTERACTIVE LESSON & QUIZ MODAL */}
+      {/* TAB 4: LESSONS */}
+      {activeTab === 'lessons' && (
+        <div className="jom-table-wrap">
+          <table className="jom-table">
+            <thead>
+              <tr>
+                <th>Lesson</th>
+                <th>Topic</th>
+                <th className="hidden sm:table-cell">Reading Time</th>
+                <th className="text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {learningItems.map(item => {
+                const isDone = completedQuizzes.includes(item.id);
+                return (
+                  <tr key={item.id} onClick={() => openLearningModal(item)}>
+                    <td>
+                      <div className="font-medium text-sm">
+                        {language === 'ENG' ? item.titleEng : item.titleBm}
+                      </div>
+                      <div className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                        {language === 'ENG' ? item.descEng : item.descBm}
+                      </div>
+                    </td>
+                    <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
+                      {item.badge}
+                    </td>
+                    <td className="text-xs font-tabular hidden sm:table-cell" style={{ color: 'var(--ink-muted)' }}>
+                      {item.meta}
+                    </td>
+                    <td className="text-right text-xs font-medium">
+                      {isDone ? (
+                        <span style={{ color: 'var(--signal-up)' }}>Completed</span>
+                      ) : (
+                        <span>Read →</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* LESSON MODAL */}
       {activeLearningItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="rh-card w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
+          <div className="rh-card w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl space-y-6">
             <div
               className="flex items-start justify-between gap-4 pb-4 border-b"
               style={{ borderColor: 'var(--border-hairline)' }}
             >
-              <div className="space-y-1">
-                <div className="text-xs font-tabular" style={{ color: 'var(--ink-muted)' }}>
+              <div>
+                <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
                   {activeLearningItem.code} · {activeLearningItem.meta}
                 </div>
-                <h2 className="text-xl font-bold">
+                <h2 className="text-lg font-semibold mt-0.5">
                   {language === 'ENG'
                     ? activeLearningItem.titleEng
                     : activeLearningItem.titleBm}
@@ -1555,7 +1384,7 @@ export function EducationalHub({
 
               <button
                 type="button"
-                className="jom-btn py-1.5 px-2.5"
+                className="jom-btn-ghost"
                 onClick={() => setActiveLearningItem(null)}
               >
                 <X size={15} />
@@ -1572,14 +1401,14 @@ export function EducationalHub({
             </div>
 
             <div
-              className="p-4 rounded-xl space-y-2"
+              className="p-3.5 rounded space-y-1.5"
               style={{ backgroundColor: 'var(--bg-subtle)' }}
             >
-              <div className="text-xs font-bold">
-                {language === 'ENG' ? 'Key Takeaways' : 'Intipati Penting'}
+              <div className="text-xs font-semibold">
+                {language === 'ENG' ? 'Key Takeaways' : 'Intipati Utama'}
               </div>
               <ul
-                className="list-disc list-inside text-xs space-y-1.5"
+                className="list-disc list-inside text-xs space-y-1"
                 style={{ color: 'var(--ink-secondary)' }}
               >
                 {(language === 'ENG'
@@ -1595,17 +1424,15 @@ export function EducationalHub({
               className="pt-4 border-t space-y-4"
               style={{ borderColor: 'var(--border-hairline)' }}
             >
-              <h4 className="text-base font-bold">
-                {language === 'ENG'
-                  ? 'Quick Quiz (+25 XP)'
-                  : 'Kuiz Ringkas (+25 XP)'}
+              <h4 className="text-sm font-semibold">
+                {language === 'ENG' ? 'Quick Check' : 'Kuiz Ringkas'}
               </h4>
 
               {activeLearningItem.quiz.map((q, qIdx) => {
                 const options = language === 'ENG' ? q.optionsEng : q.optionsBm;
                 return (
                   <div key={qIdx} className="space-y-2">
-                    <p className="text-xs font-semibold">
+                    <p className="text-xs font-medium">
                       {qIdx + 1}. {language === 'ENG' ? q.qEng : q.qBm}
                     </p>
                     <div className="space-y-1.5">
@@ -1617,8 +1444,8 @@ export function EducationalHub({
                         let bgColor = 'var(--bg-surface)';
 
                         if (isSelected) {
-                          borderColor = 'var(--accent-brand)';
-                          bgColor = 'var(--accent-brand-subtle)';
+                          borderColor = 'var(--ink-primary)';
+                          bgColor = 'var(--bg-subtle)';
                         }
                         if (quizSubmitted) {
                           if (isCorrect) {
@@ -1638,14 +1465,12 @@ export function EducationalHub({
                               setQuizSubmitted(false);
                               setQuizAnswers(prev => ({ ...prev, [qIdx]: optIdx }));
                             }}
-                            className="w-full text-left text-xs p-3 rounded-xl border transition-colors flex items-center justify-between"
+                            className="w-full text-left text-xs p-2.5 rounded border transition-colors flex items-center justify-between"
                             style={{ borderColor, backgroundColor: bgColor }}
                           >
                             <span>{opt}</span>
                             {quizSubmitted && isCorrect && (
-                              <span className="font-semibold" style={{ color: 'var(--signal-up)' }}>
-                                ✓
-                              </span>
+                              <Check size={13} style={{ color: 'var(--signal-up)' }} />
                             )}
                           </button>
                         );
@@ -1656,7 +1481,7 @@ export function EducationalHub({
               })}
 
               <div
-                className="flex justify-end gap-2.5 pt-3 border-t"
+                className="flex justify-end gap-2 pt-3 border-t"
                 style={{ borderColor: 'var(--border-hairline)' }}
               >
                 <button
@@ -1674,9 +1499,7 @@ export function EducationalHub({
                   }
                   onClick={handleQuizSubmit}
                 >
-                  {language === 'ENG'
-                    ? 'Check Answers (+25 XP)'
-                    : 'Semak Jawapan (+25 XP)'}
+                  {language === 'ENG' ? 'Check Answers' : 'Semak Jawapan'}
                 </button>
               </div>
             </div>

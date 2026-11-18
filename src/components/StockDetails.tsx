@@ -13,13 +13,7 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Legend
+  Tooltip as RechartsTooltip
 } from 'recharts';
 import type { Screen, PortfolioItem } from '../App';
 import { StockData, calculateBursaFees } from '../data/stocks';
@@ -42,56 +36,6 @@ interface StockDetailsProps {
   setHasLearnedTerm: (terms: string[]) => void;
 }
 
-const MONOGRAM_MAP: Record<string, string> = {
-  MAYBANK: 'MB',
-  TENAGA: 'TN',
-  CIMB: 'CB',
-  PBBANK: 'PB',
-  GAMUDA: 'GM',
-  INARI: 'IN',
-  TM: 'TM',
-  YTLPOWR: 'YT',
-  SUNWAY: 'SW',
-  MISC: 'MS',
-  PETGAS: 'PG',
-  IHH: 'IH',
-  CELCOMDIGI: 'CD',
-  MAXIS: 'MX',
-  PRESSMET: 'PM',
-  SDCG: 'SD',
-  DIALOG: 'DL',
-  SIME: 'SM',
-  GENM: 'GN',
-  GENTING: 'GT'
-};
-
-function getCompanyMonogram(ticker: string): string {
-  const clean = (ticker || '').toUpperCase().trim();
-  if (MONOGRAM_MAP[clean]) return MONOGRAM_MAP[clean];
-  return clean.slice(0, 2) || 'JM';
-}
-
-function getAvatarColorClass(sector: string, ticker: string): string {
-  const s = (sector || '').toLowerCase();
-  const t = (ticker || '').toUpperCase();
-  if (t === 'MAYBANK' || s.includes('construction') || s.includes('energy')) {
-    return 'jom-avatar-amber';
-  }
-  if (s.includes('financial') || s.includes('bank')) {
-    return 'jom-avatar-blue';
-  }
-  if (s.includes('utilities') || s.includes('plantation') || s.includes('healthcare')) {
-    return 'jom-avatar-emerald';
-  }
-  if (s.includes('tech') || s.includes('telecommunications') || s.includes('telco')) {
-    return 'jom-avatar-indigo';
-  }
-  if (s.includes('consumer') || s.includes('retail')) {
-    return 'jom-avatar-rose';
-  }
-  return 'jom-avatar-teal';
-}
-
 function getPlainEnglishStory(
   stock: StockData,
   language: 'ENG' | 'BM'
@@ -103,53 +47,53 @@ function getPlainEnglishStory(
 
   const businessStoriesEN: Record<string, string> = {
     MAYBANK:
-      'Maybank makes money by taking deposits from millions of Malaysians and businesses, lending that money out for home mortgages, car loans, and corporate expansion, and earning fees on wealth management, Maybank Islamic, and regional transactions across ASEAN.',
+      'Maybank takes deposits from millions of Malaysians and businesses, lends for mortgages, car loans, and corporate expansion, and earns fees across Malaysia, Singapore, and Indonesia.',
     TENAGA:
-      'Tenaga Nasional (TNB) keeps the lights on across Peninsular Malaysia. They earn steady, regulated cash flow every month from households, factories, and hyperscale data centers paying their electricity bills.',
+      'Tenaga Nasional operates the national power grid across Peninsular Malaysia, collecting recurring monthly electricity payments from households, factories, and data centers.',
     CIMB:
-      'CIMB Group earns money from consumer banking, Touch ’n Go Digital partnerships, corporate investment banking, and cross-border accounts across Malaysia, Indonesia, Singapore, and Thailand.',
+      'CIMB Group operates consumer banking, Touch ’n Go Digital partnerships, and regional investment banking across Malaysia, Indonesia, Singapore, and Thailand.',
     PBBANK:
-      'Public Bank focuses on cautious, everyday Malaysian borrowers — residential home loans, passenger car hire-purchase, and small-business financing — maintaining one of the lowest loan default rates in Asia.',
+      'Public Bank focuses on residential mortgages, passenger car financing, and SME lending, maintaining one of the lowest loan default rates in Asia.',
     GAMUDA:
-      'Gamuda builds major infrastructure — MRT lines, highways, water treatment plants, and data center campuses in Malaysia, Australia, and Taiwan — alongside developing master-planned residential townships.',
+      'Gamuda builds major regional infrastructure — MRT lines, highways, water plants, and data center campuses — alongside master-planned residential townships.',
     INARI:
-      'Inari Amertron is Malaysia’s largest semiconductor outsourced assembly and test (OSAT) player in Penang. Whenever global smartphone and AI server makers ship radio-frequency and optical chips, Inari gets paid to package and test them.'
+      'Inari Amertron is Malaysia’s largest semiconductor outsourced assembly and test (OSAT) provider in Penang, packaging and testing RF and optical chips for smartphones and servers.'
   };
 
   const businessStoriesBM: Record<string, string> = {
     MAYBANK:
-      'Maybank menjana pendapatan melalui simpanan jutaan rakyat dan peniaga Malaysia, menyalurkan pembiayaan perumahan, kenderaan, dan perniagaan, serta mengutip yuran perbankan Islam dan transaksi serantau di seluruh ASEAN.',
+      'Maybank menerima simpanan jutaan rakyat dan perniagaan, menyalurkan pembiayaan perumahan, kenderaan, dan korporat di Malaysia, Singapura, dan Indonesia.',
     TENAGA:
-      'Tenaga Nasional (TNB) membekalkan elektrik ke seluruh Semenanjung Malaysia. Mereka memperoleh aliran tunai berulang setiap bulan apabila isi rumah, kilang, dan pusat data membayar bil elektrik.',
+      'Tenaga Nasional mengendalikan grid elektrik Semenanjung Malaysia dengan aliran tunai bulanan daripada isi rumah, kilang, dan pusat data.',
     CIMB:
-      'CIMB menjana pendapatan daripada perbankan pengguna, ekosistem digital, perbankan pelaburan korporat, dan rangkaian serantau di Malaysia, Indonesia, Singapura, dan Thailand.',
+      'CIMB mengendalikan perbankan pengguna, ekosistem digital, dan perbankan pelaburan serantau di ASEAN.',
     PBBANK:
-      'Public Bank memberi tumpuan kepada pinjaman perumahan, pembiayaan kereta, dan PKS tempatan dengan rekod kualiti pinjaman yang sangat berdisiplin.',
+      'Public Bank memberi tumpuan kepada pinjaman perumahan, kenderaan, dan PKS dengan kualiti pinjaman yang sangat berdisiplin.',
     GAMUDA:
-      'Gamuda membina projek infrastruktur utama seperti laluan MRT, lebuh raya, dan pusat data, selain membangunkan perbandaran kediaman di Malaysia dan luar negara.',
+      'Gamuda membina projek infrastruktur utama seperti MRT, lebuh raya, dan pusat data serta membangunkan perbandaran kediaman.',
     INARI:
-      'Inari Amertron memasang dan menguji cip semikonduktor frekuensi radio serta optik di Pulau Pinang untuk pengeluar telefon pintar dan pelayan AI global.'
+      'Inari Amertron memasang dan menguji cip semikonduktor frekuensi radio serta optik di Pulau Pinang.'
   };
 
   const howTheyMakeMoney =
     language === 'ENG'
       ? businessStoriesEN[stock.ticker] ||
-        `${stock.name} operates in Malaysia's ${stock.sector} sector. ${stock.description} They generate RM ${stock.revenue} in annual revenue and keep RM ${stock.netProfit} in net profit after expenses.`
+        `${stock.name} operates in Malaysia's ${stock.sector} sector. ${stock.description} Annual revenue is RM ${stock.revenue} with RM ${stock.netProfit} in net profit.`
       : businessStoriesBM[stock.ticker] ||
-        `${stock.name} beroperasi dalam sektor ${stock.sector} di Malaysia. ${stock.description} Mereka menjana jualan tahunan RM ${stock.revenue} dengan keuntungan bersih RM ${stock.netProfit}.`;
+        `${stock.name} beroperasi dalam sektor ${stock.sector} di Malaysia. ${stock.description} Jualan tahunan ialah RM ${stock.revenue} dengan untung bersih RM ${stock.netProfit}.`;
 
   const dividendVsEpf =
     language === 'ENG'
       ? divNum > 0
         ? beatsEpf
-          ? `${stock.name} pays a ${stock.dividendYield} annual cash dividend yield, which is +${diffFromEpf}% higher than the EPF (5.5%) historical benchmark. Unlike EPF savings, share prices move daily on Bursa Malaysia.`
-          : `${stock.name} pays a ${stock.dividendYield} annual cash dividend yield compared to the EPF (5.5%) benchmark. Investors hold this stock for a combination of long-term capital growth and regular dividend payouts.`
-        : `${stock.name} currently pays a ${stock.dividendYield} dividend yield compared to the EPF (5.5%) benchmark. The company reinvests most of its earnings back into expanding operations.`
+          ? `Pays a ${stock.dividendYield} annual dividend yield (${diffFromEpf}% above the 5.5% EPF historical benchmark).`
+          : `Pays a ${stock.dividendYield} annual dividend yield compared to the 5.5% EPF benchmark, balancing cash payouts with capital growth.`
+        : `Reinvests most earnings back into operations (${stock.dividendYield} dividend yield vs. 5.5% EPF benchmark).`
       : divNum > 0
       ? beatsEpf
-        ? `${stock.name} membayar hasil dividen tunai tahunan ${stock.dividendYield}, iaitu +${diffFromEpf}% lebih tinggi berbanding penanda aras KWSP (5.5%). Tidak seperti simpanan KWSP, harga saham berubah setiap hari di Bursa Malaysia.`
-        : `${stock.name} membayar hasil dividen tunai tahunan ${stock.dividendYield} berbanding penanda aras KWSP (5.5%). Pelabur lazimnya memegang saham ini untuk gabungan pertumbuhan modal dan agihan tunai.`
-      : `${stock.name} mempunyai hasil dividen ${stock.dividendYield} berbanding penanda aras KWSP (5.5%). Syarikat melaburkan semula sebahagian besar keuntungan untuk mengembangkan operasi.`;
+        ? `Membayar hasil dividen tahunan ${stock.dividendYield} (${diffFromEpf}% mengatasi penanda aras KWSP 5.5%).`
+        : `Membayar hasil dividen tahunan ${stock.dividendYield} berbanding penanda aras KWSP 5.5%.`
+      : `Melaburkan semula sebahagian besar keuntungan ke dalam operasi (${stock.dividendYield}).`;
 
   return { howTheyMakeMoney, dividendVsEpf };
 }
@@ -194,72 +138,56 @@ export function StockDetails({
   const definitions: Record<
     string,
     {
-      ENG: { simple: string; detail: string; example: string };
-      BM: { simple: string; detail: string; example: string };
+      ENG: { simple: string; detail: string };
+      BM: { simple: string; detail: string };
     }
   > = {
     'P/E Ratio': {
       ENG: {
         simple: 'How many years of current profits it takes to pay back the share price.',
         detail:
-          'Price-to-Earnings (P/E) compares a company’s share price to the profit it earns per share. A lower P/E can mean the stock is reasonably priced, while a higher P/E means investors expect faster future growth.',
-        example:
-          'Example: Buying a neighbourhood Mamak stall for RM 120,000 that earns RM 10,000 net profit a year equals a 12x P/E ratio.'
+          'Price-to-Earnings compares share price to annual profit per share. Lower P/E can indicate value; higher P/E reflects higher growth expectations.'
       },
       BM: {
         simple: 'Berapa tahun keuntungan semasa diperlukan untuk menyamai harga belian saham.',
         detail:
-          'Nisbah Harga-kepada-Pendapatan (P/E) membandingkan harga saham dengan keuntungan bersih sesaham.',
-        example:
-          'Contoh: Membeli kedai makan pada harga RM 120,000 yang menjana untung bersih RM 10,000 setahun bersamaan P/E 12x.'
+          'Nisbah Harga-kepada-Pendapatan (P/E) membandingkan harga saham dengan keuntungan bersih sesaham.'
       }
     },
     'Dividend Yield': {
       ENG: {
-        simple: 'Your yearly cash payout expressed as a percentage of the share price.',
+        simple: 'Yearly cash dividend expressed as a percentage of the current share price.',
         detail:
-          'Profitable Malaysian companies regularly share part of their cash profits with shareholders. You can compare this directly against EPF (5.5%) or bank fixed deposit rates.',
-        example:
-          'Example: If a Bursa stock costs RM 10.00 and pays RM 0.60 in annual cash dividends, its Dividend Yield is 6.0%.'
+          'Malaysian single-tier dividends are tax-exempt in the hands of retail shareholders. Compare directly against EPF (5.5%) or fixed deposit rates.'
       },
       BM: {
-        simple: 'Pulangan tunai tahunan yang dibayar kepada pemegang saham dalam bentuk peratusan.',
+        simple: 'Pulangan tunai tahunan dalam bentuk peratusan daripada harga saham semasa.',
         detail:
-          'Syarikat kukuh di Malaysia lazimnya berkongsi sebahagian keuntungan tunai dengan pelabur setiap tahun.',
-        example:
-          'Contoh: Jika harga saham ialah RM 10.00 dan ia membayar dividen tunai RM 0.60 setahun, Hasil Dividen ialah 6.0%.'
+          'Dividen saham di Malaysia dikecualikan cukai untuk pelabur runcit dan boleh dibandingkan terus dengan kadar KWSP (5.5%).'
       }
     },
     'Market Cap': {
       ENG: {
-        simple: 'The total market value of 100% of the company’s shares on Bursa Malaysia.',
+        simple: 'Total market value of all issued shares of the company.',
         detail:
-          'Calculated by multiplying the current Share Price by Total Issued Shares. Larger blue-chip companies on the FBM KLCI tend to have more stable earnings.',
-        example:
-          'Example: A company with 10 billion shares trading at RM 10.00 each has a RM 100B Market Cap.'
+          'Calculated as Share Price × Total Shares. FBM KLCI constituents are the 30 largest companies on the exchange.'
       },
       BM: {
-        simple: 'Nilai keseluruhan syarikat jika anda membeli 100% sahamnya di Bursa Malaysia.',
+        simple: 'Nilai pasaran keseluruhan bagi semua saham terbitan syarikat.',
         detail:
-          'Dikira dengan mendarabkan Harga Saham Semasa dengan Jumlah Saham Terbitan.',
-        example:
-          'Contoh: Syarikat dengan 10 bilion saham pada harga RM 10.00 sesaham mempunyai Modal Pasaran RM 100B.'
+          'Dikira sebagai Harga Saham × Jumlah Saham Terbitan.'
       }
     },
     'FY Revenue / Profit': {
       ENG: {
-        simple: 'Total annual customer sales vs. the net profit left after paying all costs.',
+        simple: 'Total annual customer sales vs. net profit remaining after all expenses.',
         detail:
-          'Revenue is the top-line money coming in from customers; Net Profit is the bottom-line earnings left after salaries, materials, taxes, and interest.',
-        example:
-          'Example: If a company collects RM 10B in sales and spends RM 8B running the business, RM 2B remains as net profit.'
+          'Revenue is top-line sales; Net Profit is the bottom-line earnings left after operating costs, interest, and taxes.'
       },
       BM: {
         simple: 'Jumlah jualan tahunan berbanding untung bersih selepas ditolak semua kos.',
         detail:
-          'Hasil (Revenue) ialah jumlah jualan keseluruhan; Untung Bersih ialah baki keuntungan selepas kos operasi dan cukai.',
-        example:
-          'Contoh: Jika syarikat mengutip jualan RM 10B dan membelanjakan RM 8B untuk kos, RM 2B kekal sebagai untung bersih.'
+          'Hasil ialah jumlah jualan keseluruhan; Untung Bersih ialah baki keuntungan selepas kos operasi dan cukai.'
       }
     }
   };
@@ -269,77 +197,16 @@ export function StockDetails({
     [allStocks, peerStockId]
   );
 
-  const healthDimensions = useMemo(() => {
-    if (!stock) return [];
-    const scores = stock.radarScores || {
-      value: 70,
-      growth: 70,
-      health: 75,
-      dividend: 70,
-      momentum: 70
-    };
-    const peerScores = peerStock?.radarScores;
-
-    return [
-      {
-        key: 'value',
-        axis: 'Valuation',
-        label: language === 'ENG' ? 'Valuation' : 'Penilaian',
-        score: scores.value,
-        peerScore: peerScores?.value ?? null
-      },
-      {
-        key: 'growth',
-        axis: 'Growth',
-        label: language === 'ENG' ? 'Growth' : 'Pertumbuhan',
-        score: scores.growth,
-        peerScore: peerScores?.growth ?? null
-      },
-      {
-        key: 'health',
-        axis: 'Financial Health',
-        label: language === 'ENG' ? 'Financial Health' : 'Kesihatan Kewangan',
-        score: scores.health,
-        peerScore: peerScores?.health ?? null
-      },
-      {
-        key: 'dividend',
-        axis: 'Dividends',
-        label: language === 'ENG' ? 'Dividends' : 'Dividen',
-        score: scores.dividend,
-        peerScore: peerScores?.dividend ?? null
-      },
-      {
-        key: 'momentum',
-        axis: 'Momentum',
-        label: language === 'ENG' ? 'Momentum' : 'Momentum',
-        score: scores.momentum,
-        peerScore: peerScores?.momentum ?? null
-      }
-    ];
-  }, [stock, peerStock, language]);
-
-  const radarData = useMemo(() => {
-    if (!stock) return [];
-    return healthDimensions.map(dim => ({
-      axis: dim.axis,
-      [stock.ticker]: dim.score,
-      ...(peerStock && dim.peerScore !== null ? { [peerStock.ticker]: dim.peerScore } : {})
-    }));
-  }, [stock, peerStock, healthDimensions]);
-
   const filteredChartHistory = useMemo(() => {
     if (!stock?.history?.length) return [];
     const len = stock.history.length;
     if (timeframe === '1D') return stock.history.slice(Math.max(0, len - 5));
     if (timeframe === '1W') return stock.history.slice(Math.max(0, len - 7));
-    if (timeframe === '1M') return stock.history;
-    if (timeframe === '3M') return stock.history;
     return stock.history;
   }, [stock, timeframe]);
 
   if (!stock) {
-    return <div className="rh-page">Loading company overview...</div>;
+    return <div className="rh-page">Loading...</div>;
   }
 
   const isInWatchlist = watchlist.some(w => w.id === stock.id);
@@ -353,8 +220,6 @@ export function StockDetails({
   const sellFees = calculateBursaFees(priceNum, sellUnits, 'SELL');
   const fees = tradeSide === 'BUY' ? buyFees : sellFees;
 
-  const monogram = getCompanyMonogram(stock.ticker);
-  const avatarColor = getAvatarColorClass(stock.sector, stock.ticker);
   const plainStory = getPlainEnglishStory(stock, language);
 
   const handleQuantityChange = (val: string) => {
@@ -377,6 +242,11 @@ export function StockDetails({
 
   const keyStats = [
     {
+      key: 'Market Cap',
+      label: language === 'ENG' ? 'Market Cap' : 'Modal Pasaran',
+      value: `RM ${stock.marketCap}`
+    },
+    {
       key: 'P/E Ratio',
       label: language === 'ENG' ? 'P/E Ratio' : 'Nisbah P/E',
       value: `${stock.peRatio}x`
@@ -387,14 +257,9 @@ export function StockDetails({
       value: stock.dividendYield
     },
     {
-      key: 'Market Cap',
-      label: language === 'ENG' ? 'Market Cap' : 'Modal Pasaran',
-      value: `RM ${stock.marketCap}`
-    },
-    {
       key: 'FY Revenue / Profit',
-      label: language === 'ENG' ? 'FY Revenue / Profit' : 'Jualan / Untung',
-      value: `RM ${stock.revenue} / RM ${stock.netProfit}`
+      label: language === 'ENG' ? 'Revenue / Net Profit' : 'Jualan / Untung Bersih',
+      value: `RM ${stock.revenue} / ${stock.netProfit}`
     }
   ];
 
@@ -406,57 +271,67 @@ export function StockDetails({
     }
   };
 
+  const strokeColor = stock.isPositive ? 'var(--signal-up)' : 'var(--signal-down)';
+
   return (
     <div className="rh-page">
       <div className="rh-split">
-        {/* Left Column (.rh-main) */}
-        <div className="rh-main space-y-8">
-          {/* Simple Back Button */}
+        {/* Left Main Column */}
+        <div className="rh-main space-y-10">
+          {/* Back link */}
           <div>
             <button
               type="button"
               onClick={() => navigateTo('dashboard')}
-              className="text-sm font-medium cursor-pointer"
-              style={{ color: 'var(--ink-secondary)', background: 'none', border: 'none', padding: 0 }}
+              className="rh-link-btn"
             >
-              {language === 'ENG' ? '← Back to Stocks' : '← Kembali ke Saham'}
+              {language === 'ENG' ? '← All stocks' : '← Semua saham'}
             </button>
           </div>
 
-          {/* Unboxed Stock Header & Interactive Chart */}
+          {/* Unboxed Stock Header & Chart */}
           <div>
-            <div className="flex items-center gap-3.5">
-              <div className={`jom-avatar jom-avatar-lg ${avatarColor}`}>
-                {monogram}
-              </div>
+            <div className="flex items-baseline justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold" style={{ color: 'var(--ink-primary)' }}>
+                <h1 className="text-xl font-semibold">
                   {stock.name}
                 </h1>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--ink-secondary)' }}>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
                   {stock.ticker} · {stock.bursaCode} · {stock.sector}
-                  {stock.isShariah ? ' · Shariah Compliant' : ''}
+                  {stock.isShariah ? ' · Shariah' : ''}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() =>
+                  isInWatchlist ? removeFromWatchlist(stock.id) : addToWatchlist(stock)
+                }
+                className="jom-btn text-xs py-1.5 px-3"
+              >
+                <Bookmark size={13} />
+                <span>
+                  {isInWatchlist
+                    ? language === 'ENG'
+                      ? 'Saved'
+                      : 'Disimpan'
+                    : language === 'ENG'
+                    ? 'Watch'
+                    : 'Pantau'}
+                </span>
+              </button>
             </div>
 
-            <div className="rh-hero-num mt-3">RM {stock.price}</div>
+            <div className="rh-hero-num mt-4">RM {stock.price}</div>
             <div
-              className="text-sm font-medium mt-1"
-              style={{ color: stock.isPositive ? 'var(--signal-up)' : 'var(--signal-down)' }}
+              className="text-xs font-medium font-tabular mt-1"
+              style={{ color: strokeColor }}
             >
               {stock.change} ({stock.changePercent}) · {timeframe}
             </div>
 
-            <div className="w-full mt-4" style={{ height: '260px' }}>
+            <div className="w-full mt-4" style={{ height: '230px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={filteredChartHistory}>
-                  <defs>
-                    <linearGradient id="rhStockGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-hairline)" />
                   <XAxis
                     dataKey="date"
@@ -466,11 +341,15 @@ export function StockDetails({
                       return `${date.getDate()}/${date.getMonth() + 1}`;
                     }}
                     minTickGap={28}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <YAxis
                     domain={['auto', 'auto']}
                     tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
-                    width={48}
+                    width={44}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <RechartsTooltip
                     formatter={(value: number) => [`RM ${value.toFixed(2)}`, stock.ticker]}
@@ -479,10 +358,10 @@ export function StockDetails({
                   <Area
                     type="monotone"
                     dataKey="price"
-                    stroke="#059669"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#rhStockGradient)"
+                    stroke={strokeColor}
+                    strokeWidth={1.75}
+                    fillOpacity={0}
+                    fill="transparent"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -502,10 +381,92 @@ export function StockDetails({
             </div>
           </div>
 
-          {/* About {stock.name} */}
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold" style={{ color: 'var(--ink-primary)' }}>
-              {language === 'ENG' ? `About ${stock.name}` : ` Mengenai ${stock.name}`}
+          {/* Key Statistics (Unboxed Hairline Grid) */}
+          <section className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-sm font-semibold">
+                {language === 'ENG' ? 'Key Statistics' : 'Statistik Utama'}
+              </h2>
+              <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+                {language === 'ENG' ? 'Select any metric for definition' : 'Klik statistik untuk penerangan'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 border-t" style={{ borderColor: 'var(--border-hairline)' }}>
+              {keyStats.map(stat => {
+                const isSelected = learningTerm === stat.key;
+                return (
+                  <button
+                    key={stat.key}
+                    type="button"
+                    onClick={() => handleTermClick(stat.key)}
+                    className="rh-kv-row text-left cursor-pointer"
+                    style={{
+                      background: 'none',
+                      borderTop: 'none',
+                      borderLeft: 'none',
+                      borderRight: 'none'
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: isSelected ? 'var(--ink-primary)' : 'var(--ink-secondary)',
+                        textDecoration: 'underline',
+                        textDecorationStyle: 'dotted',
+                        textUnderlineOffset: '3px'
+                      }}
+                    >
+                      {stat.label}
+                    </span>
+                    <span className="font-tabular font-medium" style={{ color: 'var(--ink-primary)' }}>
+                      {stat.value}
+                    </span>
+                  </button>
+                );
+              })}
+              <div className="rh-kv-row">
+                <span style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? 'Debt / Equity' : 'Hutang / Ekuiti'}
+                </span>
+                <span className="font-tabular font-medium">{stock.debtEquity}</span>
+              </div>
+              <div className="rh-kv-row">
+                <span style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? 'Volume' : 'Volum'}
+                </span>
+                <span className="font-tabular font-medium">{stock.volume}</span>
+              </div>
+            </div>
+
+            {learningTerm && definitions[learningTerm] && (
+              <div
+                className="p-3.5 rounded-lg text-xs space-y-1"
+                style={{ backgroundColor: 'var(--bg-subtle)' }}
+              >
+                <div className="flex items-center justify-between font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                  <span>{learningTerm}</span>
+                  <button
+                    type="button"
+                    onClick={() => setLearningTerm(null)}
+                    className="rh-link-btn"
+                  >
+                    {language === 'ENG' ? 'Close' : 'Tutup'}
+                  </button>
+                </div>
+                <p style={{ color: 'var(--ink-primary)' }}>
+                  {definitions[learningTerm][language].simple}
+                </p>
+                <p style={{ color: 'var(--ink-secondary)' }}>
+                  {definitions[learningTerm][language].detail}
+                </p>
+              </div>
+            )}
+          </section>
+
+          {/* About */}
+          <section className="space-y-2.5">
+            <h2 className="text-sm font-semibold">
+              {language === 'ENG' ? `About ${stock.name}` : `Mengenai ${stock.name}`}
             </h2>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
               {plainStory.howTheyMakeMoney}
@@ -513,217 +474,108 @@ export function StockDetails({
             <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
               {plainStory.dividendVsEpf}
             </p>
-          </div>
+          </section>
 
-          {/* Key Stats (.rh-stat-grid) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold" style={{ color: 'var(--ink-primary)' }}>
-                {language === 'ENG' ? 'Key Stats' : 'Statistik Utama'}
+          {/* Sector Peer Comparison Table */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold">
+                {language === 'ENG' ? 'Peer Comparison' : 'Perbandingan Setara'}
               </h2>
-              <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                {language === 'ENG'
-                  ? 'Click any metric to learn (+10 XP)'
-                  : 'Klik mana-mana statistik untuk belajar (+10 XP)'}
-              </span>
+              <select
+                aria-label="Compare with peer"
+                value={peerStockId}
+                onChange={e => setPeerStockId(e.target.value)}
+                className="jom-input text-xs font-tabular"
+                style={{ width: 'auto', padding: '0.3rem 0.6rem' }}
+              >
+                {allStocks
+                  .filter(s => s.id !== stock.id)
+                  .map(s => (
+                    <option key={s.id} value={s.id}>
+                      vs. {s.ticker} ({s.name})
+                    </option>
+                  ))}
+              </select>
             </div>
 
-            <div className="rh-stat-grid">
-              {keyStats.map(stat => {
-                const isSelected = learningTerm === stat.key;
-                const isLearned = hasLearnedTerm.includes(stat.key);
-                return (
-                  <button
-                    key={stat.key}
-                    type="button"
-                    onClick={() => handleTermClick(stat.key)}
-                    className="rh-card text-left cursor-pointer transition-all"
-                    style={{
-                      borderColor: isSelected ? 'var(--accent-brand)' : 'var(--border-hairline)'
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                        {stat.label}
-                      </span>
-                      <span
-                        className="text-xs font-semibold"
-                        style={{ color: isLearned ? 'var(--accent-brand)' : 'var(--ink-muted)' }}
+            {peerStock && (
+              <div className="jom-table-wrap">
+                <table className="jom-table">
+                  <thead>
+                    <tr>
+                      <th>{language === 'ENG' ? 'Metric' : 'Metrik'}</th>
+                      <th className="text-right">{stock.ticker}</th>
+                      <th
+                        className="text-right cursor-pointer hover:underline"
+                        onClick={() => setSelectedStock(peerStock)}
                       >
-                        {isLearned ? '✓' : '+10 XP'}
-                      </span>
-                    </div>
-                    <div
-                      className="font-tabular text-base font-bold mt-1.5"
-                      style={{ color: 'var(--ink-primary)' }}
-                    >
-                      {stat.value}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {learningTerm && definitions[learningTerm] && (
-              <div className="rh-card space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold" style={{ color: 'var(--ink-primary)' }}>
-                    {learningTerm}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setLearningTerm(null)}
-                    className="text-xs cursor-pointer"
-                    style={{ color: 'var(--ink-muted)', background: 'none', border: 'none' }}
-                  >
-                    {language === 'ENG' ? 'Close' : 'Tutup'}
-                  </button>
-                </div>
-                <p className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                  {definitions[learningTerm][language].simple}
-                </p>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                  {definitions[learningTerm][language].detail}
-                </p>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  {definitions[learningTerm][language].example}
-                </p>
+                        {peerStock.ticker} →
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-tabular text-xs">
+                    <tr>
+                      <td style={{ color: 'var(--ink-secondary)' }}>Price</td>
+                      <td className="text-right font-medium">RM {stock.price}</td>
+                      <td className="text-right">RM {peerStock.price}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ color: 'var(--ink-secondary)' }}>P/E Ratio</td>
+                      <td className="text-right font-medium">{stock.peRatio}x</td>
+                      <td className="text-right">{peerStock.peRatio}x</td>
+                    </tr>
+                    <tr>
+                      <td style={{ color: 'var(--ink-secondary)' }}>Dividend Yield</td>
+                      <td className="text-right font-medium">{stock.dividendYield}</td>
+                      <td className="text-right">{peerStock.dividendYield}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ color: 'var(--ink-secondary)' }}>Market Cap</td>
+                      <td className="text-right font-medium">RM {stock.marketCap}</td>
+                      <td className="text-right">RM {peerStock.marketCap}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ color: 'var(--ink-secondary)' }}>Debt / Equity</td>
+                      <td className="text-right font-medium">{stock.debtEquity}</td>
+                      <td className="text-right">{peerStock.debtEquity}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             )}
-          </div>
-
-          {/* Company Health vs. Peer (.rh-card) */}
-          <div className="rh-card space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h2 className="text-lg font-bold" style={{ color: 'var(--ink-primary)' }}>
-                {language === 'ENG' ? 'Company Health vs. Peer' : 'Kesihatan Syarikat vs. Setara'}
-              </h2>
-              <div className="flex items-center gap-2">
-                <select
-                  aria-label="Select peer stock"
-                  value={peerStockId}
-                  onChange={e => setPeerStockId(e.target.value)}
-                  className="jom-input text-xs font-tabular"
-                  style={{ width: 'auto', minWidth: '170px' }}
-                >
-                  {allStocks
-                    .filter(s => s.id !== stock.id)
-                    .map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.ticker} · {s.name}
-                      </option>
-                    ))}
-                </select>
-                {peerStock && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedStock(peerStock)}
-                    className="jom-btn text-xs"
-                  >
-                    {peerStock.ticker}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="rh-grid-2 items-center">
-              <div className="space-y-3">
-                {healthDimensions.map(dim => (
-                  <div key={dim.key} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                        {dim.label}
-                      </span>
-                      <span className="font-tabular" style={{ color: 'var(--ink-secondary)' }}>
-                        <strong style={{ color: 'var(--accent-brand)' }}>
-                          {stock.ticker} {dim.score}
-                        </strong>
-                        {peerStock && dim.peerScore !== null
-                          ? ` · ${peerStock.ticker} ${dim.peerScore}`
-                          : ''}
-                      </span>
-                    </div>
-                    <div
-                      className="w-full h-2 rounded-full overflow-hidden"
-                      style={{ backgroundColor: 'var(--border-hairline)' }}
-                    >
-                      <div
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{
-                          width: `${dim.score}%`,
-                          backgroundColor: 'var(--accent-brand)'
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="w-full" style={{ height: '230px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="var(--border-hairline)" />
-                    <PolarAngleAxis
-                      dataKey="axis"
-                      tick={{ fontSize: 11, fill: 'var(--ink-secondary)' }}
-                    />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} />
-                    <Radar
-                      name={stock.ticker}
-                      dataKey={stock.ticker}
-                      stroke="#059669"
-                      fill="#059669"
-                      fillOpacity={0.25}
-                    />
-                    {peerStock && (
-                      <Radar
-                        name={peerStock.ticker}
-                        dataKey={peerStock.ticker}
-                        stroke="#64748B"
-                        fill="#64748B"
-                        fillOpacity={0.15}
-                      />
-                    )}
-                    <Legend />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
+          </section>
         </div>
 
-        {/* Right Sticky Rail (.rh-rail) */}
-        <aside className="rh-rail space-y-4">
-          <div className="rh-card space-y-4">
-            {/* Top Tabs: Buy {stock.ticker} | Sell {stock.ticker} */}
-            <div
-              className="grid grid-cols-2 border-b pb-3 gap-2"
-              style={{ borderColor: 'var(--border-hairline)' }}
-            >
+        {/* Right Sticky Order Ticket */}
+        <aside className="rh-rail space-y-5">
+          <div className="space-y-4">
+            {/* Buy / Sell Tabs */}
+            <div className="rh-tabs">
               <button
                 type="button"
                 onClick={() => setTradeSide('BUY')}
-                className={`rh-tf-btn text-center ${tradeSide === 'BUY' ? 'active' : ''}`}
+                className={`rh-tab ${tradeSide === 'BUY' ? 'active' : ''}`}
               >
                 {language === 'ENG' ? `Buy ${stock.ticker}` : `Beli ${stock.ticker}`}
               </button>
               <button
                 type="button"
                 onClick={() => setTradeSide('SELL')}
-                className={`rh-tf-btn text-center ${tradeSide === 'SELL' ? 'active' : ''}`}
+                className={`rh-tab ${tradeSide === 'SELL' ? 'active' : ''}`}
               >
                 {language === 'ENG' ? `Sell ${stock.ticker}` : `Jual ${stock.ticker}`}
               </button>
             </div>
 
-            {/* Order Type Row */}
+            {/* Order Unit Mode */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span style={{ color: 'var(--ink-secondary)' }}>
-                  {language === 'ENG' ? 'Order Type' : 'Jenis Pesanan'}
+                  {language === 'ENG' ? 'Unit size' : 'Saiz unit'}
                 </span>
                 <span className="font-tabular" style={{ color: 'var(--ink-muted)' }}>
-                  {effectiveUnits} {language === 'ENG' ? 'shares' : 'saham'}
+                  {effectiveUnits} {language === 'ENG' ? 'shares' : 'unit'}
                 </span>
               </div>
               <div className="jom-segmented w-full grid grid-cols-2">
@@ -732,65 +584,66 @@ export function StockDetails({
                   onClick={() => setLotMode('lot')}
                   className={lotMode === 'lot' ? 'active' : ''}
                 >
-                  {language === 'ENG' ? '100 Shares (Lot)' : '100 Saham (Lot)'}
+                  {language === 'ENG' ? '100 Shares (1 Lot)' : '100 Unit (1 Lot)'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setLotMode('micro')}
                   className={lotMode === 'micro' ? 'active' : ''}
                 >
-                  {language === 'ENG' ? '1 Share' : '1 Saham'}
+                  {language === 'ENG' ? '1 Share' : '1 Unit'}
                 </button>
               </div>
             </div>
 
-            {/* Quantity Row */}
-            <div className="flex items-center justify-between gap-3">
+            {/* Quantity */}
+            <div className="flex items-center justify-between gap-3 py-1">
               <span className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                {language === 'ENG' ? 'Quantity' : 'Kuantiti'}
+                {lotMode === 'lot'
+                  ? language === 'ENG'
+                    ? 'Lots'
+                    : 'Lot'
+                  : language === 'ENG'
+                  ? 'Shares'
+                  : 'Unit'}
               </span>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={decrement}
-                  className="jom-btn px-2.5 py-1.5"
+                  className="jom-btn px-2 py-1"
                   aria-label="Decrease quantity"
                 >
-                  <Minus size={13} />
+                  <Minus size={12} />
                 </button>
                 <input
                   type="number"
                   min={1}
                   value={quantity}
                   onChange={e => handleQuantityChange(e.target.value)}
-                  className="jom-input font-tabular text-center font-semibold"
-                  style={{ width: '68px', padding: '0.35rem 0.5rem' }}
+                  className="jom-input font-tabular text-center font-medium text-xs"
+                  style={{ width: '60px', padding: '0.3rem 0.4rem' }}
                 />
                 <button
                   type="button"
                   onClick={increment}
-                  className="jom-btn px-2.5 py-1.5"
+                  className="jom-btn px-2 py-1"
                   aria-label="Increase quantity"
                 >
-                  <Plus size={13} />
+                  <Plus size={12} />
                 </button>
               </div>
             </div>
 
-            {/* Market Price Row */}
-            <div
-              className="flex items-center justify-between text-xs pt-2 border-t"
-              style={{ borderColor: 'var(--border-hairline)' }}
-            >
+            {/* Market Price */}
+            <div className="rh-kv-row text-xs">
               <span style={{ color: 'var(--ink-secondary)' }}>
-                {language === 'ENG' ? 'Market Price' : 'Harga Pasaran'}
+                {language === 'ENG' ? 'Market price' : 'Harga pasaran'}
               </span>
-              <span className="font-tabular font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                RM {stock.price}
-              </span>
+              <span className="font-tabular font-medium">RM {stock.price}</span>
             </div>
 
-            {/* Collapsible Estimated Fees */}
+            {/* Bursa Fees */}
             <div className="space-y-2">
               <button
                 type="button"
@@ -799,31 +652,27 @@ export function StockDetails({
                 style={{ color: 'var(--ink-secondary)', background: 'none', border: 'none', padding: 0 }}
               >
                 <span className="flex items-center gap-1">
-                  <span>
-                    {language === 'ENG'
-                      ? `Estimated Fees (RM ${fees.totalFees.toFixed(2)})`
-                      : `Anggaran Yuran (RM ${fees.totalFees.toFixed(2)})`}
-                  </span>
-                  {showFeeBreakdown ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  <span>{language === 'ENG' ? 'Bursa fees' : 'Yuran Bursa'}</span>
+                  {showFeeBreakdown ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </span>
                 <span className="font-tabular">RM {fees.totalFees.toFixed(2)}</span>
               </button>
 
               {showFeeBreakdown && (
                 <div
-                  className="p-3 rounded-lg space-y-1.5 text-xs font-tabular"
+                  className="p-2.5 rounded text-xs font-tabular space-y-1"
                   style={{ backgroundColor: 'var(--bg-subtle)' }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: 'var(--ink-secondary)' }}>Brokerage</span>
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--ink-muted)' }}>Brokerage</span>
                     <span>RM {fees.brokerageFee.toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: 'var(--ink-secondary)' }}>Clearing Fee</span>
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--ink-muted)' }}>Clearing</span>
                     <span>RM {fees.clearingFee.toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: 'var(--ink-secondary)' }}>Stamp Duty</span>
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--ink-muted)' }}>Stamp duty</span>
                     <span>RM {fees.stampDuty.toFixed(2)}</span>
                   </div>
                 </div>
@@ -835,20 +684,20 @@ export function StockDetails({
               className="flex items-baseline justify-between pt-3 border-t font-tabular"
               style={{ borderColor: 'var(--border-hairline)' }}
             >
-              <span className="text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                {language === 'ENG' ? 'Estimated Total' : 'Anggaran Jumlah'}
+              <span className="text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
+                {language === 'ENG' ? 'Estimated total' : 'Jumlah anggaran'}
               </span>
-              <span className="text-lg font-bold" style={{ color: 'var(--ink-primary)' }}>
+              <span className="text-base font-semibold">
                 RM {fees.netTotal.toFixed(2)}
               </span>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="button"
               disabled={tradeSide === 'SELL' && ownedUnits <= 0}
               onClick={handleOrderSubmit}
-              className="jom-btn jom-btn-primary w-full"
+              className="jom-btn jom-btn-primary w-full py-2.5"
             >
               {tradeSide === 'BUY'
                 ? language === 'ENG'
@@ -859,39 +708,16 @@ export function StockDetails({
                 : `Jual ${ownedUnits > 0 ? sellUnits : 0} ${stock.ticker}`}
             </button>
 
-            {/* Footer Line: Buying Power & Owned Shares */}
-            <div
-              className="pt-2 border-t text-center space-y-1 text-xs font-tabular"
-              style={{ borderColor: 'var(--border-hairline)', color: 'var(--ink-muted)' }}
-            >
-              <div>RM {cashBalance.toFixed(2)} buying power available</div>
+            {/* Balance & Position footer */}
+            <div className="text-xs font-tabular space-y-1 pt-1" style={{ color: 'var(--ink-muted)' }}>
+              <div>RM {cashBalance.toFixed(2)} buying power</div>
               {ownedUnits > 0 && (
                 <div style={{ color: 'var(--ink-secondary)' }}>
-                  {ownedUnits} shares owned
+                  {ownedUnits} shares owned (avg RM {ownedHolding?.averagePrice.toFixed(2)})
                 </div>
               )}
             </div>
           </div>
-
-          {/* Watchlist Button Below Order Card */}
-          <button
-            type="button"
-            onClick={() =>
-              isInWatchlist ? removeFromWatchlist(stock.id) : addToWatchlist(stock)
-            }
-            className="jom-btn w-full"
-          >
-            <Bookmark size={14} />
-            <span>
-              {isInWatchlist
-                ? language === 'ENG'
-                  ? 'In Watchlist'
-                  : 'Dalam Senarai Pantau'
-                : language === 'ENG'
-                ? 'Add to Watchlist'
-                : 'Tambah ke Senarai Pantau'}
-            </span>
-          </button>
         </aside>
       </div>
     </div>

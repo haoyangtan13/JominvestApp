@@ -432,25 +432,23 @@ export default function App() {
   const navItems: { id: Screen; labelEng: string; labelBm: string }[] = [
     { id: 'dashboard', labelEng: 'Invest', labelBm: 'Melabur' },
     { id: 'portfolio', labelEng: 'Portfolio', labelBm: 'Portfolio' },
-    { id: 'watchlist', labelEng: 'Watchlist', labelBm: ' Pantau' },
-    { id: 'educational-hub', labelEng: 'Learn & Tools', labelBm: 'Belajar' },
-    { id: 'ai-recommendation', labelEng: 'Ideas', labelBm: 'Idea' },
+    { id: 'watchlist', labelEng: 'Watchlist', labelBm: 'Pantau' },
+    { id: 'educational-hub', labelEng: 'Learn', labelBm: 'Belajar' },
+    { id: 'ai-recommendation', labelEng: 'Screener', labelBm: 'Saringan' },
     { id: 'profile', labelEng: 'Account', labelBm: 'Akaun' }
   ];
 
   return (
     <div className={`rh-app ${darkMode ? 'dark' : ''}`}>
-      {/* Clean Single Top Navigation Bar (Robinhood / Wealthsimple Pattern) */}
       <header className="rh-topnav">
         <div className="rh-topnav-inner">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
             <button
               type="button"
               onClick={() => navigateTo('dashboard')}
               className="rh-brand"
             >
-              <span className="rh-brand-dot" />
-              <span>JomINVEST</span>
+              <span>JomInvest</span>
             </button>
 
             <nav className="rh-nav-links">
@@ -472,38 +470,37 @@ export default function App() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={refreshMarketPrices}
               disabled={isRefreshingMarket}
-              className="jom-btn py-1.5 px-2.5 text-xs"
-              title={language === 'ENG' ? 'Refresh Bursa quotes' : 'Segar semula harga'}
+              className="jom-btn-ghost"
+              title={language === 'ENG' ? 'Refresh quotes' : 'Segar semula harga'}
             >
-              <RefreshCw size={13} className={isRefreshingMarket ? 'animate-spin' : ''} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsCopilotOpen(true)}
-              className="jom-btn jom-btn-primary py-1.5 px-3.5 text-xs"
-            >
-              <MessageSquare size={13} />
-              <span>{language === 'ENG' ? 'Ask AI' : 'Tanya AI'}</span>
+              <RefreshCw size={14} className={isRefreshingMarket ? 'animate-spin' : ''} />
             </button>
             <button
               type="button"
               onClick={toggleLanguage}
-              className="jom-btn py-1.5 px-2.5 font-tabular text-xs"
+              className="jom-btn-ghost font-tabular"
             >
               {language === 'ENG' ? 'EN' : 'BM'}
             </button>
             <button
               type="button"
               onClick={() => setDarkMode(!darkMode)}
-              className="jom-btn py-1.5 px-2.5 text-xs"
+              className="jom-btn-ghost"
               title="Toggle theme"
             >
               {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCopilotOpen(true)}
+              className="jom-btn py-1.5 px-3 text-xs ml-1"
+            >
+              <span>{language === 'ENG' ? 'Ask' : 'Tanya'}</span>
             </button>
           </div>
         </div>
