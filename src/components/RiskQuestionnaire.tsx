@@ -83,8 +83,8 @@ const questions: Question[] = [
     }
   },
   {
-    eng: 'How comfortable are you with Bursa Malaysia terms like P/E ratio, lots, and Shariah screening?',
-    bm: 'Sejauh manakah keselesaan anda dengan istilah Bursa Malaysia seperti nisbah P/E, unit lot, dan saringan Syariah?',
+    eng: 'How comfortable are you with terms like P/E ratio, lots, and Shariah screening?',
+    bm: 'Sejauh manakah keselesaan anda dengan istilah seperti nisbah P/E, unit lot, dan saringan Syariah?',
     options: {
       eng: [
         'A) Brand new — I want simple, plain-English explanations from scratch',
@@ -144,20 +144,17 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
   const options = language === 'ENG' ? question.options.eng : question.options.bm;
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-6"
-      style={{ backgroundColor: 'var(--bg-canvas)' }}
-    >
-      <div className="jom-panel p-8 max-w-2xl w-full space-y-8">
-        {/* Top Header & Progress Bar */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="jom-kicker">
+    <div className="rh-page flex items-center justify-center">
+      <div className="rh-card p-8 max-w-2xl w-full space-y-6">
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--ink-muted)' }}>
+            <span>
               {language === 'ENG'
-                ? `Find your investing style in 60 seconds · Question ${currentQuestion + 1} of ${questions.length}`
-                : `Kenali gaya pelaburan anda dalam 60 saat · Soalan ${currentQuestion + 1} daripada ${questions.length}`}
+                ? `Step ${currentQuestion + 1} of ${questions.length}`
+                : `Langkah ${currentQuestion + 1} daripada ${questions.length}`}
             </span>
-            <span className="jom-tag jom-tag-shariah">JomINVEST</span>
+            <span className="font-tabular">{Math.round(progress)}%</span>
           </div>
 
           <div
@@ -173,13 +170,13 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
 
         {/* Question Prompt */}
         <div className="space-y-2">
-          <h2 className="font-editorial text-2xl sm:text-3xl leading-snug" style={{ color: 'var(--ink-primary)' }}>
+          <h1 className="text-xl sm:text-2xl font-bold leading-snug" style={{ color: 'var(--ink-primary)' }}>
             {questionText}
-          </h2>
+          </h1>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
             {language === 'ENG'
-              ? 'There are no wrong answers — we use this to personalize your starter stock picks and learning tips.'
-              : 'Tiada jawapan yang salah — kami gunakan ini untuk menyesuaikan cadangan saham dan tip pembelajaran anda.'}
+              ? 'We use this to personalize your starter stock ideas and learning notes.'
+              : 'Kami gunakan ini untuk menyesuaikan cadangan saham dan nota pembelajaran anda.'}
           </p>
         </div>
 
@@ -224,7 +221,7 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
 
         {/* Footer Navigation */}
         <div
-          className="flex items-center justify-between pt-6 border-t"
+          className="flex items-center justify-between pt-5 border-t"
           style={{ borderColor: 'var(--border-hairline)' }}
         >
           <button
@@ -246,11 +243,11 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
             <span>
               {currentQuestion === questions.length - 1
                 ? language === 'ENG'
-                  ? 'See My Investing Style & Dashboard'
-                  : 'Lihat Gaya Pelaburan & Papan Pemuka'
+                  ? 'Finish & View Portfolio'
+                  : 'Selesai & Lihat Portfolio'
                 : language === 'ENG'
-                ? 'Next Question'
-                : 'Soalan Seterusnya'}
+                ? 'Next'
+                : 'Seterusnya'}
             </span>
             <ArrowRight size={15} />
           </button>
@@ -259,4 +256,3 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
     </div>
   );
 }
-

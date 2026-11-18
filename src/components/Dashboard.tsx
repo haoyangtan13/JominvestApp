@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, ArrowRight, Loader2, Sparkles, FileText, Compass } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, ArrowRight, Loader2 } from 'lucide-react';
 import type { Screen, PortfolioItem } from '../App';
 import { StockData } from '../data/stocks';
 import { searchBursaStocksOnDemand } from '../services/bursaService';
@@ -19,6 +19,19 @@ interface DashboardProps {
   onRefreshMarket: () => void;
   isRefreshingMarket: boolean;
 }
+
+type Timeframe = '1D' | '1W' | '1M' | '3M' | '1Y';
+
+const FILTER_CHIPS = [
+  'All',
+  'Shariah',
+  'Financial Services',
+  'Utilities',
+  'Technology',
+  'Construction',
+  'Consumer Products',
+  'High Dividend'
+] as const;
 
 const AVATAR_COLORS = [
   'jom-avatar-emerald',
@@ -79,36 +92,8 @@ function getStockAvatarMeta(stock: { ticker: string; sector?: string }) {
   return { initials, colorClass };
 }
 
-function getFriendlyPickHighlight(stock: StockData, language: 'ENG' | 'BM'): string {
-  const yieldNum = parseFloat(String(stock.dividendYield).replace('%', '')) || 0;
-  const scores = stock.radarScores;
-  const avgScore = scores
-    ? Math.round((scores.value + scores.growth + scores.health + scores.dividend + scores.momentum) / 5)
-    : 75;
-
-  if (language === 'BM') {
-    if (yieldNum >= 4.5) {
-      return `Hasil dividen tinggi (${stock.dividendYield}) · ${stock.isShariah ? 'Patuh Syariah' : 'Komponen FBM KLCI'}`;
-    }
-    if (stock.isShariah && avgScore >= 75) {
-      return `Patuh Syariah · Skor 5-faktor kukuh (${avgScore}/100) dalam sektor ${stock.sector}`;
-    }
-    return `Skor 5-faktor kukuh (${avgScore}/100) · Peneraju sektor ${stock.sector} di Bursa Malaysia`;
-  }
-
-  if (yieldNum >= 4.5) {
-    return `High dividend yield (${stock.dividendYield}) · ${stock.isShariah ? 'Shariah Compliant' : 'Steady FBM KLCI leader'}`;
-  }
-  if (stock.isShariah) {
-    return `Shariah Compliant · Strong 5-factor score (${avgScore}/100) in ${stock.sector}`;
-  }
-  return `Strong 5-factor score (${avgScore}/100) · Leading ${stock.sector} pick on Bursa`;
-}
-
 export function Dashboard({
   navigateTo,
-  userProfile,
-  userName,
   language,
   stocks,
   setSelectedStock,
@@ -117,114 +102,52 @@ export function Dashboard({
   watchlist
 }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [shariahOnly, setShariahOnly] = useState(false);
-  const [selectedSector, setSelectedSector] = useState<string>('ALL');
-  const [moverTab, setMoverTab] = useState<'gainers' | 'decliners'>('gainers');
+  const [activeChip, setActiveChip] = useState<string>('All');
+  const [timeframe, setTimeframe] = useState<Timeframe>('1M');
   const [onDemandResults, setOnDemandResults] = useState<StockData[]>([]);
   const [isSearchingOnDemand, setIsSearchingOnDemand] = useState(false);
 
-  const explorerSectionRef = useRef<HTMLElement | null>(null);
-
-  const firstName = (userName || 'Investor').trim().split(' ')[0];
-
   const texts = {
     ENG: {
-      kicker: 'Home & Daily Market Brief',
-      greeting: `Welcome back, ${firstName}`,
-      styleLabel: 'Investing Style',
-      openLedger: 'View My Portfolio →',
-      totalPracticeBalance: 'Total Practice Balance',
-      investedEquity: 'Invested in Stocks',
-      buyingPower: 'Cash to Invest',
-      projDividend: 'Est. Annual Dividends',
-      positionsCount: 'holdings',
-      unallocatedCash: 'Ready to practice buying shares',
-      estYieldBasis: 'Passive income from your holdings',
-      briefBadge: "Today's Market Brief",
-      briefHeadline:
-        'Your portfolio is steady today — Tenaga Nasional and Gamuda are leading Bursa infrastructure activity, while Bank Negara holds OPR steady at 3.00%.',
-      briefSub:
-        'Practice buying 100-share standard lots or 1-share starter units without risking a single sen of real money.',
-      btnExploreStocks: 'Explore Stocks',
-      btnAnnualReport: '30-Sec Annual Report',
-      btnAskJomAI: 'Ask JomAI',
-      convictionKicker: 'Matched to Your Investing Style',
-      convictionTitle: 'Popular on Bursa Today — Guided Picks',
-      readThesis: 'See Why It Matches →',
-      screenerKicker: 'Discover Malaysian Companies',
-      screenerTitle: 'Bursa Malaysia Stock Explorer',
-      searchPlaceholder: 'Search by company name, ticker, or Bursa code (e.g. Maybank, 1155.KL, Tenaga)...',
-      allSecurities: 'All Stocks',
-      shariahOnlyLabel: 'Shariah Compliant Only',
-      allSectors: 'All Sectors',
-      colSecurity: 'Company',
-      colSector: 'Sector',
-      colCompliance: 'Shariah Status',
-      colTrend: '7D Trend',
-      colPrice: 'Price (RM)',
-      colChange: 'Today',
-      colPe: 'P/E Ratio',
-      colYield: 'Dividend Yield',
-      noResults: 'No Bursa Malaysia stocks match your current filters. Try clearing your search or sector filter.',
-      breadthKicker: "What's Moving Today",
-      breadthTitle: 'Bursa Market Movers',
-      topGainers: 'Top Gainers',
-      topDecliners: 'Top Dippers',
-      watchlistKicker: 'Stocks You Follow',
-      watchlistTitle: 'Saved Stocks Watchlist',
-      manageWatchlist: 'Open Watchlist →'
+      investing: 'Investing',
+      buyingPowerLabel: 'Buying power',
+      buyingPowerTitle: 'Buying Power',
+      stocksHeading: 'Stocks',
+      searchPlaceholder: 'Search companies or ticker...',
+      noResults: 'No stocks match your current filter.',
+      holdingsHeading: 'Holdings',
+      sharesUnit: 'shares',
+      emptyHoldings: 'No stocks owned yet — click any stock to place a practice trade.',
+      watchlistHeading: 'Watchlist',
+      editWatchlist: 'Edit',
+      noteHeading: "Today's Market Note",
+      noteBody:
+        'Tenaga Nasional and Gamuda are leading grid and data-centre infrastructure activity, while Maybank remains steady with Bank Negara holding OPR at 3.00%.',
+      noteLinkFiling: 'Read 30-sec filing summary →',
+      noteLinkIdeas: 'See starter ideas →'
     },
     BM: {
-      kicker: 'Utama & Ringkasan Pasaran Harian',
-      greeting: `Selamat kembali, ${firstName}`,
-      styleLabel: 'Gaya Pelaburan',
-      openLedger: 'Lihat Portfolio Saya →',
-      totalPracticeBalance: 'Jumlah Baki Latihan',
-      investedEquity: 'Dilaburkan dalam Saham',
-      buyingPower: 'Tunai untuk Melabur',
-      projDividend: 'Anggaran Dividen Tahunan',
-      positionsCount: 'pegangan',
-      unallocatedCash: 'Sedia untuk latihan membeli saham',
-      estYieldBasis: 'Pendapatan pasif daripada pegangan anda',
-      briefBadge: 'Ringkasan Pasaran Hari Ini',
-      briefHeadline:
-        'Portfolio anda stabil hari ini — Tenaga Nasional dan Gamuda mendahului aktiviti infrastruktur Bursa, manakala Bank Negara mengekalkan OPR pada 3.00%.',
-      briefSub:
-        'Berlatih membeli lot standard 100 unit atau unit permulaan 1 saham tanpa sebarang risiko wang sebenar.',
-      btnExploreStocks: 'Teroka Saham',
-      btnAnnualReport: 'Laporan Tahunan 30-Saat',
-      btnAskJomAI: 'Tanya JomAI',
-      convictionKicker: 'Disesuaikan dengan Gaya Pelaburan Anda',
-      convictionTitle: 'Popular di Bursa Hari Ini — Pilihan Panduan',
-      readThesis: 'Lihat Sebab Padanan →',
-      screenerKicker: 'Terokai Syarikat Malaysia',
-      screenerTitle: 'Peneroka Saham Bursa Malaysia',
-      searchPlaceholder: 'Cari nama syarikat, simbol, atau kod Bursa (cth: Maybank, 1155.KL, Tenaga)...',
-      allSecurities: 'Semua Saham',
-      shariahOnlyLabel: 'Patuh Syariah Sahaja',
-      allSectors: 'Semua Sektor',
-      colSecurity: 'Syarikat',
-      colSector: 'Sektor',
-      colCompliance: 'Status Syariah',
-      colTrend: 'Trend 7H',
-      colPrice: 'Harga (RM)',
-      colChange: 'Hari Ini',
-      colPe: 'Nisbah P/E',
-      colYield: 'Hasil Dividen',
-      noResults: 'Tiada saham Bursa Malaysia sepadan dengan tapisan semasa anda.',
-      breadthKicker: 'Pergerakan Hari Ini',
-      breadthTitle: 'Penggerak Pasaran Bursa',
-      topGainers: 'Penaik Utama',
-      topDecliners: 'Penurun Utama',
-      watchlistKicker: 'Saham Pilihan Anda',
-      watchlistTitle: 'Senarai Pantau Saham Disimpan',
-      manageWatchlist: 'Buka Senarai Pantau →'
+      investing: 'Pelaburan',
+      buyingPowerLabel: 'Kuasa beli',
+      buyingPowerTitle: 'Kuasa Beli',
+      stocksHeading: 'Saham',
+      searchPlaceholder: 'Cari nama syarikat atau simbol...',
+      noResults: 'Tiada saham sepadan dengan tapisan semasa anda.',
+      holdingsHeading: 'Pegangan',
+      sharesUnit: 'unit',
+      emptyHoldings: 'Tiada saham dimiliki — klik mana-mana saham untuk cuba beli.',
+      watchlistHeading: 'Senarai Pantau',
+      editWatchlist: 'Ubah',
+      noteHeading: 'Nota Pasaran Hari Ini',
+      noteBody:
+        'Tenaga Nasional dan Gamuda mendahului aktiviti infrastruktur grid dan pusat data, manakala Maybank kekal stabil dengan OPR pada 3.00%.',
+      noteLinkFiling: 'Baca ringkasan laporan 30-saat →',
+      noteLinkIdeas: 'Lihat idea permulaan →'
     }
   };
 
   const t = texts[language];
 
-  // Live on-demand search for any .KL stock when user types a query
   useEffect(() => {
     const q = searchQuery.trim();
     if (q.length < 2) {
@@ -254,14 +177,6 @@ export function Dashboard({
     };
   }, [searchQuery, stocks]);
 
-  const sectors = useMemo(() => {
-    const set = new Set<string>();
-    stocks.forEach(s => {
-      if (s.sector) set.add(s.sector);
-    });
-    return ['ALL', ...Array.from(set)];
-  }, [stocks]);
-
   const screenerStocks = useMemo(() => {
     let baseList = stocks;
     const q = searchQuery.trim().toLowerCase();
@@ -285,47 +200,15 @@ export function Dashboard({
     }
 
     return baseList.filter(s => {
-      if (shariahOnly && !s.isShariah) return false;
-      if (selectedSector !== 'ALL' && s.sector !== selectedSector) return false;
-      return true;
+      if (activeChip === 'All') return true;
+      if (activeChip === 'Shariah') return s.isShariah;
+      if (activeChip === 'High Dividend') {
+        const yieldVal = parseFloat(String(s.dividendYield).replace('%', '')) || 0;
+        return yieldVal >= 4.0;
+      }
+      return s.sector.toLowerCase().includes(activeChip.toLowerCase());
     });
-  }, [stocks, searchQuery, onDemandResults, shariahOnly, selectedSector]);
-
-  // Top 3 Profile-Matched Picks
-  const topPicks = useMemo(() => {
-    const profileLower = (userProfile || '').toLowerCase();
-    let targetTickers: string[];
-
-    if (profileLower.includes('conservative') || profileLower.includes('protector')) {
-      targetTickers = ['MAYBANK', 'PBBANK', 'TENAGA'];
-    } else if (profileLower.includes('moderate') || profileLower.includes('builder')) {
-      targetTickers = ['CIMB', 'MISC', 'TM'];
-    } else {
-      targetTickers = ['GAMUDA', 'YTLPOWR', 'SUNWAY'];
-    }
-
-    const matched = targetTickers
-      .map(ticker => stocks.find(s => s.ticker === ticker))
-      .filter((s): s is StockData => Boolean(s));
-
-    return (matched.length >= 3 ? matched : stocks).slice(0, 3);
-  }, [userProfile, stocks]);
-
-  const topGainers = useMemo(
-    () =>
-      [...stocks]
-        .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
-        .slice(0, 5),
-    [stocks]
-  );
-
-  const topDecliners = useMemo(
-    () =>
-      [...stocks]
-        .sort((a, b) => parseFloat(a.changePercent) - parseFloat(b.changePercent))
-        .slice(0, 5),
-    [stocks]
-  );
+  }, [stocks, searchQuery, onDemandResults, activeChip]);
 
   const portfolioValue = portfolio.reduce(
     (acc, item) => acc + parseFloat(item.stock.price) * item.quantity,
@@ -340,40 +223,85 @@ export function Dashboard({
   const totalGainRM = portfolioValue - totalCostBasis;
   const isGainPositive = totalGainRM >= 0;
 
-  const estAnnualDividend = portfolio.reduce((sum, item) => {
-    const yieldPct = parseFloat(String(item.stock.dividendYield).replace('%', '')) || 0;
-    const positionVal = parseFloat(item.stock.price) * item.quantity;
-    return sum + (positionVal * yieldPct) / 100;
-  }, 0);
+  const chartSeries = useMemo(() => {
+    const base = totalBalance || 10000;
+    const offsetsByTf: Record<Timeframe, number[]> = {
+      '1D': [-18, -14, -9, -12, -4, 2, 6, 4, 11, 15, 12, 18],
+      '1W': [-45, -32, -28, -15, -22, -8, 5, 14, 9, 24, 31, 38],
+      '1M': [-120, -95, -110, -70, -45, -60, -25, 10, -5, 35, 62, 85],
+      '3M': [-260, -210, -180, -220, -140, -95, -60, -15, 30, 75, 110, 145],
+      '1Y': [-640, -520, -480, -390, -420, -290, -180, -90, 20, 140, 260, 380]
+    };
+    const deltas = offsetsByTf[timeframe];
+    return deltas.map((d, idx) =>
+      idx === deltas.length - 1 ? base : Number((base + d - deltas[deltas.length - 1]).toFixed(2))
+    );
+  }, [totalBalance, timeframe]);
 
   const handleStockClick = (stock: StockData) => {
     setSelectedStock(stock);
     navigateTo('stock-details');
   };
 
-  const handleThesisClick = (stock: StockData, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedStock(stock);
-    navigateTo('ai-recommendation');
+  const renderPortfolioChart = (series: number[], positive: boolean) => {
+    const width = 720;
+    const height = 210;
+    const min = Math.min(...series);
+    const max = Math.max(...series);
+    const range = max - min || 1;
+    const strokeColor = positive ? 'var(--signal-up)' : 'var(--signal-down)';
+
+    const coords = series.map((val, idx) => {
+      const x = (idx / Math.max(1, series.length - 1)) * width;
+      const y = height - ((val - min) / range) * (height - 32) - 16;
+      return { x, y };
+    });
+
+    const linePoints = coords.map(pt => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+    const areaPath = `M 0,${height} L ${coords
+      .map(pt => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`)
+      .join(' L ')} L ${width},${height} Z`;
+
+    return (
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ width: '100%', height: '210px' }}
+        className="overflow-visible"
+      >
+        <defs>
+          <linearGradient id="rhPortfolioFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={strokeColor} stopOpacity="0.16" />
+            <stop offset="100%" stopColor={strokeColor} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path d={areaPath} fill="url(#rhPortfolioFill)" />
+        <polyline
+          points={linePoints}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="2.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
   };
 
-  const scrollToExplorer = () => {
-    if (explorerSectionRef.current) {
-      explorerSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const renderSparkline = (data: number[], isPositive: boolean) => {
+  const renderSparkline = (
+    data: number[] | { date: string; price: number }[] | undefined,
+    isPositive: boolean
+  ) => {
     if (!data || data.length === 0) return null;
-    const max = Math.max(...data);
-    const min = Math.min(...data);
+    const values = data.map(item => (typeof item === 'number' ? item : item.price));
+    const max = Math.max(...values);
+    const min = Math.min(...values);
     const range = max - min || 1;
     const width = 76;
     const height = 24;
 
-    const points = data
+    const points = values
       .map((value, index) => {
-        const x = (index / Math.max(1, data.length - 1)) * width;
+        const x = (index / Math.max(1, values.length - 1)) * width;
         const y = height - ((value - min) / range) * (height - 4) - 2;
         return `${x.toFixed(1)},${y.toFixed(1)}`;
       })
@@ -394,575 +322,272 @@ export function Dashboard({
   };
 
   return (
-    <div className="jom-container space-y-8">
-      {/* Top Greeting Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="jom-kicker">{t.kicker}</div>
-          <h1 className="font-editorial text-3xl sm:text-4xl" style={{ color: 'var(--ink-primary)' }}>
-            {t.greeting}
-          </h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="jom-kicker">{t.styleLabel}:</span>
-          <span className="jom-tag jom-tag-shariah">{userProfile || 'Jom-Explorer (Aggressive)'}</span>
-          <button
-            type="button"
-            onClick={() => navigateTo('portfolio')}
-            className="jom-btn text-xs"
-          >
-            {t.openLedger}
-          </button>
-        </div>
-      </div>
-
-      {/* Origin-style Portfolio & Daily Market Brief Hero */}
-      <div className="grid lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left Card: Total Practice Balance & Breakdown */}
-        <div className="jom-panel p-6 lg:col-span-5 flex flex-col justify-between space-y-5">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="jom-kicker">{t.totalPracticeBalance}</span>
-              <span className={`jom-tag font-tabular ${isGainPositive ? 'jom-tag-up' : 'jom-tag-down'}`}>
-                {portfolio.length === 0
-                  ? language === 'ENG'
-                    ? 'RM 10,000 Starter Cash'
-                    : 'Tunai Permulaan RM 10,000'
-                  : `${isGainPositive ? '+' : ''}RM ${totalGainRM.toFixed(2)}`}
-              </span>
+    <div className="rh-page">
+      <div className="rh-split">
+        {/* Left Main Column */}
+        <div className="rh-main space-y-8">
+          {/* Unboxed Portfolio Header & Interactive Chart */}
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--ink-secondary)' }}>
+              {t.investing}
             </div>
-            <div className="font-tabular text-3xl sm:text-4xl font-bold" style={{ color: 'var(--ink-primary)' }}>
+            <div className="rh-hero-num mt-1">
               RM {totalBalance.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-              {language === 'ENG'
-                ? 'Risk-free practice portfolio · Bursa Malaysia (MYR)'
-                : 'Portfolio latihan bebas risiko · Bursa Malaysia (MYR)'}
-            </p>
+            <div className="flex items-center gap-2 mt-1.5 text-sm font-medium">
+              <span
+                className="font-tabular"
+                style={{ color: isGainPositive ? 'var(--signal-up)' : 'var(--signal-down)' }}
+              >
+                {isGainPositive ? '+' : ''}RM {totalGainRM.toFixed(2)} ({timeframe})
+              </span>
+              <span style={{ color: 'var(--ink-muted)' }}>·</span>
+              <span style={{ color: 'var(--ink-secondary)' }}>
+                {t.buyingPowerLabel}: RM{' '}
+                {cashBalance.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            <div className="mt-4">{renderPortfolioChart(chartSeries, isGainPositive)}</div>
+
+            <div className="rh-timeframe-bar">
+              {(['1D', '1W', '1M', '3M', '1Y'] as Timeframe[]).map(tf => (
+                <button
+                  key={tf}
+                  type="button"
+                  onClick={() => setTimeframe(tf)}
+                  className={`rh-tf-btn ${timeframe === tf ? 'active' : ''}`}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
           </div>
 
+          {/* Buying Power Row */}
           <div
-            className="grid grid-cols-3 gap-3 pt-4 border-t"
+            onClick={() => navigateTo('portfolio')}
+            className="flex items-center justify-between py-3 border-b cursor-pointer transition-colors"
             style={{ borderColor: 'var(--border-hairline)' }}
           >
-            <div>
-              <div className="jom-kicker">{t.buyingPower}</div>
-              <div className="font-tabular text-sm font-semibold mt-1" style={{ color: 'var(--signal-up)' }}>
-                RM {cashBalance.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-              <div className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                {t.unallocatedCash}
-              </div>
-            </div>
-            <div>
-              <div className="jom-kicker">{t.investedEquity}</div>
-              <div className="font-tabular text-sm font-semibold mt-1" style={{ color: 'var(--ink-primary)' }}>
-                RM {portfolioValue.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-              <div className="text-[11px] mt-0.5 font-tabular" style={{ color: 'var(--ink-muted)' }}>
-                {portfolio.length} {t.positionsCount}
-              </div>
-            </div>
-            <div>
-              <div className="jom-kicker">{t.projDividend}</div>
-              <div className="font-tabular text-sm font-semibold mt-1" style={{ color: 'var(--ink-primary)' }}>
-                RM {estAnnualDividend.toFixed(2)}/yr
-              </div>
-              <div className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                {t.estYieldBasis}
-              </div>
+            <span className="text-sm font-semibold">{t.buyingPowerTitle}</span>
+            <div className="flex items-center gap-2 font-tabular text-sm font-semibold">
+              <span>RM {cashBalance.toFixed(2)}</span>
+              <ArrowRight size={14} style={{ color: 'var(--ink-muted)' }} />
             </div>
           </div>
-        </div>
 
-        {/* Right Card: Origin-Style Daily Market Brief Verdict & Quick Actions */}
-        <div className="jom-hero-verdict p-6 lg:col-span-7 flex flex-col justify-between space-y-5">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="jom-tag jom-tag-shariah">
-                <Sparkles size={12} />
-                <span>{t.briefBadge}</span>
-              </span>
-              <span className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-                Bursa Malaysia · FBM KLCI
-              </span>
+          {/* Stocks Explorer Section */}
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">{t.stocksHeading}</h2>
+                {isSearchingOnDemand && (
+                  <Loader2 size={14} className="animate-spin" style={{ color: 'var(--ink-muted)' }} />
+                )}
+              </div>
+
+              <div className="relative sm:max-w-md w-full">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--ink-muted)' }}
+                />
+                <input
+                  type="text"
+                  className="jom-input"
+                  style={{ paddingLeft: '2.25rem' }}
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-            <h2
-              className="font-editorial text-xl sm:text-2xl leading-snug"
-              style={{ color: 'var(--ink-primary)' }}
-            >
-              {t.briefHeadline}
-            </h2>
-            <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-              {t.briefSub}
-            </p>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={scrollToExplorer}
-              className="jom-btn jom-btn-primary text-xs"
-            >
-              <Compass size={14} />
-              <span>{t.btnExploreStocks}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigateTo('educational-hub')}
-              className="jom-btn text-xs"
-            >
-              <FileText size={14} />
-              <span>{t.btnAnnualReport}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigateTo('ai-recommendation')}
-              className="jom-btn text-xs"
-            >
-              <Sparkles size={14} />
-              <span>{t.btnAskJomAI}</span>
-            </button>
-          </div>
-        </div>
-      </div>
+            {/* Filter Chips */}
+            <div className="rh-chip-row">
+              {FILTER_CHIPS.map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setActiveChip(chip)}
+                  className={`rh-chip ${activeChip === chip ? 'active' : ''}`}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
 
-      {/* Popular on Bursa Today — Guided Picks */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="jom-kicker">{t.convictionKicker}</div>
-            <h2 className="font-editorial text-2xl mt-0.5">{t.convictionTitle}</h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigateTo('ai-recommendation')}
-            className="jom-btn text-xs"
-          >
-            <span>{t.readThesis}</span>
-          </button>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-4">
-          {topPicks.map(stock => {
-            const avatar = getStockAvatarMeta(stock);
-            const friendlyReason = getFriendlyPickHighlight(stock, language);
-
-            return (
-              <div
-                key={stock.id}
-                onClick={() => handleStockClick(stock)}
-                className="jom-panel p-5 flex flex-col justify-between gap-4 cursor-pointer transition-colors hover:border-[var(--border-strong)]"
-              >
-                <div className="space-y-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`jom-avatar ${avatar.colorClass}`}>{avatar.initials}</div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-tabular text-sm font-bold">{stock.ticker}</span>
-                          <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                            {stock.bursaCode}
-                          </span>
+            {/* Clean Stock Rows */}
+            <div className="rh-stock-list">
+              {screenerStocks.length > 0 ? (
+                screenerStocks.map(stock => {
+                  const avatar = getStockAvatarMeta(stock);
+                  const history1W =
+                    (stock.history as unknown as Record<string, number[]>)?.['1W'] ?? stock.sparkline;
+                  return (
+                    <div
+                      key={stock.id}
+                      className="rh-stock-row"
+                      onClick={() => handleStockClick(stock)}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`jom-avatar ${avatar.colorClass}`}>{avatar.initials}</div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm truncate">{stock.name}</div>
+                          <div className="text-xs truncate" style={{ color: 'var(--ink-muted)' }}>
+                            {stock.ticker} · {stock.sector}
+                            {stock.isShariah ? ' · Shariah' : ''}
+                          </div>
                         </div>
-                        <p
-                          className="text-xs mt-0.5 truncate"
-                          style={{ color: 'var(--ink-secondary)' }}
+                      </div>
+
+                      <div>{renderSparkline(history1W, stock.isPositive)}</div>
+
+                      <div className="text-right font-tabular">
+                        <div className="font-semibold text-sm">RM {stock.price}</div>
+                        <div
+                          className="text-xs font-medium"
+                          style={{
+                            color: stock.isPositive ? 'var(--signal-up)' : 'var(--signal-down)'
+                          }}
                         >
-                          {stock.name}
-                        </p>
+                          {stock.changePercent}
+                        </div>
                       </div>
                     </div>
-                    {stock.isShariah ? (
-                      <span className="jom-tag jom-tag-shariah shrink-0">Shariah</span>
-                    ) : (
-                      <span className="jom-tag shrink-0">Conventional</span>
-                    )}
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="py-8 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
+                  {t.noResults}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
 
-                  {/* Friendly 1-line explanation */}
-                  <div className="jom-panel-subtle p-2.5 text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                    {friendlyReason}
-                  </div>
+        {/* Right Sticky Rail */}
+        <aside className="rh-rail space-y-5">
+          {/* Card 1: Holdings & Watchlist */}
+          <div className="rh-card space-y-4">
+            {/* Section A: Holdings */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold">{t.holdingsHeading}</h3>
+              </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div>
-                      <div className="font-tabular text-2xl font-bold">RM {stock.price}</div>
-                      <span
-                        className={`jom-tag mt-1 font-tabular ${
-                          stock.isPositive ? 'jom-tag-up' : 'jom-tag-down'
-                        }`}
+              {portfolio.length > 0 ? (
+                <div className="space-y-2">
+                  {portfolio.map(item => {
+                    const avatar = getStockAvatarMeta(item.stock);
+                    const positionVal = parseFloat(item.stock.price) * item.quantity;
+                    return (
+                      <div
+                        key={item.stock.id}
+                        onClick={() => handleStockClick(item.stock)}
+                        className="flex items-center justify-between gap-2 py-1.5 cursor-pointer"
                       >
-                        {stock.changePercent}
-                      </span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`jom-avatar ${avatar.colorClass}`}>{avatar.initials}</div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-xs truncate">{item.stock.ticker}</div>
+                            <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+                              {item.quantity} {t.sharesUnit}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right font-tabular text-xs font-semibold">
+                          RM {positionVal.toFixed(2)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                  {t.emptyHoldings}
+                </p>
+              )}
+            </div>
+
+            <div className="rh-divider" />
+
+            {/* Section B: Watchlist */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold">{t.watchlistHeading}</h3>
+                <button
+                  type="button"
+                  onClick={() => navigateTo('watchlist')}
+                  className="text-xs font-semibold cursor-pointer"
+                  style={{ color: 'var(--accent-brand)' }}
+                >
+                  {t.editWatchlist}
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {watchlist.slice(0, 6).map(stock => {
+                  const avatar = getStockAvatarMeta(stock);
+                  return (
+                    <div
+                      key={stock.id}
+                      onClick={() => handleStockClick(stock)}
+                      className="flex items-center justify-between gap-2 py-1.5 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`jom-avatar ${avatar.colorClass}`}>{avatar.initials}</div>
+                        <div className="font-semibold text-xs truncate">{stock.ticker}</div>
+                      </div>
+
+                      <div>{renderSparkline(stock.sparkline, stock.isPositive)}</div>
+
+                      <div className="text-right font-tabular">
+                        <div className="text-xs font-semibold">RM {stock.price}</div>
+                        <div
+                          className="text-[11px] font-medium"
+                          style={{
+                            color: stock.isPositive ? 'var(--signal-up)' : 'var(--signal-down)'
+                          }}
+                        >
+                          {stock.changePercent}
+                        </div>
+                      </div>
                     </div>
-                    <div>{renderSparkline(stock.sparkline, stock.isPositive)}</div>
-                  </div>
-                </div>
-
-                <div
-                  className="pt-3 border-t flex items-center justify-between text-xs"
-                  style={{ borderColor: 'var(--border-hairline)' }}
-                >
-                  <span className="font-tabular" style={{ color: 'var(--ink-muted)' }}>
-                    P/E {stock.peRatio} · Yield {stock.dividendYield}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={e => handleThesisClick(stock, e)}
-                    className="font-semibold flex items-center gap-1 cursor-pointer"
-                    style={{ color: 'var(--accent-brand)' }}
-                  >
-                    <span>{t.readThesis}</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Bursa Malaysia Stock Explorer */}
-      <section ref={explorerSectionRef} className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-          <div>
-            <div className="jom-kicker">{t.screenerKicker}</div>
-            <h2 className="font-editorial text-2xl mt-0.5">{t.screenerTitle}</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            {isSearchingOnDemand && (
-              <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                <Loader2 size={13} className="animate-spin" />
-                <span>Searching Bursa Malaysia...</span>
-              </span>
-            )}
-            <span className="jom-tag font-tabular">
-              {screenerStocks.length} {language === 'ENG' ? 'Stocks' : 'Saham'}
-            </span>
-          </div>
-        </div>
-
-        <div className="jom-panel overflow-hidden">
-          {/* Top Filter Bar */}
-          <div
-            className="p-4 border-b flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3"
-            style={{ borderColor: 'var(--border-hairline)', backgroundColor: 'var(--bg-elevated)' }}
-          >
-            <div className="relative flex-1">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: 'var(--ink-muted)' }}
-              />
-              <input
-                type="text"
-                className="jom-input"
-                style={{ paddingLeft: '2.25rem' }}
-                placeholder={t.searchPlaceholder}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Segmented Shariah Toggle */}
-              <div className="jom-segmented">
-                <button
-                  type="button"
-                  onClick={() => setShariahOnly(false)}
-                  className={!shariahOnly ? 'active' : ''}
-                >
-                  {t.allSecurities}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShariahOnly(true)}
-                  className={shariahOnly ? 'active' : ''}
-                >
-                  {t.shariahOnlyLabel}
-                </button>
-              </div>
-
-              {/* Sector Select */}
-              <select
-                aria-label="Filter by sector"
-                className="jom-input"
-                style={{ width: 'auto', minWidth: '170px' }}
-                value={selectedSector}
-                onChange={e => setSelectedSector(e.target.value)}
-              >
-                {sectors.map(sector => (
-                  <option key={sector} value={sector}>
-                    {sector === 'ALL' ? t.allSectors : sector}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Consumer Stock Explorer Table with Monogram Avatars */}
-          <div className="jom-table-wrap">
-            {screenerStocks.length > 0 ? (
-              <table className="jom-table">
-                <thead>
-                  <tr>
-                    <th>{t.colSecurity}</th>
-                    <th>{t.colSector}</th>
-                    <th>{t.colCompliance}</th>
-                    <th>{t.colTrend}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colPrice}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colChange}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colPe}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colYield}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {screenerStocks.map(stock => {
-                    const avatar = getStockAvatarMeta(stock);
-                    return (
-                      <tr key={stock.id} onClick={() => handleStockClick(stock)}>
-                        <td>
-                          <div className="flex items-center gap-3">
-                            <div className={`jom-avatar ${avatar.colorClass}`}>{avatar.initials}</div>
-                            <div className="min-w-0">
-                              <div className="font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                                {stock.ticker}{' '}
-                                <span
-                                  className="font-tabular text-xs font-normal"
-                                  style={{ color: 'var(--ink-muted)' }}
-                                >
-                                  · {stock.bursaCode}
-                                </span>
-                              </div>
-                              <div className="text-xs truncate max-w-xs" style={{ color: 'var(--ink-secondary)' }}>
-                                {stock.name}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                            {stock.sector}
-                          </span>
-                        </td>
-                        <td>
-                          {stock.isShariah ? (
-                            <span className="jom-tag jom-tag-shariah">Shariah Compliant</span>
-                          ) : (
-                            <span className="jom-tag">Conventional</span>
-                          )}
-                        </td>
-                        <td>{renderSparkline(stock.sparkline, stock.isPositive)}</td>
-                        <td className="font-tabular font-semibold" style={{ textAlign: 'right' }}>
-                          {stock.price}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <span
-                            className={`jom-tag font-tabular ${
-                              stock.isPositive ? 'jom-tag-up' : 'jom-tag-down'
-                            }`}
-                          >
-                            {stock.changePercent}
-                          </span>
-                        </td>
-                        <td
-                          className="font-tabular text-xs"
-                          style={{ textAlign: 'right', color: 'var(--ink-secondary)' }}
-                        >
-                          {stock.peRatio}
-                        </td>
-                        <td
-                          className="font-tabular text-xs font-medium"
-                          style={{ textAlign: 'right', color: 'var(--ink-primary)' }}
-                        >
-                          {stock.dividendYield}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <div className="p-8 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-                {t.noResults}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Bottom 2-Column Market Movers & Saved Watchlist Preview */}
-      <section className="grid lg:grid-cols-2 gap-6">
-        {/* Left: Top Gainers & Top Dippers */}
-        <div className="jom-panel overflow-hidden flex flex-col justify-between">
-          <div>
-            <div
-              className="p-5 border-b flex items-center justify-between gap-2"
-              style={{ borderColor: 'var(--border-hairline)' }}
-            >
-              <div>
-                <div className="jom-kicker">{t.breadthKicker}</div>
-                <h3 className="font-editorial text-2xl mt-0.5">{t.breadthTitle}</h3>
-              </div>
-              <div className="jom-segmented">
-                <button
-                  type="button"
-                  onClick={() => setMoverTab('gainers')}
-                  className={moverTab === 'gainers' ? 'active' : ''}
-                >
-                  {t.topGainers}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMoverTab('decliners')}
-                  className={moverTab === 'decliners' ? 'active' : ''}
-                >
-                  {t.topDecliners}
-                </button>
+                  );
+                })}
               </div>
             </div>
-
-            <div className="jom-table-wrap">
-              <table className="jom-table">
-                <thead>
-                  <tr>
-                    <th>{t.colSecurity}</th>
-                    <th>{t.colCompliance}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colPrice}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colChange}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(moverTab === 'gainers' ? topGainers : topDecliners).map(stock => {
-                    const avatar = getStockAvatarMeta(stock);
-                    return (
-                      <tr key={stock.id} onClick={() => handleStockClick(stock)}>
-                        <td>
-                          <div className="flex items-center gap-2.5">
-                            <div className={`jom-avatar ${avatar.colorClass}`}>{avatar.initials}</div>
-                            <div>
-                              <div className="font-semibold text-xs">{stock.ticker}</div>
-                              <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                                {stock.bursaCode}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          {stock.isShariah ? (
-                            <span className="jom-tag jom-tag-shariah">Shariah</span>
-                          ) : (
-                            <span className="jom-tag">Conventional</span>
-                          )}
-                        </td>
-                        <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
-                          RM {stock.price}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <span
-                            className={`jom-tag font-tabular ${
-                              stock.isPositive ? 'jom-tag-up' : 'jom-tag-down'
-                            }`}
-                          >
-                            {stock.changePercent}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
           </div>
-        </div>
 
-        {/* Right: Saved Watchlist Preview */}
-        <div className="jom-panel overflow-hidden flex flex-col justify-between">
-          <div>
-            <div
-              className="p-5 border-b flex items-center justify-between gap-2"
-              style={{ borderColor: 'var(--border-hairline)' }}
-            >
-              <div>
-                <div className="jom-kicker">{t.watchlistKicker}</div>
-                <h3 className="font-editorial text-2xl mt-0.5">{t.watchlistTitle}</h3>
-              </div>
+          {/* Card 2: Today's Market Note */}
+          <div className="rh-card space-y-3">
+            <h3 className="text-sm font-bold">{t.noteHeading}</h3>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              {t.noteBody}
+            </p>
+            <div className="pt-1 flex flex-col gap-2">
               <button
                 type="button"
-                onClick={() => navigateTo('watchlist')}
-                className="jom-btn text-xs"
+                onClick={() => navigateTo('educational-hub')}
+                className="text-left text-xs font-semibold cursor-pointer"
+                style={{ color: 'var(--accent-brand)' }}
               >
-                <span>{t.manageWatchlist}</span>
+                {t.noteLinkFiling}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigateTo('ai-recommendation')}
+                className="text-left text-xs font-semibold cursor-pointer"
+                style={{ color: 'var(--accent-brand)' }}
+              >
+                {t.noteLinkIdeas}
               </button>
             </div>
-
-            <div className="jom-table-wrap">
-              <table className="jom-table">
-                <thead>
-                  <tr>
-                    <th>{t.colSecurity}</th>
-                    <th>{t.colTrend}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colPrice}</th>
-                    <th style={{ textAlign: 'right' }}>{t.colChange}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {watchlist.slice(0, 5).map(stock => {
-                    const avatar = getStockAvatarMeta(stock);
-                    return (
-                      <tr key={stock.id} onClick={() => handleStockClick(stock)}>
-                        <td>
-                          <div className="flex items-center gap-2.5">
-                            <div className={`jom-avatar ${avatar.colorClass}`}>{avatar.initials}</div>
-                            <div>
-                              <div className="font-semibold text-xs">{stock.ticker}</div>
-                              <div className="text-xs truncate max-w-[180px]" style={{ color: 'var(--ink-muted)' }}>
-                                {stock.name}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{renderSparkline(stock.sparkline, stock.isPositive)}</td>
-                        <td className="font-tabular text-xs font-semibold" style={{ textAlign: 'right' }}>
-                          RM {stock.price}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <span
-                            className={`jom-tag font-tabular ${
-                              stock.isPositive ? 'jom-tag-up' : 'jom-tag-down'
-                            }`}
-                          >
-                            {stock.changePercent}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
           </div>
-
-          <div
-            className="p-4 border-t flex items-center justify-between text-xs"
-            style={{ borderColor: 'var(--border-hairline)', backgroundColor: 'var(--bg-elevated)' }}
-          >
-            <span style={{ color: 'var(--ink-muted)' }}>
-              {watchlist.length} {language === 'ENG' ? 'stocks saved in your watchlist' : 'saham disimpan dalam senarai pantau'}
-            </span>
-            <button
-              type="button"
-              onClick={() => navigateTo('watchlist')}
-              className="font-semibold flex items-center gap-1 cursor-pointer"
-              style={{ color: 'var(--accent-brand)' }}
-            >
-              <span>{t.manageWatchlist}</span>
-              <ArrowRight size={13} />
-            </button>
-          </div>
-        </div>
-      </section>
+        </aside>
+      </div>
     </div>
   );
 }
-
