@@ -2954,7 +2954,9 @@ body {
 .transition-opacity { transition-property: opacity; transition-duration: 150ms; }
 .hover\:opacity-80:hover { opacity: 0.8; }
 .px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
-
-
-
+.space-y-0\.5 > :not(:last-child) { margin-bottom: 0.125rem; }
+.space-y-3\.5 > :not(:last-child) { margin-bottom: 0.875rem; }
+.items-baseline { align-items: baseline; }
+.max-w-\[92\%\] { max-width: 92%; }
+.whitespace-pre-line { white-space: pre-line; }
 

@@ -43,8 +43,8 @@ export function ChatbotModal({
 
   const initialGreeting =
     language === 'ENG'
-      ? `Greetings, ${firstName}. JomAI Research Copilot is synchronized with ${stocks.length} Bursa Malaysia securities and your live portfolio ledger. Query any issuer ticker, compare multiples, audit sector concentration, or verify SAC Shariah standing.`
-      : `Salam sejahtera, ${firstName}. Pembantu Penyelidikan JomAI diselaraskan dengan ${stocks.length} sekuriti Bursa Malaysia dan lejar portfolio anda. Tanya mengenai sebarang saham, perbandingan gandaan, atau saringan Syariah MPS.`;
+      ? `Hi ${firstName}! I’m JomAI, your Bursa Malaysia study buddy. I’m connected to all ${stocks.length} Bursa companies and your practice portfolio. Ask me about any stock, compare dividends, check your diversification, or see which companies are Shariah-compliant!`
+      : `Hai ${firstName}! Saya JomAI, rakan belajar Bursa Malaysia anda. Saya dihubungkan dengan ${stocks.length} syarikat Bursa dan portfolio latihan anda. Tanya saya tentang mana-mana saham, perbandingan dividen, kepelbagaian portfolio, atau status patuh Syariah!`;
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -62,29 +62,27 @@ export function ChatbotModal({
 
   const texts = {
     ENG: {
-      kicker: 'JOMAI · BURSA RESEARCH COPILOT',
-      title: 'Institutional Research & Ledger Desk',
-      placeholder: 'Query ticker (e.g. MAYBANK, TENAGA), compare multiples, or audit portfolio...',
-      quickPromptsLabel: 'RESEARCH PROMPTS',
+      kicker: 'JomAI Study Buddy',
+      title: 'Ask JomAI — Your Bursa Study Buddy',
+      placeholder: 'Ask about a stock (e.g. Maybank, Tenaga), dividends, or your portfolio...',
+      quickPromptsLabel: 'Popular Starter Questions',
       quickReplies: [
-        'Audit my portfolio',
-        'Top dividend yields',
-        'SAC Shariah issuers',
-        'Compare MAYBANK vs CIMB',
-        'Bursa contract fee schedule'
+        'Is Maybank or CIMB better for dividends?',
+        'Check my portfolio diversification',
+        'Which Bursa stocks are Shariah-compliant?',
+        'How do Bursa trading fees work?'
       ]
     },
     BM: {
-      kicker: 'JOMAI · PEMBANTU PENYELIDIKAN BURSA',
-      title: 'Meja Penyelidikan & Lejar Institusi',
-      placeholder: 'Tanya kaunter (cth. MAYBANK, TENAGA), bandingkan gandaan, atau audit portfolio...',
-      quickPromptsLabel: 'ARAHAN PANTAS',
+      kicker: 'Rakan Belajar JomAI',
+      title: 'Tanya JomAI — Rakan Belajar Bursa Anda',
+      placeholder: 'Tanya tentang saham (cth. Maybank, Tenaga), dividen, atau portfolio anda...',
+      quickPromptsLabel: 'Soalan Permulaan Popular',
       quickReplies: [
-        'Audit portfolio saya',
-        'Hasil dividen tertinggi',
-        'Sekuriti patuh Syariah MPS',
-        'Bandingkan MAYBANK vs CIMB',
-        'Jadual yuran kontrak Bursa'
+        'Adakah Maybank atau CIMB lebih baik untuk dividen?',
+        'Semak kepelbagaian portfolio saya',
+        'Saham Bursa manakah yang patuh Syariah?',
+        'Bagaimana yuran dagangan Bursa dikira?'
       ]
     }
   };
@@ -129,7 +127,7 @@ export function ChatbotModal({
         sender: 'bot',
         content: response.text,
         text: response.text,
-        isTabular: true,
+        isTabular: false,
         provider: response.provider,
         referencedTickers: response.referencedTickers
       };
@@ -137,8 +135,8 @@ export function ChatbotModal({
     } catch {
       const fallbackText =
         language === 'ENG'
-          ? `JomAI Research Copilot encountered a temporary connection interruption. Please retry your query on any of our ${stocks.length} Bursa Malaysia issuers.`
-          : `Pembantu Penyelidikan JomAI mengalami gangguan sambungan sementara. Sila cuba semula pertanyaan anda.`;
+          ? `Oops! JomAI had a brief connection hiccup. Please try asking your question again about any of our ${stocks.length} Bursa Malaysia companies.`
+          : `Maaf! JomAI mengalami gangguan sambungan sebentar. Sila cuba tanya soalan anda sekali lagi.`;
       setMessages(prev => [
         ...prev,
         {
@@ -165,8 +163,8 @@ export function ChatbotModal({
     }
     handleSendMessage(
       language === 'ENG'
-        ? `Provide an institutional research brief on ${ticker}`
-        : `Berikan nota penyelidikan institusi untuk ${ticker}`
+        ? `Tell me about ${ticker} in plain English`
+        : `Terangkan tentang saham ${ticker} dengan mudah`
     );
   };
 
@@ -184,7 +182,7 @@ export function ChatbotModal({
         onClick={onClose}
       />
 
-      {/* Slide-Over Research Copilot Drawer */}
+      {/* Slide-Over Study Buddy Drawer */}
       <aside
         className="fixed inset-y-0 right-0 z-50 w-full max-w-md border-l flex flex-col shadow-2xl"
         style={{
@@ -201,19 +199,22 @@ export function ChatbotModal({
             backgroundColor: 'var(--bg-elevated)'
           }}
         >
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="jom-kicker">{t.kicker}</span>
-              <span className="jom-tag jom-tag-shariah">KLSE DATA LINKED</span>
+          <div className="flex items-start gap-3">
+            <div className="jom-avatar jom-avatar-emerald">AI</div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="jom-kicker">{t.kicker}</span>
+                <span className="jom-tag jom-tag-shariah">Live Bursa Data</span>
+              </div>
+              <h3 className="font-editorial text-xl">{t.title}</h3>
             </div>
-            <h3 className="font-editorial text-2xl">{t.title}</h3>
           </div>
 
           <button
             type="button"
             onClick={onClose}
             className="jom-btn py-1.5 px-2.5 shrink-0"
-            title="Close Copilot Drawer"
+            title="Close JomAI"
           >
             <X size={15} />
           </button>
@@ -230,24 +231,28 @@ export function ChatbotModal({
               >
                 <div className="flex items-center gap-2 mb-1 px-0.5">
                   <span className="jom-kicker">
-                    {isUser ? 'INVESTOR QUERY' : 'JOMAI DESK NOTE'}
+                    {isUser
+                      ? language === 'ENG'
+                        ? 'You'
+                        : 'Anda'
+                      : 'JomAI'}
                   </span>
                   {!isUser && (
-                    <span className="jom-tag font-tabular">
-                      JOMAI VERIFIED
+                    <span className="jom-tag jom-tag-shariah">
+                      {language === 'ENG' ? 'Plain-English Guide' : 'Panduan Mudah'}
                     </span>
                   )}
                 </div>
                 <div
-                  className={`max-w-[92%] rounded-lg p-3.5 border text-xs leading-relaxed whitespace-pre-line ${
+                  className={`max-w-[92%] rounded-2xl p-3.5 border text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
                     message.isTabular ? 'font-tabular' : ''
                   }`}
                   style={
                     isUser
                       ? {
-                          backgroundColor: 'var(--ink-primary)',
-                          color: 'var(--ink-inverse)',
-                          borderColor: 'var(--ink-primary)'
+                          backgroundColor: 'var(--accent-brand)',
+                          color: '#FFFFFF',
+                          borderColor: 'var(--accent-brand)'
                         }
                       : {
                           backgroundColor: 'var(--bg-subtle)',
@@ -259,11 +264,11 @@ export function ChatbotModal({
                   {message.content}
                 </div>
 
-                {/* Clickable Referenced Ticker Pills */}
+                {/* Clickable Referenced Stock Chips */}
                 {!isUser &&
                   message.referencedTickers &&
                   message.referencedTickers.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    <div className="flex flex-wrap gap-1.5 mt-2">
                       {message.referencedTickers.map(ticker => {
                         const matchedStock = stocks.find(s => s.ticker === ticker);
                         return (
@@ -271,7 +276,7 @@ export function ChatbotModal({
                             key={ticker}
                             type="button"
                             onClick={() => handleTickerPillClick(ticker)}
-                            className="jom-tag font-tabular cursor-pointer transition-opacity hover:opacity-80 flex items-center gap-1"
+                            className="jom-tag jom-tag-shariah font-tabular cursor-pointer transition-opacity hover:opacity-80 flex items-center gap-1"
                             title={
                               matchedStock
                                 ? `${matchedStock.name} (RM ${matchedStock.price})`
@@ -294,20 +299,24 @@ export function ChatbotModal({
 
           {isTyping && (
             <div className="flex flex-col items-start">
-              <div className="jom-kicker mb-1">JOMAI DESK NOTE</div>
+              <div className="jom-kicker mb-1">JomAI</div>
               <div
-                className="jom-panel-subtle px-3.5 py-2.5 font-tabular text-xs flex items-center gap-2"
+                className="jom-panel-subtle px-3.5 py-2.5 text-xs flex items-center gap-2"
                 style={{ color: 'var(--ink-secondary)' }}
               >
                 <Loader2 size={13} className="animate-spin" />
-                <span>SYNTHESIS IN PROGRESS...</span>
+                <span>
+                  {language === 'ENG'
+                    ? 'Looking up Bursa numbers...'
+                    : 'Menyemak data Bursa...'}
+                </span>
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Prompt Pills */}
+        {/* Starter Question Pills */}
         <div
           className="px-5 py-3 border-t space-y-2"
           style={{
@@ -344,13 +353,19 @@ export function ChatbotModal({
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isTyping ? 'SYNTHESIS IN PROGRESS...' : t.placeholder}
+            placeholder={
+              isTyping
+                ? language === 'ENG'
+                  ? 'JomAI is thinking...'
+                  : 'JomAI sedang menyemak...'
+                : t.placeholder
+            }
             disabled={isTyping}
             className="jom-input flex-1"
           />
           <button
             type="button"
-            className="jom-btn jom-btn-primary py-2 px-3.5"
+            className="jom-btn jom-btn-primary py-2.5 px-3.5"
             onClick={() => handleSendMessage(inputValue)}
             disabled={isTyping || !inputValue.trim()}
           >

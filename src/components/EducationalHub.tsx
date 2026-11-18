@@ -68,49 +68,94 @@ interface EducationalItem {
   quiz: QuizQuestion[];
 }
 
+function getStockMonogram(ticker: string, sector?: string): { initials: string; avatarClass: string } {
+  const map: Record<string, { initials: string; avatarClass: string }> = {
+    MAYBANK: { initials: 'MB', avatarClass: 'jom-avatar jom-avatar-amber' },
+    PBBANK: { initials: 'PB', avatarClass: 'jom-avatar jom-avatar-blue' },
+    CIMB: { initials: 'CB', avatarClass: 'jom-avatar jom-avatar-rose' },
+    RHBBANK: { initials: 'RH', avatarClass: 'jom-avatar jom-avatar-blue' },
+    TENAGA: { initials: 'TN', avatarClass: 'jom-avatar jom-avatar-emerald' },
+    YTLPOWR: { initials: 'YP', avatarClass: 'jom-avatar jom-avatar-indigo' },
+    PETGAS: { initials: 'PG', avatarClass: 'jom-avatar jom-avatar-teal' },
+    GAMUDA: { initials: 'GM', avatarClass: 'jom-avatar jom-avatar-emerald' },
+    INARI: { initials: 'IN', avatarClass: 'jom-avatar jom-avatar-indigo' },
+    MYEG: { initials: 'MY', avatarClass: 'jom-avatar jom-avatar-blue' },
+    IHH: { initials: 'IH', avatarClass: 'jom-avatar jom-avatar-teal' },
+    PMETAL: { initials: 'PM', avatarClass: 'jom-avatar jom-avatar-blue' },
+    SDG: { initials: 'SD', avatarClass: 'jom-avatar jom-avatar-emerald' },
+    MISC: { initials: 'MS', avatarClass: 'jom-avatar jom-avatar-indigo' },
+    MRDIY: { initials: 'DY', avatarClass: 'jom-avatar jom-avatar-amber' },
+    NESTLE: { initials: 'NS', avatarClass: 'jom-avatar jom-avatar-rose' },
+    QL: { initials: 'QL', avatarClass: 'jom-avatar jom-avatar-emerald' },
+    TM: { initials: 'TM', avatarClass: 'jom-avatar jom-avatar-amber' },
+    AXIATA: { initials: 'AX', avatarClass: 'jom-avatar jom-avatar-indigo' },
+    PAVREIT: { initials: 'PV', avatarClass: 'jom-avatar jom-avatar-teal' },
+    SUNREIT: { initials: 'SR', avatarClass: 'jom-avatar jom-avatar-amber' }
+  };
+
+  if (map[ticker]) return map[ticker];
+
+  const clean = ticker.replace(/[^A-Za-z]/g, '').toUpperCase();
+  const initials = clean.slice(0, 2) || 'JM';
+  const sectorLower = (sector || '').toLowerCase();
+  if (sectorLower.includes('financial') || sectorLower.includes('bank')) {
+    return { initials, avatarClass: 'jom-avatar jom-avatar-blue' };
+  }
+  if (sectorLower.includes('tech')) {
+    return { initials, avatarClass: 'jom-avatar jom-avatar-indigo' };
+  }
+  if (sectorLower.includes('consumer') || sectorLower.includes('reit')) {
+    return { initials, avatarClass: 'jom-avatar jom-avatar-amber' };
+  }
+  if (sectorLower.includes('health')) {
+    return { initials, avatarClass: 'jom-avatar jom-avatar-teal' };
+  }
+  return { initials, avatarClass: 'jom-avatar jom-avatar-emerald' };
+}
+
 const learningItems: EducationalItem[] = [
   {
     id: 'art-dividend',
-    code: 'MOD-01',
+    code: 'Lesson 1',
     type: 'article',
-    titleEng: 'Single-Tier Dividends & Entitlement Mechanics on Bursa',
-    titleBm: 'Dividen Satu Peringkat & Mekanisme Kelayakan di Bursa',
+    titleEng: 'How Dividends Work on Bursa Malaysia',
+    titleBm: 'Cara Dividen Berfungsi di Bursa Malaysia',
     descEng:
-      'How Malaysian blue-chip issuers distribute tax-exempt cash dividends and how Ex-Date settlement rules operate.',
+      'Learn how profitable Malaysian companies share cash payouts with everyday investors—and why they are 100% tax-free.',
     descBm:
-      'Bagaimana syarikat cip biru Malaysia mengagihkan dividen tunai dikecualikan cukai dan peraturan penyelesaian Ex-Date.',
-    meta: '05 MIN READ',
-    badge: 'FUNDAMENTALS',
+      'Ketahui bagaimana syarikat Malaysia berkongsi keuntungan tunai dengan pelabur—dan mengapa ia dikecualikan cukai sepenuhnya.',
+    meta: '5 min read',
+    badge: 'Passive Income',
     contentEng: [
-      'A dividend is a cash distribution paid by a profitable listed issuer to its shareholders. On Bursa Malaysia, institutional staples and financial institutions typically declare dividends semi-annually or quarterly.',
-      'For example, if Malayan Banking Berhad (MAYBANK) trades at RM 10.54 with a 6.15% indicated yield, holding 1,000 shares (10 standard board lots valued at RM 10,540) generates approximately RM 648 annually in tax-exempt single-tier cash dividends.',
-      'Entitlement is governed strictly by the Ex-Dividend Date (Ex-Date): an investor must execute a buy order at least one trading day prior to the Ex-Date to be recorded on the Central Depository System (CDS) register for the payout.'
+      'A dividend is a slice of a company’s profit paid directly to you in cash just for owning its shares. On Bursa Malaysia, established companies like banks and utilities usually pay dividends twice a year or every quarter.',
+      'For example, if Maybank (MAYBANK) trades at RM 10.54 with a 6.15% dividend yield, owning 1,000 shares (10 lots worth RM 10,540) pays you roughly RM 648 per year in tax-free cash.',
+      'To receive an upcoming dividend, you simply need to buy the stock at least 1 trading day before its Ex-Dividend Date (Ex-Date).'
     ],
     contentBm: [
-      'Dividen ialah agihan tunai daripada keuntungan syarikat kepada pemegang sahamnya. Di Bursa Malaysia, syarikat cip biru lazimnya membayar dividen dua kali setahun atau setiap suku tahun.',
+      'Dividen ialah agihan tunai daripada keuntungan syarikat kepada pemegang sahamnya. Di Bursa Malaysia, syarikat kukuh lazimnya membayar dividen dua kali setahun atau setiap suku tahun.',
       'Sebagai contoh, jika Maybank (MAYBANK) didagangkan pada RM 10.54 dengan kadar hasil dividen 6.15%, memegang 1,000 unit (10 lot bernilai RM 10,540) menjana kira-kira RM 648 setahun dalam bentuk dividen tunai.',
       'Perhatikan Tarikh Ex-Dividen (Ex-Date): anda mesti membeli saham sekurang-kurangnya 1 hari dagangan sebelum Ex-Date untuk layak menerima bayaran dividen tersebut.'
     ],
     takeawaysEng: [
-      'Dividend Yield (%) = (Annual Dividend Per Share / Current Market Price) x 100',
-      'Malaysia operates a Single-Tier Dividend System: cash dividends are tax-exempt in the hands of retail investors',
-      'Sustainable yields (>4.5%) require healthy free cash flow and disciplined payout ratios'
+      'Dividend Yield (%) = (Yearly Cash Dividend Per Share ÷ Current Share Price) × 100',
+      'Malaysia uses a Single-Tier Dividend System: cash dividends you receive are 100% tax-exempt',
+      'Look for steady companies with healthy cash flow rather than chasing unusually high yields'
     ],
     takeawaysBm: [
-      'Kadar Hasil Dividen (%) = (Dividen Tahunan Sesaham / Harga Saham Semasa) x 100',
+      'Kadar Hasil Dividen (%) = (Dividen Tahunan Sesaham ÷ Harga Saham Semasa) × 100',
       'Malaysia menggunakan Sistem Dividen Satu Peringkat: dividen dikecualikan cukai untuk pelabur runcit',
-      'Hasil dividen tinggi (>4.5%) memerlukan aliran tunai bebas yang kukuh'
+      'Hasil dividen yang mampan (>4.5%) memerlukan aliran tunai syarikat yang kukuh'
     ],
     quiz: [
       {
-        qEng: 'When must you purchase a Bursa Malaysia security to qualify for its declared cash dividend?',
+        qEng: 'When do you need to buy a Bursa Malaysia stock to qualify for its upcoming cash dividend?',
         qBm: 'Bilakah anda mesti membeli saham Bursa Malaysia untuk layak mendapat dividen yang diumumkan?',
         optionsEng: ['Before the Ex-Dividend Date', 'On the Payment Date', 'After the Entitlement Date'],
         optionsBm: ['Sebelum Tarikh Ex-Dividen', 'Pada Tarikh Pembayaran', 'Selepas Tarikh Kelayakan'],
         correctIndex: 0
       },
       {
-        qEng: 'If a security priced at RM 10.00 distributes RM 0.50 annual dividend per share, what is its dividend yield?',
+        qEng: 'If a stock priced at RM 10.00 pays RM 0.50 in yearly dividends per share, what is its dividend yield?',
         qBm: 'Jika saham berharga RM 10.00 membayar dividen tahunan RM 0.50 sesaham, apakah kadar hasil dividennya?',
         optionsEng: ['2.0%', '5.0%', '10.0%'],
         optionsBm: ['2.0%', '5.0%', '10.0%'],
@@ -120,47 +165,47 @@ const learningItems: EducationalItem[] = [
   },
   {
     id: 'art-bursa',
-    code: 'MOD-02',
+    code: 'Lesson 2',
     type: 'article',
-    titleEng: 'Bursa Market Structure, Board Lots & SAC Shariah Screening',
-    titleBm: 'Struktur Pasaran Bursa, Lot Papan & Saringan Syariah MPS',
+    titleEng: 'Bursa Basics: Board Lots, Trading Hours & Shariah Screening',
+    titleBm: 'Asas Bursa: Lot Papan, Waktu Dagangan & Saringan Syariah',
     descEng:
-      'Institutional guide to trading sessions, 100-unit board lots, regulated clearing fees, and SC Shariah Advisory Council ratios.',
+      'A friendly guide to 100-share lots, trading fees, and how the Securities Commission screens halal stocks.',
     descBm:
-      'Panduan lengkap tentang waktu dagangan, lot papan 100 unit, yuran penjelasan, dan nisbah saringan Syariah SC.',
-    meta: '08 MIN READ',
-    badge: 'MARKET STRUCTURE',
+      'Panduan mudah tentang lot 100 unit, yuran dagangan, dan cara Suruhanjaya Sekuriti menyaring saham patuh Syariah.',
+    meta: '5 min read',
+    badge: 'Bursa Basics',
     contentEng: [
-      'Bursa Malaysia operates Monday through Friday across two continuous trading sessions: the Morning Session (09:00 – 12:30 MYT) and the Afternoon Session (14:30 – 17:00 MYT).',
-      'Equities on Bursa Malaysia trade in standard Board Lots of 100 shares. If Tenaga Nasional (TENAGA) trades at RM 14.12 per share, 1 standard lot (100 shares) requires RM 1,412 in principal before regulated brokerage, stamp duty, and clearing fees.',
-      'The Securities Commission (SC) Malaysia Shariah Advisory Council (SAC) reviews listed securities semi-annually (May and November) using quantitative business activity thresholds (5% / 20%) and financial ratio screens (<33% conventional debt and conventional cash over total assets).'
+      'Bursa Malaysia is open Monday to Friday across two sessions: Morning (9:00 AM – 12:30 PM) and Afternoon (2:30 PM – 5:00 PM).',
+      'On Bursa Malaysia, stocks are normally bought in standard "Board Lots" of 100 shares. So if Tenaga Nasional (TENAGA) is RM 14.12 per share, 1 standard lot (100 shares) costs RM 1,412 plus a few Ringgit in fees.',
+      'Twice a year (May and November), the Securities Commission (SC) Malaysia Shariah Advisory Council reviews every listed company’s business activities and debt levels to certify which stocks are Shariah-compliant.'
     ],
     contentBm: [
-      'Bursa Malaysia beroperasi Isnin hingga Jumaat dalam dua sesi: Sesi Pagi (09:00 – 12:30) dan Sesi Petang (14:30 – 17:00).',
-      'Saham di Bursa Malaysia didagangkan dalam Lot Papan standard sebanyak 100 unit. Jika Tenaga Nasional (TENAGA) berharga RM 14.12 seunit, 1 lot (100 unit) berharga RM 1,412 sebelum yuran broker, duti setem, dan yuran penjelasan.',
-      'Majlis Penasihat Syariah Suruhanjaya Sekuriti (SC) Malaysia menyaring saham dua kali setahun (Mei & November) berdasarkan penanda aras aktiviti perniagaan dan nisbah kewangan (<33% hutang konvensional).'
+      'Bursa Malaysia beroperasi Isnin hingga Jumaat dalam dua sesi: Sesi Pagi (9:00 PG – 12:30 PTG) dan Sesi Petang (2:30 PTG – 5:00 PTG).',
+      'Saham di Bursa Malaysia didagangkan dalam Lot Papan standard sebanyak 100 unit. Jika Tenaga Nasional (TENAGA) berharga RM 14.12 seunit, 1 lot (100 unit) berharga RM 1,412 sebelum yuran.',
+      'Majlis Penasihat Syariah Suruhanjaya Sekuriti (SC) Malaysia menyaring saham dua kali setahun (Mei & November) berdasarkan aktiviti perniagaan dan nisbah kewangan.'
     ],
     takeawaysEng: [
-      '1 Standard Bursa Board Lot = 100 shares',
-      'Every contract note includes 3 regulated charges: Brokerage Fee, Stamp Duty (RM 1 per RM 1,000), and Clearing Fee (0.03%)',
-      'Over 75% of Bursa Malaysia listed securities are certified SAC Shariah-compliant'
+      '1 Standard Bursa Lot = 100 shares',
+      'Every trade includes 3 small charges: Brokerage Fee, Stamp Duty (RM 1 per RM 1,000), and Clearing Fee (0.03%)',
+      'Over 75% of companies listed on Bursa Malaysia are certified Shariah-compliant'
     ],
     takeawaysBm: [
       '1 Lot Standard Bursa = 100 unit saham',
-      'Setiap nota kontrak melibatkan 3 kos: Yuran Broker, Duti Setem (RM 1 setiap RM 1,000), dan Yuran Penjelasan (0.03%)',
-      'Lebih 75% sekuriti tersenarai di Bursa Malaysia adalah patuh Syariah MPS'
+      'Setiap dagangan melibatkan 3 kos kecil: Yuran Broker, Duti Setem (RM 1 setiap RM 1,000), dan Yuran Penjelasan (0.03%)',
+      'Lebih 75% syarikat tersenarai di Bursa Malaysia adalah patuh Syariah'
     ],
     quiz: [
       {
-        qEng: 'How many shares constitute 1 standard Board Lot on Bursa Malaysia?',
+        qEng: 'How many shares are in 1 standard Board Lot on Bursa Malaysia?',
         qBm: 'Berapa unit dalam 1 Lot Papan standard di Bursa Malaysia?',
         optionsEng: ['10 shares', '100 shares', '1,000 shares'],
         optionsBm: ['10 unit', '100 unit', '1,000 unit'],
         correctIndex: 1
       },
       {
-        qEng: 'Which regulatory authority publishes the official Shariah-compliant security list in Malaysia?',
-        qBm: 'Badan manakah yang menerbitkan senarai rasmi sekuriti patuh Syariah di Malaysia?',
+        qEng: 'Who publishes the official Shariah-compliant stock list in Malaysia?',
+        qBm: 'Badan manakah yang menerbitkan senarai rasmi saham patuh Syariah di Malaysia?',
         optionsEng: ['Securities Commission (SC) Shariah Advisory Council', 'EPF Investment Panel', 'Companies Commission (SSM)'],
         optionsBm: ['Majlis Penasihat Syariah Suruhanjaya Sekuriti (SC)', 'Panel Pelaburan KWSP', 'SSM Malaysia'],
         correctIndex: 0
@@ -169,64 +214,64 @@ const learningItems: EducationalItem[] = [
   },
   {
     id: 'art-risk',
-    code: 'MOD-03',
+    code: 'Lesson 3',
     type: 'article',
-    titleEng: 'Portfolio Construction & Multi-Sector Risk Allocation',
-    titleBm: 'Pembinaan Portfolio & Peruntukan Risiko Pelbagai Sektor',
+    titleEng: 'Building a Balanced Portfolio & Ringgit Cost Averaging',
+    titleBm: 'Membina Portfolio Seimbang & Pemurataan Kos Ringgit',
     descEng:
-      'Balancing capital appreciation catalysts and defensive dividend buffers across Malaysian macroeconomic cycles.',
+      'How to mix steady dividend payers with growth stocks and invest consistently every month without stressing over market timing.',
     descBm:
-      'Seimbangkan pemangkin pertumbuhan modal dan penampan dividen defensif merentasi kitaran ekonomi Malaysia.',
-    meta: '06 MIN READ',
-    badge: 'PORTFOLIO STRATEGY',
+      'Cara menggabungkan saham dividen stabil dengan saham pertumbuhan dan melabur secara konsisten setiap bulan.',
+    meta: '5 min read',
+    badge: 'Portfolio Strategy',
     contentEng: [
-      'Institutional portfolio construction balances expected return against drawdown volatility. Malaysian Fixed Deposits (3.0% p.a.) and EPF/ASB (5.5% p.a.) provide capital preservation, whereas equities target 8.0%–12.0% annualized returns alongside mark-to-market fluctuations.',
-      'Pairing defensive yield anchors (such as MAYBANK, PBBANK, TENAGA, and IHH) with secular growth and infrastructure compounders (such as GAMUDA, INARI, and YTLPOWR) dampens single-sector cyclicality.',
-      'Ringgit Cost Averaging (systematic monthly capital deployment) mitigates timing risk by acquiring larger share quantities during market pullbacks and fewer at valuation peaks.'
+      'Malaysian Fixed Deposits (~3.0% p.a.) and EPF/KWSP (~5.5% p.a.) are great for safety, while Bursa stocks aim for 8%–12% yearly growth over the long run in exchange for day-to-day price ups and downs.',
+      'Combining steady dividend payers (like MAYBANK, PBBANK, TENAGA, and IHH) with faster-growing companies (like GAMUDA, INARI, and YTLPOWR) helps keep your portfolio resilient.',
+      'By practicing Ringgit Cost Averaging (investing a fixed RM amount every month), you automatically buy more shares when prices dip and fewer when prices are high.'
     ],
     contentBm: [
-      'Pembinaan portfolio institusi mengimbangi potensi pulangan dan risiko turun naik. Deposit Tetap (3.0% setahun) dan ASB/KWSP (5.5% setahun) menawarkan kestabilan modal, manakala ekuiti mampu memberi 8.0%–12.0% setahun dalam jangka panjang.',
-      'Menggabungkan Saham Dividen Defensif (seperti MAYBANK, PBBANK, TENAGA, IHH) dengan Saham Pertumbuhan (seperti GAMUDA, INARI, YTLPOWR) membantu mengimbangi kitaran pasaran.',
+      'Deposit Tetap (~3.0% setahun) dan KWSP (~5.5% setahun) menawarkan kestabilan modal, manakala saham mampu memberi 8%–12% setahun dalam jangka panjang.',
+      'Menggabungkan Saham Dividen Stabil (seperti MAYBANK, PBBANK, TENAGA, IHH) dengan Saham Pertumbuhan (seperti GAMUDA, INARI, YTLPOWR) membantu mengimbangi pasaran.',
       'Amalkan Pemurataan Kos Ringgit (DCA - melabur jumlah RM tetap setiap bulan) untuk mengurangkan risiko masa pasaran.'
     ],
     takeawaysEng: [
-      'Allocate across at least 3–4 uncorrelated Bursa sectors (Financials, Utilities, Technology, Healthcare, Consumer)',
-      'Maintain a 15%–25% buying power reserve to deploy during liquidity dislocations',
-      'Align portfolio beta with your Risk Mandate (Conservative, Balanced, or Aggressive)'
+      'Spread your money across at least 3–4 different Bursa industries (Banking, Utilities, Tech, Healthcare)',
+      'Keep 15%–25% in practice cash so you are ready when great companies go on sale',
+      'Match your stock picks with your personal comfort level (Conservative, Balanced, or Explorer)'
     ],
     takeawaysBm: [
       'Pelbagaikan modal merentasi sekurang-kurangnya 3–4 sektor Bursa berbeza',
-      'Simpan 15%–25% dalam rizab kuasa beli untuk mengambil peluang semasa pasaran menurun',
-      'Padankan pilihan saham dengan Mandat Risiko anda'
+      'Simpan 15%–25% dalam tunai untuk mengambil peluang semasa pasaran menurun',
+      'Padankan pilihan saham dengan gaya pelaburan anda'
     ],
     quiz: [
       {
-        qEng: 'What is the primary institutional benefit of diversifying across multiple uncorrelated sectors?',
+        qEng: 'Why is it helpful to own stocks across 3 or more different industries?',
         qBm: 'Apakah manfaat utama mempelbagaikan pelaburan merentasi pelbagai sektor?',
         optionsEng: [
-          'It guarantees positive returns every trading session',
-          'An industry-specific downturn will not impair the entire portfolio',
-          'It exempts the account from Bursa clearing fees'
+          'It guarantees your stocks will go up every single day',
+          'A slowdown in one industry will not drag down your entire portfolio',
+          'It removes all Bursa trading fees'
         ],
         optionsBm: [
           'Ia menjamin keuntungan setiap hari dagangan',
           'Kelembapan dalam satu industri tidak akan menjejaskan keseluruhan portfolio',
-          'Ia menghapuskan yuran penjelasan Bursa'
+          'Ia menghapuskan yuran dagangan Bursa'
         ],
         correctIndex: 1
       },
       {
-        qEng: 'What defines Ringgit Cost Averaging (DCA)?',
+        qEng: 'What is Ringgit Cost Averaging (DCA)?',
         qBm: 'Apakah maksud Pemurataan Kos Ringgit (DCA)?',
         optionsEng: [
-          'Deploying a fixed Ringgit amount at regular intervals regardless of short-term price swings',
-          'Allocating 100% of liquidity into a single security at market open',
-          'Only purchasing securities when they reach 52-week highs'
+          'Investing a fixed Ringgit amount regularly regardless of short-term price swings',
+          'Putting 100% of your cash into one stock all at once',
+          'Only buying stocks when they hit all-time highs'
         ],
         optionsBm: [
           'Melabur jumlah RM tetap secara berkala tanpa mengira naik turun harga jangka pendek',
           'Meletakkan 100% modal ke dalam satu saham serentak',
-          'Hanya membeli saham apabila harga berada pada paras tertinggi 52 minggu'
+          'Hanya membeli saham apabila harga berada pada paras tertinggi'
         ],
         correctIndex: 0
       }
@@ -234,62 +279,62 @@ const learningItems: EducationalItem[] = [
   },
   {
     id: 'tut-chart',
-    code: 'BRF-01',
+    code: 'Video 1',
     type: 'tutorial',
-    titleEng: 'Equity Valuation Multiples & Price Structure Analysis',
-    titleBm: 'Gandaan Penilaian Ekuiti & Analisis Struktur Harga',
+    titleEng: 'How to Read P/E Ratios & Compare Stock Health Scores',
+    titleBm: 'Cara Membaca Nisbah P/E & Membandingkan Skor Kesihatan Saham',
     descEng:
-      'Evaluating Price-to-Earnings (P/E) multiples across Bursa sectors alongside 5-axis fundamental scores.',
+      'A step-by-step walkthrough on checking whether a stock is reasonably priced compared to its industry peers.',
     descBm:
-      'Menilai gandaan Harga-kepada-Pendapatan (P/E) merentasi sektor Bursa bersama skor asas 5-paksi.',
-    meta: '12 MIN BRIEFING',
-    badge: 'VALUATION',
+      'Panduan langkah demi langkah untuk menyemak sama ada harga saham berpatutan berbanding rakan seindustri.',
+    meta: '8 min video guide',
+    badge: 'Stock Valuation',
     contentEng: [
-      'When evaluating a security in the Equity Terminal, begin by reviewing the 30-day price trajectory alongside underlying earnings power and sector multiples.',
-      'The Price-to-Earnings (P/E) multiple quantifies how much the market pays per RM 1.00 of net earnings. On Bursa Malaysia, commercial banks typically trade between 10x–13x P/E, regulated utilities at 14x–18x, and semiconductor or healthcare leaders at 22x–35x.',
-      'Cross-reference valuation multiples against the 5-Axis Fundamental Factor model (Value, Growth, Balance Sheet Health, Dividend, and Momentum) before sizing an order.'
+      'When you open a company on the Stock Overview page, start by looking at its recent price trend alongside how much profit the business actually earns.',
+      'The P/E Ratio (Price-to-Earnings) tells you how much you are paying for RM 1 of the company’s yearly profit. On Bursa Malaysia, banks often trade around 10x–13x P/E, utilities around 14x–18x, and fast-growing tech or healthcare stocks around 22x–35x.',
+      'Use the 5-Factor Health Check (Value, Growth, Financial Health, Dividend, and Momentum) to compare two companies side-by-side before placing a practice trade.'
     ],
     contentBm: [
-      'Apabila menyemak sekuriti dalam Terminal Ekuiti, mulakan dengan melihat trend harga 30 hari dan membandingkan harga semasa dengan pendapatan asas syarikat.',
-      'Nisbah Harga-kepada-Pendapatan (P/E) menunjukkan berapa banyak pelabur membayar untuk setiap RM 1.00 keuntungan syarikat. Di Bursa Malaysia, bank lazimnya didagangkan pada P/E 10x–13x, manakala saham teknologi/penjagaan kesihatan pada 22x–35x.',
-      'Gabungkan penilaian P/E dengan model Faktor Asas 5-Paksi (Nilai, Pertumbuhan, Kesihatan, Dividen, Momentum) sebelum membuat pesanan.'
+      'Apabila menyemak syarikat di halaman Gambaran Saham, mulakan dengan melihat trend harga dan membandingkan harga semasa dengan keuntungan sebenar syarikat.',
+      'Nisbah P/E (Harga-kepada-Pendapatan) menunjukkan berapa banyak anda membayar untuk setiap RM 1 keuntungan syarikat. Di Bursa Malaysia, bank lazimnya pada P/E 10x–13x, manakala saham teknologi pada 22x–35x.',
+      'Gunakan Semakan Kesihatan 5-Faktor untuk membandingkan dua syarikat secara bersebelahan sebelum membuat dagangan latihan.'
     ],
     takeawaysEng: [
-      'A discounted P/E relative to sector peers may indicate value—confirm that Debt/Equity remains disciplined',
-      'Volume expansion validates institutional accumulation during price breakouts',
-      'Always corroborate price action with audited revenue and net profit figures in JomRingkas'
+      'A lower P/E than industry peers can signal a bargain—just check that debt levels are healthy',
+      'Compare banks with banks and tech stocks with tech stocks for a fair apples-to-apples check',
+      'Use the 30-Second Annual Report Cheat Sheet to confirm revenue and profit are growing'
     ],
     takeawaysBm: [
-      'Nisbah P/E rendah berbanding rakan sektor boleh menandakan saham terkurang nilai',
-      'Pengembangan volum mengesahkan pengumpulan institusi',
-      'Sentiasa semak hasil dan keuntungan bersih dalam JomRingkas'
+      'Nisbah P/E rendah berbanding rakan sektor boleh menandakan harga saham berpatutan',
+      'Bandingkan syarikat dalam industri yang sama untuk penilaian yang adil',
+      'Sentiasa semak pertumbuhan hasil dan untung bersih dalam JomRingkas'
     ],
     quiz: [
       {
-        qEng: 'What does a Price-to-Earnings (P/E) multiple of 12x indicate?',
+        qEng: 'What does a P/E Ratio of 12x mean in plain English?',
         qBm: 'Apakah maksud Nisbah P/E sebanyak 12x?',
         optionsEng: [
-          'The security distributes a 12% annual dividend yield',
-          'Investors are paying RM 12 for every RM 1 of annual per-share earnings',
-          'The share price is projected to appreciate 12x in one year'
+          'The stock pays a 12% yearly dividend',
+          'Investors are paying RM 12 for every RM 1 of annual profit the company earns',
+          'The stock price will multiply 12 times in a year'
         ],
         optionsBm: [
           'Saham membayar hasil dividen 12%',
-          'Pelabur membayar RM 12 untuk setiap RM 1 keuntungan tahunan sesaham',
+          'Pelabur membayar RM 12 untuk setiap RM 1 keuntungan tahunan syarikat',
           'Harga saham dijangka meningkat 12 kali ganda dalam setahun'
         ],
         correctIndex: 1
       },
       {
-        qEng: 'Why should P/E multiples primarily be benchmarked against peers within the same sector?',
+        qEng: 'Why should you compare a stock’s P/E ratio against companies in the same sector?',
         qBm: 'Mengapa nisbah P/E perlu dibandingkan dengan syarikat dalam sektor yang sama?',
         optionsEng: [
-          'Different industries exhibit distinct capital intensity, growth rates, and valuation norms',
-          'All Bursa Malaysia companies share an identical statutory P/E ratio',
-          'P/E multiples only apply to plantation companies'
+          'Different industries grow at different speeds and have different normal P/E ranges',
+          'Every company on Bursa Malaysia has the exact same P/E ratio',
+          'P/E ratios only work for plantation stocks'
         ],
         optionsBm: [
-          'Sektor berbeza mempunyai intensiti modal, kadar pertumbuhan, dan norma penilaian berbeza',
+          'Sektor berbeza mempunyai kadar pertumbuhan dan julat penilaian normal yang berbeza',
           'Semua syarikat di Bursa mempunyai nisbah P/E yang sama',
           'Nisbah P/E hanya terpakai untuk syarikat perladangan'
         ],
@@ -299,56 +344,56 @@ const learningItems: EducationalItem[] = [
   },
   {
     id: 'tut-risk-mgmt',
-    code: 'BRF-02',
+    code: 'Video 2',
     type: 'tutorial',
-    titleEng: 'Position Sizing, Balance Sheet Gearing & Concentration Limits',
-    titleBm: 'Saiz Posisi, Gearing Kunci Kira-kira & Had Tumpuan',
+    titleEng: 'Smart Position Sizing & Avoiding Debt Traps',
+    titleBm: 'Saiz Pegangan Bijak & Mengelak Perangkap Hutang',
     descEng:
-      'Protecting portfolio equity using single-issuer limits, Debt-to-Equity screening, and partial profit trimming.',
+      'Learn how to protect your portfolio by checking company debt levels and keeping any single sector under 60%.',
     descBm:
-      'Melindungi ekuiti portfolio menggunakan had posisi tunggal, saringan Hutang-ke-Ekuiti, dan pengambilan untung separa.',
-    meta: '15 MIN BRIEFING',
-    badge: 'RISK MANAGEMENT',
+      'Pelajari cara melindungi portfolio anda dengan menyemak tahap hutang syarikat dan mengelakkan tumpuan berlebihan.',
+    meta: '10 min video guide',
+    badge: 'Risk Coaching',
     contentEng: [
-      'Institutional risk management prioritizes capital preservation. A core discipline is enforcing a 20%–25% single-security cap and a 60% maximum single-sector ceiling so no individual earnings miss impairs total net liquidity.',
-      'Before initiating a position, inspect the Debt-to-Equity (D/E) ratio in the Equity Terminal. Non-financial issuers with low gearing (<0.6x D/E) maintain stronger interest coverage across Overnight Policy Rate (OPR) cycles.',
-      'Use the Portfolio Risk & Concentration Audit in your Portfolio Ledger to monitor sector weights and trim oversized winners by 50% when rebalancing.'
+      'Great investors focus on protecting their downside first. A helpful beginner habit is keeping any single company under 25% of your portfolio and any single industry under 60%.',
+      'Before buying, glance at the Debt-to-Equity ratio on the Stock Overview page. Non-bank companies with lower debt (<0.6x) have a much easier time weathering interest rate changes.',
+      'Visit your Diversification Coach on the Portfolio page anytime to see your sector breakdown and sell half of oversized winners to lock in gains.'
     ],
     contentBm: [
-      'Pengurusan risiko institusi mengutamakan pemeliharaan modal. Peraturan utama ialah menghadkan pendedahan kepada 20%–25% bagi satu syarikat tunggal dan maksimum 60% bagi satu sektor.',
-      'Sebelum membeli, semak nisbah Hutang-ke-Ekuiti (D/E) di Terminal Ekuiti. Syarikat bukan kewangan dengan D/E rendah (<0.6x) mempunyai kunci kira-kira yang lebih kukuh.',
-      'Gunakan Audit Risiko & Tumpuan Portfolio di halaman Lejar Portfolio anda untuk memantau wajaran sektor pada bila-bila masa.'
+      'Pelabur bijak mengutamakan perlindungan modal. Tabiat yang baik ialah menghadkan pendedahan kepada 25% bagi satu syarikat dan maksimum 60% bagi satu sektor.',
+      'Sebelum membeli, semak nisbah Hutang-ke-Ekuiti (D/E). Syarikat bukan kewangan dengan hutang rendah (<0.6x) mempunyai kedudukan kewangan lebih kukuh.',
+      'Gunakan Jurulatih Kepelbagaian di halaman Portfolio anda untuk memantau pecahan sektor pada bila-bila masa.'
     ],
     takeawaysEng: [
-      'Never exceed 60% portfolio concentration within a single Bursa sector',
-      'Screen Debt-to-Equity (D/E) ratios to avoid over-leveraged balance sheets',
-      'Trimming 50% of an appreciated position locks in realized gains while retaining upside participation'
+      'Keep any single Bursa industry under 60% of your total invested stocks',
+      'Check Debt-to-Equity ratios so you avoid companies overloaded with borrowings',
+      'Selling half of a big winner lets you lock in profits while staying invested'
     ],
     takeawaysBm: [
       'Elakkan menumpukan >60% portfolio anda dalam satu sektor sahaja',
       'Semak nisbah Hutang/Ekuiti untuk mengelakkan syarikat yang terlalu banyak hutang',
-      'Kurangkan 50% pegangan yang untung untuk mengunci keuntungan sambil mengekalkan pendedahan'
+      'Jual separuh pegangan yang untung untuk mengunci keuntungan sambil kekal melabur'
     ],
     quiz: [
       {
-        qEng: 'Which ratio measures balance sheet leverage by comparing total debt to shareholder equity?',
-        qBm: 'Nisbah manakah yang mengukur leveraj kunci kira-kira dengan membandingkan jumlah hutang dengan ekuiti?',
-        optionsEng: ['Indicated Dividend Yield', 'Debt-to-Equity (D/E) Ratio', 'Daily Trading Volume'],
+        qEng: 'Which metric helps you see how much debt a company carries compared to its own equity?',
+        qBm: 'Nisbah manakah yang mengukur tahap hutang syarikat berbanding ekuiti pemegang saham?',
+        optionsEng: ['Dividend Yield', 'Debt-to-Equity Ratio', 'Daily Trading Volume'],
         optionsBm: ['Kadar Hasil Dividen', 'Nisbah Hutang-ke-Ekuiti (D/E)', 'Volum Dagangan Harian'],
         correctIndex: 1
       },
       {
-        qEng: 'What threshold triggers a Sector Concentration warning in the Portfolio Risk Audit?',
-        qBm: 'Apakah ambang yang mencetuskan amaran Tumpuan Sektor dalam Audit Risiko Portfolio?',
+        qEng: 'When does the Diversification Coach flag a heavy sector concentration?',
+        qBm: 'Bilakah Jurulatih Kepelbagaian memberi peringatan tumpuan sektor?',
         optionsEng: [
-          'Greater than 60% of equity allocated to a single sector',
-          'Holding securities across 4 different sectors',
-          'Maintaining a 20% cash reserve'
+          'When more than 60% of your stock investments are in a single sector',
+          'When you own stocks across 4 different sectors',
+          'When you keep 20% in practice cash'
         ],
         optionsBm: [
-          'Melebihi 60% ekuiti tertumpu dalam satu sektor tunggal',
-          'Memegang saham merentasi 4 sektor berbeza',
-          'Mengekalkan 20% rizab tunai'
+          'Apabila melebihi 60% saham anda tertumpu dalam satu sektor tunggal',
+          'Apabila memegang saham merentasi 4 sektor berbeza',
+          'Apabila mengekalkan 20% rizab tunai'
         ],
         correctIndex: 0
       }
@@ -374,7 +419,7 @@ export function EducationalHub({
   const [selectedStockId, setSelectedStockId] = useState<string>(() => stocks[0]?.id || '1');
   const [isScanning, setIsScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(true);
-  const [loadingText, setLoadingText] = useState('Parsing Bursa Filing...');
+  const [loadingText, setLoadingText] = useState('Summarizing Annual Report...');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [uploadedText, setUploadedText] = useState<string>('');
   const [customPasteOpen, setCustomPasteOpen] = useState<boolean>(false);
@@ -406,8 +451,8 @@ export function EducationalHub({
         if (isManualRefresh) {
           toast.success(
             language === 'ENG'
-              ? 'Bursa Malaysia news wire & market breadth synchronized.'
-              : 'Suapan berita Bursa Malaysia & keluasan pasaran dikemas kini.'
+              ? 'Latest Bursa Malaysia news and market mood updated!'
+              : 'Berita terkini Bursa Malaysia dan mood pasaran dikemas kini!'
           );
         }
       } finally {
@@ -426,16 +471,16 @@ export function EducationalHub({
       const steps =
         language === 'ENG'
           ? [
-              'Parsing Audited Bursa Filing...',
-              'Extracting FY Revenue & Net Profit...',
-              'Verifying SAC Shariah & Payout Ratios...',
-              'Compiling Institutional Equity Brief...'
+              'Reading Bursa Annual Report...',
+              'Highlighting Revenue & Profit Trends...',
+              'Checking Dividends & Shariah Status...',
+              'Building Your 30-Second Cheat Sheet...'
             ]
           : [
-              'Membaca Pemfailan Teraudit Bursa...',
-              'Mengekstrak Hasil & Untung Bersih...',
-              'Mengesahkan Nisbah Syariah MPS & Dividen...',
-              'Menyusun Nota Ringkas Ekuiti...'
+              'Membaca Laporan Tahunan Bursa...',
+              'Menyemak Trend Hasil & Keuntungan...',
+              'Mengesahkan Status Dividen & Syariah...',
+              'Menyediakan Ringkasan 30 Saat Anda...'
             ];
       let i = 0;
       const interval = setInterval(() => {
@@ -448,28 +493,28 @@ export function EducationalHub({
 
   const texts = {
     ENG: {
-      kicker: 'RESEARCH DESK & BURSA ACADEMY',
-      title: 'Institutional Filing Analysis, Compilers & Curriculum',
+      kicker: 'Learn & Research Hub',
+      title: 'Bite-Sized Research Tools & 5-Minute Lessons',
       subtitle:
-        'Automated Bursa Malaysia annual report extraction, market breadth telemetry, Malaysian benchmark compounding models, and accredited learning modules.',
-      tabTools: 'Research Tools',
-      tabCurriculum: 'Curriculum Modules',
-      tabBriefings: 'Video Briefings',
-      openModule: 'Read Module & Verify (+25 XP)',
-      openBriefing: 'Open Briefing & Verify (+25 XP)',
-      reviewModule: 'Verified · Review Notes'
+        'Turn long Bursa annual reports into a 30-second cheat sheet, check today’s market mood, compare stocks vs. EPF, and earn XP with quick lessons.',
+      tabTools: 'AI Research Tools',
+      tabCurriculum: '5-Minute Lessons',
+      tabBriefings: 'Video Guides',
+      openModule: 'Start Lesson & Quiz (+25 XP)',
+      openBriefing: 'Watch Guide & Quiz (+25 XP)',
+      reviewModule: 'Completed · Review Notes'
     },
     BM: {
-      kicker: 'MEJA PENYELIDIKAN & AKADEMI BURSA',
-      title: 'Analisis Pemfailan Institusi, Pengkompil & Kurikulum',
+      kicker: 'Hab Belajar & Penyelidikan',
+      title: 'Alat Penyelidikan AI & Pelajaran 5 Minit',
       subtitle:
-        'Pengekstrakan laporan tahunan Bursa Malaysia automatik, telemetri keluasan pasaran, model kompaun penanda aras Malaysia, dan modul pembelajaran.',
-      tabTools: 'Alat Penyelidikan',
-      tabCurriculum: 'Modul Kurikulum',
-      tabBriefings: 'Taklimat Video',
-      openModule: 'Baca Modul & Sahkan (+25 XP)',
-      openBriefing: 'Buka Taklimat & Sahkan (+25 XP)',
-      reviewModule: 'Disahkan · Ulang Kaji'
+        'Tukarkan laporan tahunan Bursa kepada ringkasan 30 saat, semak mood pasaran hari ini, bandingkan saham vs KWSP, dan kumpul XP.',
+      tabTools: 'Alat Penyelidikan AI',
+      tabCurriculum: 'Pelajaran 5 Minit',
+      tabBriefings: 'Panduan Video',
+      openModule: 'Mula Pelajaran & Kuiz (+25 XP)',
+      openBriefing: 'Tonton Panduan & Kuiz (+25 XP)',
+      reviewModule: 'Selesai · Ulang Kaji'
     }
   };
 
@@ -491,49 +536,49 @@ export function EducationalHub({
 
     const growthText =
       language === 'ENG'
-        ? `${currentStock.name} (${currentStock.ticker} · ${currentStock.bursaCode}) reported audited FY revenue of ${currentStock.revenue} and net profit of ${currentStock.netProfit} within the ${currentStock.sector} sector. ${currentStock.description} Factor scores stand at ${radar.growth}/100 for Growth and ${radar.momentum}/100 for Momentum. (Ref: Audited Financial Statements, Sec. 02)`
-        : `${currentStock.name} (${currentStock.ticker} · ${currentStock.bursaCode}) mencatatkan hasil tahunan teraudit ${currentStock.revenue} dan untung bersih ${currentStock.netProfit} dalam sektor ${currentStock.sector}. Skor faktor Pertumbuhan dan Momentum berada pada ${radar.growth}/100 dan ${radar.momentum}/100. (Ruj: Penyata Kewangan Teraudit, Seksyen 02)`;
+        ? `${currentStock.name} (${currentStock.ticker}) generated ${currentStock.revenue} in yearly revenue and ${currentStock.netProfit} in net profit in the ${currentStock.sector} sector. ${currentStock.description} Its Growth Score is ${radar.growth}/100 and Momentum is ${radar.momentum}/100.`
+        : `${currentStock.name} (${currentStock.ticker}) menjana hasil tahunan ${currentStock.revenue} dan untung bersih ${currentStock.netProfit} dalam sektor ${currentStock.sector}. Skor Pertumbuhan ialah ${radar.growth}/100 dan Momentum ialah ${radar.momentum}/100.`;
 
     const valuationLabel =
       pe < 14
         ? language === 'ENG'
-          ? 'at a valuation discount relative to broader FBM KLCI averages'
-          : 'pada diskaun penilaian berbanding purata FBM KLCI'
+          ? 'more affordable than the average Bursa stock'
+          : 'lebih berpatutan berbanding purata saham Bursa'
         : pe <= 24
         ? language === 'ENG'
-          ? 'in line with historical sector valuation multiples'
-          : 'selaras dengan gandaan penilaian sejarah sektor'
+          ? 'in line with typical industry peers'
+          : 'selaras dengan purata rakan seindustri'
         : language === 'ENG'
-        ? 'at a growth expansion premium multiple'
-        : 'pada gandaan premium pengembangan pertumbuhan';
+        ? 'priced at a premium because investors expect faster growth'
+        : 'didagangkan pada harga premium kerana jangkaan pertumbuhan tinggi';
 
     const riskText =
       language === 'ENG'
-        ? `At a spot price of RM ${currentStock.price} (${currentStock.changePercent}), ${currentStock.ticker} trades at an earnings multiple of ${currentStock.peRatio}x (${valuationLabel}) with a Debt-to-Equity gearing ratio of ${currentStock.debtEquity}. Balance sheet health scores ${radar.health}/100; monitor sector margin sensitivity and BNM OPR / FX transmission. (Ref: Risk Management & Gearing Note, pg. 48)`
-        : `Pada harga semasa RM ${currentStock.price} (${currentStock.changePercent}), ${currentStock.ticker} didagangkan pada gandaan P/E ${currentStock.peRatio}x (${valuationLabel}) dengan nisbah Hutang-ke-Ekuiti ${currentStock.debtEquity}. Skor kesihatan kunci kira-kira ialah ${radar.health}/100. (Ruj: Nota Pengurusan Risiko, ms. 48)`;
+        ? `At RM ${currentStock.price} (${currentStock.changePercent}), ${currentStock.ticker} trades at a P/E ratio of ${currentStock.peRatio}x (${valuationLabel}) with a Debt-to-Equity ratio of ${currentStock.debtEquity}. Financial Health scores ${radar.health}/100—keep an eye on industry competition and interest rate changes.`
+        : `Pada harga RM ${currentStock.price} (${currentStock.changePercent}), ${currentStock.ticker} mempunyai nisbah P/E ${currentStock.peRatio}x (${valuationLabel}) dan nisbah Hutang-ke-Ekuiti ${currentStock.debtEquity}. Skor Kesihatan Kewangan ialah ${radar.health}/100.`;
 
     const shariahStatus = currentStock.isShariah
       ? language === 'ENG'
-        ? 'SAC Shariah-Compliant (SC Malaysia Verified)'
-        : 'Patuh Syariah MPS (Disahkan SC Malaysia)'
+        ? 'Shariah-Compliant (Verified by SC Malaysia)'
+        : 'Patuh Syariah (Disahkan SC Malaysia)'
       : language === 'ENG'
       ? 'Conventional (Non-Shariah)'
       : 'Konvensional (Bukan Syariah)';
 
     const dividendText =
       language === 'ENG'
-        ? `Distributes an indicated dividend yield of ${currentStock.dividendYield} (${
+        ? `Pays a ${currentStock.dividendYield} yearly dividend yield (${
             divYield >= 4.5
-              ? 'high-yield institutional cash generator for income mandates'
+              ? 'a generous passive cash payer for income-focused investors'
               : divYield >= 2.5
-              ? 'balanced capital distribution alongside retained earnings reinvestment'
-              : 'capital-retention profile prioritizing reinvestment into core growth'
-          }). Regulatory Classification: ${shariahStatus}. Market Capitalization: ${currentStock.marketCap}. (Ref: Capital Allocation & Dividends, pg. 84)`
-        : `Menawarkan kadar hasil dividen ${currentStock.dividendYield} (${
+              ? 'a balanced mix of cash payouts and reinvesting for growth'
+              : 'reinvests most profits back into expanding the business'
+          }). Status: ${shariahStatus}. Company Size (Market Cap): ${currentStock.marketCap}.`
+        : `Membayar hasil dividen tahunan ${currentStock.dividendYield} (${
             divYield >= 4.5
-              ? 'aliran tunai dividen tinggi untuk mandat pendapatan'
-              : 'agihan modal seimbang bersama pelaburan semula ekuiti'
-          }). Klasifikasi: ${shariahStatus}. Modal Pasaran: ${currentStock.marketCap}. (Ruj: Peruntukan Modal & Dividen, ms. 84)`;
+              ? 'pembayar tunai pasif yang menarik untuk pelabur pendapatan'
+              : 'gabungan seimbang antara bayaran dividen dan pelaburan semula'
+          }). Status: ${shariahStatus}. Saiz Pasaran: ${currentStock.marketCap}.`;
 
     return {
       title: `${currentStock.name} (${currentStock.ticker})`,
@@ -544,8 +589,8 @@ export function EducationalHub({
       dividend: dividendText,
       score: confidenceScore,
       sourceLabel: uploadedFileName
-        ? `UPLOADED FILING · ${uploadedFileName.toUpperCase()}`
-        : 'VERIFIED PDF FILING',
+        ? `Uploaded: ${uploadedFileName}`
+        : 'Annual Report Summary',
       extractedExcerpt: uploadedText.trim() ? uploadedText.trim().slice(0, 260) : undefined,
       provider: 'QUANT_ENGINE'
     };
@@ -554,9 +599,9 @@ export function EducationalHub({
   const activeReport = aiReport || dynamicReport;
 
   const getProviderLabel = (provider?: 'API_KEY_LLM' | 'LIVE_CLOUD_LLM' | 'QUANT_ENGINE') => {
-    if (provider === 'API_KEY_LLM') return 'LIVE LLM';
-    if (provider === 'LIVE_CLOUD_LLM') return 'CLOUD AI';
-    return 'QUANT ENGINE';
+    if (provider === 'API_KEY_LLM') return 'Live AI Summary';
+    if (provider === 'LIVE_CLOUD_LLM') return 'JomAI Cloud';
+    return 'JomRingkas AI';
   };
 
   // 10-Year Compounding & Malaysian Benchmark Model
@@ -575,7 +620,7 @@ export function EducationalHub({
 
     for (let year = 0; year <= years; year++) {
       data.push({
-        year: `Y${year}`,
+        year: `Year ${year}`,
         wealth: Math.round(currentWealth),
         epfAsb: Math.round(epfWealth),
         fixedDeposit: Math.round(fdWealth),
@@ -644,8 +689,8 @@ export function EducationalHub({
     setUploadedFileName(file.name);
     toast.success(
       language === 'ENG'
-        ? `Loaded filing: ${file.name} — extracting document text & ratios...`
-        : `Pemfailan dimuatkan: ${file.name} — mengekstrak teks & nisbah utama...`
+        ? `Loaded ${file.name} — building your 30-second cheat sheet...`
+        : `Dimuatkan ${file.name} — membina ringkasan 30 saat anda...`
     );
 
     const extracted = await extractTextFromDocument(file);
@@ -659,33 +704,33 @@ export function EducationalHub({
     setAiReport(null);
     toast.info(
       language === 'ENG'
-        ? 'Cleared custom filing document.'
-        : 'Dokumen pemfailan tersuai dipadamkan.'
+        ? 'Cleared uploaded document.'
+        : 'Dokumen yang dimuat naik telah dipadamkan.'
     );
   };
 
   const handleExportSummary = () => {
     if (!currentStock || !activeReport) return;
     const textReport = [
-      `JOMRINGKAS INSTITUTIONAL EQUITY BRIEF`,
-      `Security: ${currentStock.name} (${currentStock.ticker} / ${currentStock.bursaCode})`,
-      `Spot Price: RM ${currentStock.price} (${currentStock.changePercent}) | Sector: ${currentStock.sector}`,
-      `Synthesis Engine: ${getProviderLabel(activeReport.provider)} | Fundamental Score: ${activeReport.score} / 100`,
+      `JOMRINGKAS — 30-SECOND ANNUAL REPORT CHEAT SHEET`,
+      `Company: ${currentStock.name} (${currentStock.ticker} / ${currentStock.bursaCode})`,
+      `Current Price: RM ${currentStock.price} (${currentStock.changePercent}) | Sector: ${currentStock.sector}`,
+      `Summary Engine: ${getProviderLabel(activeReport.provider)} | Health Score: ${activeReport.score} / 100`,
       ...(uploadedText.trim() || activeReport.extractedExcerpt
         ? [
             ``,
-            `EXTRACTED DOCUMENT EXCERPT (${uploadedFileName || 'Custom Filing'})`,
-            (activeReport.extractedExcerpt || uploadedText.trim().slice(0, 260))
+            `Document Excerpt (${uploadedFileName || 'Custom Filing'})`,
+            activeReport.extractedExcerpt || uploadedText.trim().slice(0, 260)
           ]
         : []),
       ``,
-      `01 / GROWTH & REVENUE CATALYST`,
+      `1. What's Going Well (Growth)`,
       activeReport.growth,
       ``,
-      `02 / VALUATION & BALANCE SHEET RISK`,
+      `2. What to Watch Out For (Risks)`,
       activeReport.risk,
       ``,
-      `03 / DIVIDEND & SAC SHARIAH STANDING`,
+      `3. Dividends & Shariah Status`,
       activeReport.dividend
     ].join('\n');
 
@@ -697,11 +742,11 @@ export function EducationalHub({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${currentStock.ticker}_JomRingkas_Equity_Brief.txt`;
+    a.download = `${currentStock.ticker}_JomRingkas_Cheat_Sheet.txt`;
     a.click();
     URL.revokeObjectURL(url);
 
-    addXP(15, `Exported ${currentStock.ticker} Equity Brief`);
+    addXP(15, `Saved ${currentStock.ticker} Cheat Sheet`);
   };
 
   const openLearningModal = (item: EducationalItem) => {
@@ -721,22 +766,22 @@ export function EducationalHub({
         setCompletedQuizzes(prev => [...prev, activeLearningItem.id]);
         addXP(
           25,
-          `Verified Module: ${
+          `Completed Lesson: ${
             language === 'ENG' ? activeLearningItem.titleEng : activeLearningItem.titleBm
           }`
         );
       } else {
         toast.success(
           language === 'ENG'
-            ? 'Verification complete. XP for this module has already been credited.'
-            : 'Pengesahan selesai. XP untuk modul ini telah pun dikreditkan.'
+            ? 'Great job! You have already earned the +25 XP for this lesson.'
+            : 'Syabas! Anda telah pun menerima +25 XP untuk pelajaran ini.'
         );
       }
     } else {
       toast.error(
         language === 'ENG'
-          ? 'Verification incomplete. Review the highlighted answers and resubmit.'
-          : 'Beberapa jawapan kurang tepat. Semak semula dan cuba lagi.'
+          ? 'Almost there! Check the highlighted answers and try again.'
+          : 'Hampir berjaya! Semak jawapan yang ditandakan dan cuba lagi.'
       );
     }
   };
@@ -749,10 +794,22 @@ export function EducationalHub({
     [stocks, newsItems]
   );
 
+  const getFriendlySentimentLabel = (impact: BursaNewsItem['impact']) => {
+    if (impact === 'CONSTRUCTIVE') return language === 'ENG' ? 'Bullish' : 'Positif';
+    if (impact === 'CAUTIOUS') return language === 'ENG' ? 'Cautious' : 'Berhati-hati';
+    return language === 'ENG' ? 'Neutral' : 'Neutral';
+  };
+
   const getImpactTagClass = (impact: BursaNewsItem['impact']) => {
     if (impact === 'CONSTRUCTIVE') return 'jom-tag jom-tag-up';
     if (impact === 'CAUTIOUS') return 'jom-tag jom-tag-down';
     return 'jom-tag';
+  };
+
+  const getFriendlyRegimeLabel = (regime: MarketBreadthSummary['regime']) => {
+    if (regime === 'CONSTRUCTIVE') return language === 'ENG' ? 'Bullish Mood' : 'Mood Positif';
+    if (regime === 'FEAR') return language === 'ENG' ? 'Cautious Mood' : 'Mood Berhati-hati';
+    return language === 'ENG' ? 'Steady / Neutral' : 'Stabil / Neutral';
   };
 
   const getRegimeTagClass = (regime: MarketBreadthSummary['regime']) => {
@@ -764,9 +821,13 @@ export function EducationalHub({
   const excerptToDisplay =
     activeReport?.extractedExcerpt || (uploadedText.trim() ? uploadedText.trim().slice(0, 260) : '');
 
+  const currentMonogram = currentStock
+    ? getStockMonogram(currentStock.ticker, currentStock.sector)
+    : { initials: 'JM', avatarClass: 'jom-avatar jom-avatar-emerald' };
+
   return (
     <div className="jom-container space-y-8">
-      {/* Editorial Header */}
+      {/* Friendly Consumer Header */}
       <div
         className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b"
         style={{ borderColor: 'var(--border-hairline)' }}
@@ -804,13 +865,13 @@ export function EducationalHub({
         </div>
       </div>
 
-      {/* TAB 1: RESEARCH TOOLS */}
+      {/* TAB 1: AI RESEARCH TOOLS */}
       {activeTab === 'tools' && (
         <div className="space-y-8">
-          {/* 1. JomRingkas — Annual Filing & Equity Brief */}
+          {/* 1. JomRingkas — 30-Second Annual Report Cheat Sheet */}
           <section className="jom-panel overflow-hidden">
             <div className="grid md:grid-cols-12">
-              {/* Left 4 cols: Filing Selector & Key Ratios */}
+              {/* Left 4 cols: Company Picker & Friendly File Dropzone */}
               <div
                 className="md:col-span-4 p-6 border-b md:border-b-0 md:border-r flex flex-col justify-between space-y-6"
                 style={{
@@ -821,24 +882,26 @@ export function EducationalHub({
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="jom-kicker">JOMRINGKAS · FILING COMPILER</span>
-                      <span className="jom-tag font-tabular">{stocks.length} ISSUERS</span>
+                      <span className="jom-kicker">JomRingkas AI Summarizer</span>
+                      <span className="jom-tag jom-tag-shariah font-tabular">
+                        {stocks.length} Bursa Companies
+                      </span>
                     </div>
                     <h2 className="font-editorial text-2xl">
                       {language === 'ENG'
-                        ? 'Annual Filing & Equity Brief'
-                        : 'Pemfailan Tahunan & Nota Ekuiti'}
+                        ? '30-Second Annual Report Cheat Sheet'
+                        : 'Ringkasan Laporan Tahunan 30 Saat'}
                     </h2>
-                    <p className="text-xs mt-1" style={{ color: 'var(--ink-secondary)' }}>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
                       {language === 'ENG'
-                        ? 'Synthesize audited revenue drivers, balance sheet gearing, and SAC Shariah standing for any Bursa-listed security.'
-                        : 'Sintesis pemacu hasil teraudit, gearing kunci kira-kira, dan status Syariah MPS bagi sekuriti tersenarai Bursa.'}
+                        ? 'Skip the 200-page PDF! Pick any Bursa company or upload a report to get 3 plain-English takeaways.'
+                        : 'Tidak perlu baca ratusan muka surat! Pilih syarikat Bursa atau muat naik PDF untuk 3 intipati mudah.'}
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="jom-kicker block">
-                      {language === 'ENG' ? 'SELECT BURSA ISSUER' : 'PILIH PENERBIT BURSA'}
+                      {language === 'ENG' ? 'Choose a Bursa Company' : 'Pilih Syarikat Bursa'}
                     </label>
                     <select
                       className="jom-input font-tabular w-full"
@@ -857,39 +920,26 @@ export function EducationalHub({
                     </select>
                   </div>
 
-                  {/* Custom PDF / Annual Report Upload & Paste Text */}
+                  {/* Friendly File Dropzone & Paste Announcement */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="jom-kicker block">
                         {language === 'ENG'
-                          ? 'OR UPLOAD PDF / FILING DOCUMENT'
-                          : 'ATAU MUAT NAIK PDF / PEMFAILAN'}
+                          ? 'Upload a Bursa Annual Report PDF or paste an announcement'
+                          : 'Muat naik PDF Laporan Tahunan atau tampal pengumuman'}
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => setCustomPasteOpen(prev => !prev)}
-                        className="jom-kicker underline cursor-pointer"
-                      >
-                        {customPasteOpen
-                          ? language === 'ENG'
-                            ? 'HIDE PASTE'
-                            : 'TUTUP TEKS'
-                          : language === 'ENG'
-                          ? 'PASTE FILING TEXT'
-                          : 'TAMPAL TEKS'}
-                      </button>
                     </div>
-                    <label className="jom-btn w-full justify-between cursor-pointer text-xs font-tabular">
+                    <label className="jom-btn w-full justify-between cursor-pointer text-xs">
                       <span className="truncate flex items-center gap-1.5">
-                        <FileText size={13} />
+                        <FileText size={14} />
                         <span className="truncate">
                           {uploadedFileName ||
                             (language === 'ENG'
-                              ? 'Upload Annual Report (.PDF / .TXT / .CSV)'
-                              : 'Muat Naik Laporan (.PDF / .TXT / .CSV)')}
+                              ? 'Choose PDF / TXT file from your device'
+                              : 'Pilih fail PDF / TXT dari peranti anda')}
                         </span>
                       </span>
-                      <span className="jom-tag">BROWSE</span>
+                      <span className="jom-tag">Browse</span>
                       <input
                         type="file"
                         accept=".pdf,.txt,.md,.csv"
@@ -901,6 +951,22 @@ export function EducationalHub({
                         }}
                       />
                     </label>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setCustomPasteOpen(prev => !prev)}
+                        className="jom-kicker underline cursor-pointer"
+                      >
+                        {customPasteOpen
+                          ? language === 'ENG'
+                            ? 'Hide text box'
+                            : 'Tutup ruangan teks'
+                          : language === 'ENG'
+                          ? 'Or paste announcement text instead'
+                          : 'Atau tampal teks pengumuman'}
+                      </button>
+                    </div>
 
                     {customPasteOpen && (
                       <div className="space-y-1.5 pt-1">
@@ -915,17 +981,17 @@ export function EducationalHub({
                           }}
                           placeholder={
                             language === 'ENG'
-                              ? 'Paste raw Bursa quarterly announcement, audited financial statement notes, or management commentary...'
-                              : 'Tampal teks pengumuman suku tahunan Bursa, nota penyata kewangan, atau ulasan pengurusan...'
+                              ? 'Paste a quarterly announcement, earnings release, or annual report paragraph here...'
+                              : 'Tampal pengumuman suku tahunan atau petikan laporan tahunan di sini...'
                           }
-                          className="jom-input w-full text-xs font-tabular"
+                          className="jom-input w-full text-xs"
                         />
                         {(uploadedFileName || uploadedText) && (
                           <div className="flex justify-end">
                             <button
                               type="button"
                               onClick={handleClearCustomDocument}
-                              className="jom-btn py-1 px-2.5 text-[11px]"
+                              className="jom-btn py-1 px-2.5 text-xs"
                             >
                               {language === 'ENG' ? 'Clear Document' : 'Padam Dokumen'}
                             </button>
@@ -937,27 +1003,38 @@ export function EducationalHub({
 
                   {currentStock && (
                     <div className="jom-panel p-4 space-y-2.5 text-xs">
-                      <div className="jom-kicker pb-1 border-b" style={{ borderColor: 'var(--border-hairline)' }}>
-                        KEY FILING TELEMETRY
+                      <div
+                        className="jom-kicker pb-1 border-b"
+                        style={{ borderColor: 'var(--border-hairline)' }}
+                      >
+                        {language === 'ENG' ? 'Quick Snapshot' : 'Ringkasan Pantas'}
                       </div>
                       <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>Spot Price / 24h</span>
+                        <span style={{ color: 'var(--ink-secondary)' }}>
+                          {language === 'ENG' ? 'Share Price (24h)' : 'Harga Saham (24j)'}
+                        </span>
                         <span className="font-semibold">
                           RM {currentStock.price} ({currentStock.changePercent})
                         </span>
                       </div>
                       <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>P/E · Indicated Yield</span>
+                        <span style={{ color: 'var(--ink-secondary)' }}>
+                          {language === 'ENG' ? 'P/E · Dividend Yield' : 'P/E · Hasil Dividen'}
+                        </span>
                         <span className="font-semibold">
                           {currentStock.peRatio}x · {currentStock.dividendYield}
                         </span>
                       </div>
                       <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>Debt / Equity</span>
+                        <span style={{ color: 'var(--ink-secondary)' }}>
+                          {language === 'ENG' ? 'Debt-to-Equity' : 'Hutang-ke-Ekuiti'}
+                        </span>
                         <span className="font-semibold">{currentStock.debtEquity}</span>
                       </div>
                       <div className="flex justify-between font-tabular">
-                        <span style={{ color: 'var(--ink-secondary)' }}>FY Rev / Net Profit</span>
+                        <span style={{ color: 'var(--ink-secondary)' }}>
+                          {language === 'ENG' ? 'Yearly Revenue / Profit' : 'Hasil / Untung Tahunan'}
+                        </span>
                         <span className="font-semibold">
                           {currentStock.revenue} / {currentStock.netProfit}
                         </span>
@@ -979,47 +1056,62 @@ export function EducationalHub({
                     </>
                   ) : (
                     <span>
-                      {language === 'ENG' ? 'Analyze PDF / Filing Document' : 'Analisis Dokumen PDF / Pemfailan'}
+                      {language === 'ENG'
+                        ? 'Generate 30-Second Cheat Sheet'
+                        : 'Jana Ringkasan 30 Saat'}
                     </span>
                   )}
                 </button>
               </div>
 
-              {/* Right 8 cols: Structured Institutional Research Memo */}
+              {/* Right 8 cols: 3 Scannable Takeaway Cards */}
               <div className="md:col-span-8 p-6 flex flex-col justify-between">
                 {isScanning ? (
                   <div className="py-20 text-center space-y-3">
-                    <Loader2 size={24} className="animate-spin mx-auto" style={{ color: 'var(--ink-muted)' }} />
-                    <div className="font-tabular text-xs font-semibold">{loadingText}</div>
+                    <Loader2
+                      size={24}
+                      className="animate-spin mx-auto"
+                      style={{ color: 'var(--accent-brand)' }}
+                    />
+                    <div className="text-sm font-semibold">{loadingText}</div>
                   </div>
                 ) : (
                   scanComplete &&
                   activeReport &&
                   currentStock && (
                     <div className="space-y-6">
-                      {/* Memo Header */}
+                      {/* Cheat Sheet Header */}
                       <div
                         className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b"
                         style={{ borderColor: 'var(--border-hairline)' }}
                       >
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="jom-tag">{activeReport.sourceLabel || 'VERIFIED PDF FILING'}</span>
-                            <span className="jom-tag font-tabular">{currentStock.bursaCode}</span>
-                            {currentStock.isShariah ? (
-                              <span className="jom-tag jom-tag-shariah">SAC SHARIAH</span>
-                            ) : (
-                              <span className="jom-tag">CONVENTIONAL</span>
-                            )}
-                            <span className="jom-tag font-tabular">
-                              {getProviderLabel(activeReport.provider)}
-                            </span>
+                        <div className="flex items-start gap-3.5">
+                          <div className={`${currentMonogram.avatarClass} jom-avatar-lg`}>
+                            {currentMonogram.initials}
                           </div>
-                          <h3 className="font-editorial text-2xl">{activeReport.title}</h3>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="jom-tag">
+                                {activeReport.sourceLabel || 'Annual Report Summary'}
+                              </span>
+                              <span className="jom-tag font-tabular">{currentStock.bursaCode}</span>
+                              {currentStock.isShariah ? (
+                                <span className="jom-tag jom-tag-shariah">Shariah-Compliant</span>
+                              ) : (
+                                <span className="jom-tag">Conventional</span>
+                              )}
+                              <span className="jom-tag font-tabular">
+                                {getProviderLabel(activeReport.provider)}
+                              </span>
+                            </div>
+                            <h3 className="font-editorial text-2xl">{activeReport.title}</h3>
+                          </div>
                         </div>
 
                         <div className="sm:text-right shrink-0">
-                          <div className="jom-kicker">CONFIDENCE / FUNDAMENTAL SCORE</div>
+                          <div className="jom-kicker">
+                            {language === 'ENG' ? 'Overall Health Score' : 'Skor Kesihatan Syarikat'}
+                          </div>
                           <div
                             className="font-tabular text-2xl font-semibold mt-0.5"
                             style={{ color: 'var(--signal-up)' }}
@@ -1029,7 +1121,7 @@ export function EducationalHub({
                         </div>
                       </div>
 
-                      {/* Extracted Document Excerpt Box (when uploadedText or aiReport.extractedExcerpt is present) */}
+                      {/* Extracted Document Excerpt Box */}
                       {excerptToDisplay && (
                         <div
                           className="jom-panel-subtle p-4 space-y-1.5"
@@ -1037,19 +1129,19 @@ export function EducationalHub({
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span className="jom-kicker">
-                              EXTRACTED DOCUMENT EXCERPT
-                              {uploadedFileName ? ` · ${uploadedFileName.toUpperCase()}` : ''}
+                              {language === 'ENG' ? 'Excerpt from Uploaded Filing' : 'Petikan Dokumen'}
+                              {uploadedFileName ? ` · ${uploadedFileName}` : ''}
                             </span>
                             <button
                               type="button"
                               onClick={handleClearCustomDocument}
                               className="jom-kicker underline cursor-pointer"
                             >
-                              {language === 'ENG' ? 'CLEAR' : 'PADAM'}
+                              {language === 'ENG' ? 'Clear' : 'Padam'}
                             </button>
                           </div>
                           <p
-                            className="font-tabular text-xs leading-relaxed"
+                            className="text-xs leading-relaxed"
                             style={{ color: 'var(--ink-secondary)' }}
                           >
                             "{excerptToDisplay}"
@@ -1057,43 +1149,61 @@ export function EducationalHub({
                         </div>
                       )}
 
-                      {/* 3 Numbered Memo Sections */}
+                      {/* 3 Clean, Scannable Takeaway Cards */}
                       <div className="space-y-4">
                         <div className="jom-panel-subtle p-4 space-y-1.5">
-                          <div className="jom-kicker">
-                            {language === 'ENG'
-                              ? '01 / GROWTH & REVENUE CATALYST'
-                              : '01 / PEMANGKIN PERTUMBUHAN & HASIL'}
+                          <div className="flex items-center justify-between">
+                            <span className="jom-kicker" style={{ color: 'var(--signal-up)' }}>
+                              {language === 'ENG'
+                                ? "What's Going Well (Growth)"
+                                : 'Apa Yang Positif (Pertumbuhan)'}
+                            </span>
+                            <span className="jom-tag jom-tag-up">Growth Drivers</span>
                           </div>
-                          <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                          <p
+                            className="text-xs sm:text-sm leading-relaxed"
+                            style={{ color: 'var(--ink-primary)' }}
+                          >
                             {activeReport.growth}
                           </p>
                         </div>
 
                         <div className="jom-panel-subtle p-4 space-y-1.5">
-                          <div className="jom-kicker">
-                            {language === 'ENG'
-                              ? '02 / VALUATION & BALANCE SHEET RISK'
-                              : '02 / PENILAIAN & RISIKO KUNCI KIRA-KIRA'}
+                          <div className="flex items-center justify-between">
+                            <span className="jom-kicker" style={{ color: 'var(--signal-warn)' }}>
+                              {language === 'ENG'
+                                ? 'What to Watch Out For (Risks)'
+                                : 'Perkara Perlu Diperhatikan (Risiko)'}
+                            </span>
+                            <span className="jom-tag jom-tag-warn">Key Risks & Valuation</span>
                           </div>
-                          <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                          <p
+                            className="text-xs sm:text-sm leading-relaxed"
+                            style={{ color: 'var(--ink-primary)' }}
+                          >
                             {activeReport.risk}
                           </p>
                         </div>
 
                         <div className="jom-panel-subtle p-4 space-y-1.5">
-                          <div className="jom-kicker">
-                            {language === 'ENG'
-                              ? '03 / DIVIDEND & SAC SHARIAH STANDING'
-                              : '03 / DIVIDEN & KEDUDUKAN SYARIAH MPS'}
+                          <div className="flex items-center justify-between">
+                            <span className="jom-kicker" style={{ color: 'var(--accent-brand)' }}>
+                              {language === 'ENG'
+                                ? 'Dividends & Shariah Status'
+                                : 'Dividen & Status Syariah'}
+                            </span>
+                            <span className="jom-tag jom-tag-shariah">Payout & Compliance</span>
                           </div>
-                          <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+                          <p
+                            className="text-xs sm:text-sm leading-relaxed"
+                            style={{ color: 'var(--ink-primary)' }}
+                          >
                             {activeReport.dividend}
                           </p>
                         </div>
                       </div>
 
-                      {/* Memo Actions */}
+                      {/* Cheat Sheet Actions */}
                       <div
                         className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t"
                         style={{ borderColor: 'var(--border-hairline)' }}
@@ -1105,7 +1215,9 @@ export function EducationalHub({
                           className="jom-btn"
                         >
                           <span>
-                            {language === 'ENG' ? 'Open Bursa PDF Filings' : 'Buka Pemfailan PDF Bursa'}
+                            {language === 'ENG'
+                              ? 'Official Bursa Announcements'
+                              : 'Pengumuman Rasmi Bursa'}
                           </span>
                           <ArrowUpRight size={14} />
                         </a>
@@ -1118,22 +1230,20 @@ export function EducationalHub({
                           }}
                         >
                           <span>
-                            {language === 'ENG'
-                              ? 'Open in Equity Terminal'
-                              : 'Buka di Terminal Ekuiti'}
+                            {language === 'ENG' ? 'View Stock Overview' : 'Lihat Gambaran Saham'}
                           </span>
                           <ArrowUpRight size={14} />
                         </button>
                         <button
                           type="button"
-                          className="jom-btn jom-btn-inverse"
+                          className="jom-btn jom-btn-primary"
                           onClick={handleExportSummary}
                         >
                           <Download size={14} />
                           <span>
                             {language === 'ENG'
-                              ? 'Export Brief (+15 XP)'
-                              : 'Eksport Nota (+15 XP)'}
+                              ? 'Save Cheat Sheet (+15 XP)'
+                              : 'Simpan Ringkasan (+15 XP)'}
                           </span>
                         </button>
                       </div>
@@ -1144,29 +1254,32 @@ export function EducationalHub({
             </div>
           </section>
 
-          {/* 2. JomSentimen — Bursa Market Breadth & News Wire */}
+          {/* 2. JomSentimen — Visual Bursa Market Mood & Clean News Story Cards */}
           <section className="jom-panel overflow-hidden">
             <div className="grid md:grid-cols-12">
-              {/* Left 5 cols: Market Breadth Arc & Telemetry */}
+              {/* Left 5 cols: Visual Bursa Market Mood Card */}
               <div
                 className="md:col-span-5 p-6 border-b md:border-b-0 md:border-r flex flex-col justify-between space-y-6"
                 style={{ borderColor: 'var(--border-hairline)' }}
               >
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="jom-kicker">JOMSENTIMEN · MARKET BREADTH</span>
+                    <span className="jom-kicker">JomSentimen Market Pulse</span>
                     <span className={getRegimeTagClass(marketBreadth.regime)}>
-                      {marketBreadth.regime}
+                      {getFriendlyRegimeLabel(marketBreadth.regime)}
                     </span>
                   </div>
                   <h2 className="font-editorial text-2xl">
-                    {language === 'ENG'
-                      ? 'Bursa Market Breadth & Regime'
-                      : 'Keluasan Pasaran & Rejim Bursa'}
+                    {language === 'ENG' ? 'Bursa Market Mood' : 'Mood Pasaran Bursa'}
                   </h2>
+                  <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                    {language === 'ENG'
+                      ? 'See at a glance whether Malaysian investors are feeling optimistic (Bullish), steady, or cautious today.'
+                      : 'Lihat sepintas lalu sama ada pelabur Malaysia berasa optimis (Bullish), stabil, atau berhati-hati hari ini.'}
+                  </p>
                 </div>
 
-                {/* Clean Architectural SVG Market Breadth Arc */}
+                {/* Clean SVG Market Mood Gauge */}
                 <div className="flex flex-col items-center py-2">
                   <div className="relative w-60 h-28">
                     <svg viewBox="0 0 200 100" className="w-full h-full overflow-visible">
@@ -1175,7 +1288,7 @@ export function EducationalHub({
                         fill="none"
                         stroke="var(--border-hairline)"
                         strokeWidth="12"
-                        strokeLinecap="butt"
+                        strokeLinecap="round"
                       />
                       <path
                         d="M 20 95 A 80 80 0 0 1 65 30"
@@ -1215,30 +1328,43 @@ export function EducationalHub({
                     </svg>
                   </div>
 
-                  <div className="flex justify-between w-60 font-tabular text-[10px] uppercase tracking-wider mt-1">
-                    <span style={{ color: 'var(--signal-down)' }}>FEAR</span>
-                    <span style={{ color: 'var(--signal-warn)' }}>NEUTRAL</span>
-                    <span style={{ color: 'var(--signal-up)' }}>CONSTRUCTIVE</span>
+                  <div className="flex justify-between w-60 text-xs font-semibold mt-1">
+                    <span style={{ color: 'var(--signal-down)' }}>
+                      {language === 'ENG' ? 'Cautious' : 'Berhati-hati'}
+                    </span>
+                    <span style={{ color: 'var(--signal-warn)' }}>Neutral</span>
+                    <span style={{ color: 'var(--signal-up)' }}>
+                      {language === 'ENG' ? 'Bullish' : 'Positif'}
+                    </span>
                   </div>
 
                   <div className="text-center mt-4">
-                    <div className="jom-kicker">COMPOSITE BREADTH INDEX</div>
+                    <div className="jom-kicker">
+                      {language === 'ENG' ? 'Today’s Mood Score' : 'Skor Mood Hari Ini'}
+                    </div>
                     <div className="font-tabular text-2xl font-semibold mt-0.5">
-                      {marketBreadth.score} / 100 · {marketBreadth.regime}
+                      {marketBreadth.score} / 100 · {getFriendlyRegimeLabel(marketBreadth.regime)}
                     </div>
                   </div>
                 </div>
 
-                {/* Breadth Metrics Strip */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-hairline)' }}>
+                {/* Friendly Market Pulse Strip */}
+                <div
+                  className="grid grid-cols-3 gap-2 pt-2 border-t"
+                  style={{ borderColor: 'var(--border-hairline)' }}
+                >
                   <div className="jom-panel-subtle p-2.5">
-                    <div className="jom-kicker">ADV / DEC</div>
+                    <div className="jom-kicker">
+                      {language === 'ENG' ? 'Up / Down' : 'Naik / Turun'}
+                    </div>
                     <div className="font-tabular text-xs font-semibold mt-1">
                       {marketBreadth.advancers} / {marketBreadth.decliners}
                     </div>
                   </div>
                   <div className="jom-panel-subtle p-2.5">
-                    <div className="jom-kicker">INST. FLOW</div>
+                    <div className="jom-kicker">
+                      {language === 'ENG' ? 'Fund Flow' : 'Aliran Dana'}
+                    </div>
                     <div
                       className="font-tabular text-xs font-semibold mt-1"
                       style={{
@@ -1251,7 +1377,7 @@ export function EducationalHub({
                     </div>
                   </div>
                   <div className="jom-panel-subtle p-2.5">
-                    <div className="jom-kicker">OPR BENCH</div>
+                    <div className="jom-kicker">BNM OPR</div>
                     <div className="font-tabular text-xs font-semibold mt-1">
                       {marketBreadth.oprRate}
                     </div>
@@ -1259,120 +1385,129 @@ export function EducationalHub({
                 </div>
               </div>
 
-              {/* Right 7 cols: Institutional News Wire Table */}
-              <div className="md:col-span-7 flex flex-col justify-between">
+              {/* Right 7 cols: Clean News Story Cards */}
+              <div className="md:col-span-7 p-6 flex flex-col justify-between space-y-4">
                 <div
-                  className="p-5 border-b flex items-center justify-between gap-2"
+                  className="pb-4 border-b flex items-center justify-between gap-2"
                   style={{ borderColor: 'var(--border-hairline)' }}
                 >
                   <div>
-                    <div className="jom-kicker">BURSA RESEARCH WIRE</div>
+                    <div className="jom-kicker">
+                      {language === 'ENG' ? 'Malaysian Market Stories' : 'Berita Pasaran Malaysia'}
+                    </div>
                     <h3 className="font-editorial text-xl">
                       {language === 'ENG'
-                        ? 'Macro & Corporate Catalyst Dispatches'
-                        : 'Berita Pemangkin Korporat & Makro'}
+                        ? 'What’s Moving Bursa Stocks Today'
+                        : 'Apa Yang Menggerakkan Saham Bursa Hari Ini'}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => loadBursaNewsWire(true)}
-                      disabled={isRefreshingNews}
-                      className="jom-btn py-1 px-2.5 text-xs"
-                    >
-                      <RefreshCw size={12} className={isRefreshingNews ? 'animate-spin' : ''} />
-                      <span>{language === 'ENG' ? 'Refresh Wire' : 'Segar Semula'}</span>
-                    </button>
-                    <span className="jom-tag font-tabular">KLSE WIRE</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => loadBursaNewsWire(true)}
+                    disabled={isRefreshingNews}
+                    className="jom-btn py-1.5 px-3 text-xs"
+                  >
+                    <RefreshCw size={12} className={isRefreshingNews ? 'animate-spin' : ''} />
+                    <span>{language === 'ENG' ? 'Refresh Stories' : 'Segar Semula'}</span>
+                  </button>
                 </div>
 
-                <div className="jom-table-wrap flex-1">
-                  <table className="jom-table">
-                    <thead>
-                      <tr>
-                        <th>{language === 'ENG' ? 'Source' : 'Sumber'}</th>
-                        <th>{language === 'ENG' ? 'Headline' : 'Tajuk Utama'}</th>
-                        <th className="text-right">{language === 'ENG' ? 'Impact Tag' : 'Impak'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {newsItems.map(news => (
-                        <tr
-                          key={news.id}
-                          onClick={() => {
-                            const found = stocks.find(s => s.ticker === news.ticker);
-                            if (found) {
-                              setSelectedStock(found);
-                              navigateTo('stock-details');
-                            }
-                          }}
-                        >
-                          <td className="whitespace-nowrap">
-                            <div className="font-semibold text-xs">{news.source}</div>
-                            <div className="font-tabular text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                              {news.timeAgo} · {news.ticker}
+                <div className="space-y-3 flex-1">
+                  {newsItems.map(news => {
+                    const matchedStock = stocks.find(s => s.ticker === news.ticker);
+                    const monogram = getStockMonogram(news.ticker, matchedStock?.sector);
+                    return (
+                      <div
+                        key={news.id}
+                        onClick={() => {
+                          if (matchedStock) {
+                            setSelectedStock(matchedStock);
+                            navigateTo('stock-details');
+                          }
+                        }}
+                        className="jom-panel-subtle p-4 cursor-pointer transition-all hover:border-[var(--border-strong)] flex items-start justify-between gap-3.5"
+                        style={{ border: '1px solid var(--border-hairline)' }}
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className={monogram.avatarClass}>{monogram.initials}</div>
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-xs">{news.source}</span>
+                              <span
+                                className="font-tabular text-xs"
+                                style={{ color: 'var(--ink-muted)' }}
+                              >
+                                · {news.timeAgo} · {news.ticker}
+                              </span>
                             </div>
-                          </td>
-                          <td>
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
-                                {news.headline}
-                              </p>
-                              {news.url && (
-                                <a
-                                  href={news.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="jom-btn py-0.5 px-1.5 text-[11px] font-tabular shrink-0"
-                                  title={
-                                    language === 'ENG'
-                                      ? 'Open source article in new tab'
-                                      : 'Buka artikel sumber di tab baharu'
-                                  }
-                                >
-                                  ↗
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                          <td className="text-right whitespace-nowrap">
-                            <span className={getImpactTagClass(news.impact)}>{news.impact}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            <p
+                              className="text-xs sm:text-sm leading-relaxed"
+                              style={{ color: 'var(--ink-primary)' }}
+                            >
+                              {news.headline}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={getImpactTagClass(news.impact)}>
+                            {getFriendlySentimentLabel(news.impact)}
+                          </span>
+                          {news.url && (
+                            <a
+                              href={news.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="jom-btn py-1 px-2 text-xs"
+                              title={
+                                language === 'ENG'
+                                  ? 'Read full article'
+                                  : 'Baca artikel penuh'
+                              }
+                            >
+                              <ArrowUpRight size={12} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* 3. 10-Year Compounding & Malaysian Benchmark Model */}
+          {/* 3. Stocks vs. EPF (KWSP) & FD Wealth Calculator */}
           <section className="jom-panel p-6 space-y-6">
             <div
               className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b"
               style={{ borderColor: 'var(--border-hairline)' }}
             >
               <div>
-                <div className="jom-kicker">LONG-HORIZON CAPITAL MODEL</div>
+                <div className="jom-kicker">
+                  {language === 'ENG'
+                    ? '10-Year Compounding Simulator'
+                    : 'Simulator Kompaun 10 Tahun'}
+                </div>
                 <h2 className="font-editorial text-2xl mt-0.5">
                   {language === 'ENG'
-                    ? '10-Year Compounding & Malaysian Benchmark Model'
-                    : 'Model Kompaun 10 Tahun & Penanda Aras Malaysia'}
+                    ? 'Stocks vs. EPF (KWSP) & FD Wealth Calculator'
+                    : 'Kalkulator Kekayaan: Saham vs. KWSP & Deposit Tetap (FD)'}
                 </h2>
                 <p className="text-xs mt-1" style={{ color: 'var(--ink-secondary)' }}>
                   {language === 'ENG'
-                    ? 'Compare systematic monthly Ringgit allocations against EPF (KWSP) / ASB (5.5% p.a.) and Malaysian Fixed Deposits (3.0% p.a.).'
-                    : 'Bandingkan pelaburan bulanan sistematik dengan KWSP / ASB (5.5% setahun) dan Deposit Tetap Malaysia (3.0% setahun).'}
+                    ? 'See how investing a fixed Ringgit amount every month compares against EPF/ASB (5.5% p.a.) and Fixed Deposits (3.0% p.a.) over 10 years.'
+                    : 'Lihat bagaimana melabur jumlah RM tetap setiap bulan berbanding KWSP/ASB (5.5% setahun) dan Deposit Tetap (3.0% setahun) selama 10 tahun.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="jom-tag font-tabular">
-                  EST. CAGR {(4 + riskLevel * 0.8 - (inflationAdjusted ? 3 : 0)).toFixed(1)}% P.A.
+                <span className="jom-tag jom-tag-shariah font-tabular">
+                  Est. {(4 + riskLevel * 0.8 - (inflationAdjusted ? 3 : 0)).toFixed(1)}% / yr
                 </span>
-                {inflationAdjusted && <span className="jom-tag jom-tag-warn">REAL (-3.0% CPI)</span>}
+                {inflationAdjusted && (
+                  <span className="jom-tag jom-tag-warn">Inflation-Adjusted (-3%)</span>
+                )}
               </div>
             </div>
 
@@ -1383,20 +1518,24 @@ export function EducationalHub({
                   <AreaChart data={wealthData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="jomEquityGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0A5C36" stopOpacity={0.22} />
-                        <stop offset="95%" stopColor="#0A5C36" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="#059669" stopOpacity={0.24} />
+                        <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-hairline)" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="var(--border-hairline)"
+                    />
                     <XAxis
                       dataKey="year"
-                      tick={{ fontSize: 11, fill: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}
+                      tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={v => `RM${(v / 1000).toFixed(0)}k`}
-                      tick={{ fontSize: 11, fill: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}
+                      tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
                       axisLine={false}
                       tickLine={false}
                       width={58}
@@ -1406,17 +1545,16 @@ export function EducationalHub({
                       contentStyle={{
                         backgroundColor: 'var(--bg-surface)',
                         borderColor: 'var(--border-hairline)',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontFamily: 'var(--font-mono)'
+                        borderRadius: '12px',
+                        fontSize: '12px'
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                     <Area
                       type="monotone"
-                      name="Equity Mandate"
+                      name="Bursa Stock Strategy"
                       dataKey="wealth"
-                      stroke="#0A5C36"
+                      stroke="#059669"
                       strokeWidth={2.5}
                       fillOpacity={1}
                       fill="url(#jomEquityGrad)"
@@ -1425,7 +1563,7 @@ export function EducationalHub({
                       type="monotone"
                       name="EPF (KWSP) / ASB (5.5%)"
                       dataKey="epfAsb"
-                      stroke="#52585E"
+                      stroke="#475569"
                       strokeWidth={2}
                       fillOpacity={0}
                     />
@@ -1433,16 +1571,16 @@ export function EducationalHub({
                       type="monotone"
                       name="Fixed Deposit (3.0%)"
                       dataKey="fixedDeposit"
-                      stroke="#9A6B16"
+                      stroke="#D97706"
                       strokeWidth={1.75}
                       strokeDasharray="4 4"
                       fillOpacity={0}
                     />
                     <Area
                       type="monotone"
-                      name="Principal Contributed"
+                      name="Total Cash Saved"
                       dataKey="invested"
-                      stroke="#848B92"
+                      stroke="#94A3B8"
                       strokeWidth={1.25}
                       strokeDasharray="2 2"
                       fillOpacity={0}
@@ -1451,12 +1589,16 @@ export function EducationalHub({
                 </ResponsiveContainer>
               </div>
 
-              {/* Right 4 cols: Model Parameters */}
+              {/* Right 4 cols: Friendly Sliders */}
               <div className="lg:col-span-4 jom-panel-subtle p-5 space-y-5">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="jom-kicker">MONTHLY CONTRIBUTION</span>
-                    <span className="font-tabular text-sm font-semibold">RM {monthlyInvest.toLocaleString()}</span>
+                    <span className="jom-kicker">
+                      {language === 'ENG' ? 'Monthly Savings' : 'Simpanan Bulanan'}
+                    </span>
+                    <span className="font-tabular text-sm font-semibold">
+                      RM {monthlyInvest.toLocaleString()} / mo
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -1465,20 +1607,25 @@ export function EducationalHub({
                     step="100"
                     value={monthlyInvest}
                     onChange={e => setMonthlyInvest(parseInt(e.target.value))}
-                    className="w-full cursor-pointer accent-[#0A5C36]"
+                    className="w-full cursor-pointer accent-[#059669]"
                   />
-                  <div className="flex justify-between font-tabular text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                    <span>RM 100/mo</span>
-                    <span>Principal: RM {finalInvested.toLocaleString()}</span>
-                    <span>RM 5,000/mo</span>
+                  <div
+                    className="flex justify-between font-tabular text-xs"
+                    style={{ color: 'var(--ink-muted)' }}
+                  >
+                    <span>RM 100</span>
+                    <span>Total put in: RM {finalInvested.toLocaleString()}</span>
+                    <span>RM 5,000</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="jom-kicker">RISK MANDATE TIER</span>
+                    <span className="jom-kicker">
+                      {language === 'ENG' ? 'Investor Style & Return' : 'Gaya Pelabur & Pulangan'}
+                    </span>
                     <span className="jom-tag font-tabular">
-                      TIER {riskLevel}/10 · {(4 + riskLevel * 0.8).toFixed(1)}% P.A.
+                      {(4 + riskLevel * 0.8).toFixed(1)}% / yr
                     </span>
                   </div>
                   <input
@@ -1488,14 +1635,14 @@ export function EducationalHub({
                     step="1"
                     value={riskLevel}
                     onChange={e => setRiskLevel(parseInt(e.target.value))}
-                    className="w-full cursor-pointer accent-[#0A5C36]"
+                    className="w-full cursor-pointer accent-[#059669]"
                   />
                   <p className="text-xs leading-relaxed pt-1" style={{ color: 'var(--ink-secondary)' }}>
                     {riskLevel <= 3
-                      ? 'Conservative Mandate: Utility & REIT income focus (4.8%–6.4% p.a. nominal).'
+                      ? 'Conservative Style: Focuses on steady utilities & REIT dividends (4.8%–6.4% yearly).'
                       : riskLevel <= 7
-                      ? 'Balanced Mandate: Blue-chip banking yield paired with secular growth (7.2%–9.6% p.a. nominal).'
-                      : 'Aggressive Mandate: High-conviction infrastructure, semiconductor & data center compounders (10.4%–12.0% p.a. nominal).'}
+                      ? 'Balanced Style: Mixes Malaysian banks with steady growth leaders (7.2%–9.6% yearly).'
+                      : 'Explorer Style: Focuses on faster-growing tech, infrastructure & data center stocks (10.4%–12.0% yearly).'}
                   </p>
                 </div>
 
@@ -1505,45 +1652,55 @@ export function EducationalHub({
                 >
                   <div>
                     <div className="text-xs font-semibold">
-                      {language === 'ENG' ? 'CPI Inflation Adjustment' : 'Pelarasan Inflasi IHP'}
+                      {language === 'ENG' ? 'Adjust for Inflation' : 'Laraskan Untuk Inflasi'}
                     </div>
-                    <div className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                      {language === 'ENG' ? 'Discount by 3.0% p.a. real purchasing power' : 'Diskaun kuasa beli sebenar 3.0% setahun'}
+                    <div className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+                      {language === 'ENG'
+                        ? 'Show real buying power (-3% inflation/yr)'
+                        : 'Tunjukkan kuasa beli sebenar (-3% setahun)'}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setInflationAdjusted(!inflationAdjusted)}
                     className={`jom-btn py-1 px-3 text-xs font-tabular ${
-                      inflationAdjusted ? 'jom-btn-inverse' : ''
+                      inflationAdjusted ? 'jom-btn-primary' : ''
                     }`}
                   >
-                    {inflationAdjusted ? 'ENABLED' : 'NOMINAL'}
+                    {inflationAdjusted
+                      ? language === 'ENG'
+                        ? 'On (-3%)'
+                        : 'Aktif (-3%)'
+                      : language === 'ENG'
+                      ? 'Off'
+                      : 'Matikan'}
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* 3-Column Benchmark Ledger Strip Below */}
+            {/* 3-Card Comparison Strip Below */}
             <div className="jom-ledger-strip">
               <div className="jom-ledger-cell space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="jom-kicker">PROJECTED EQUITY MANDATE</span>
+                  <span className="jom-kicker">
+                    {language === 'ENG' ? 'Bursa Stock Strategy' : 'Strategi Saham Bursa'}
+                  </span>
                   <span className="jom-tag jom-tag-up font-tabular">
-                    +RM {(finalWealth - finalInvested).toLocaleString()}
+                    +RM {(finalWealth - finalInvested).toLocaleString()} profit
                   </span>
                 </div>
                 <div className="font-tabular text-2xl font-semibold">
                   RM {finalWealth.toLocaleString()}
                 </div>
                 <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  vs RM {finalInvested.toLocaleString()} contributed capital
+                  from RM {finalInvested.toLocaleString()} total savings
                 </div>
               </div>
 
               <div className="jom-ledger-cell space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="jom-kicker">EPF (KWSP) / ASB (5.5% P.A.)</span>
+                  <span className="jom-kicker">EPF (KWSP) / ASB (5.5% / yr)</span>
                   <span className="jom-tag font-tabular">
                     +RM {(finalEpf - finalInvested).toLocaleString()}
                   </span>
@@ -1552,14 +1709,14 @@ export function EducationalHub({
                   RM {finalEpf.toLocaleString()}
                 </div>
                 <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  Equity spread: {finalWealth >= finalEpf ? '+' : ''}RM{' '}
+                  Stocks difference: {finalWealth >= finalEpf ? '+' : ''}RM{' '}
                   {(finalWealth - finalEpf).toLocaleString()}
                 </div>
               </div>
 
               <div className="jom-ledger-cell space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="jom-kicker">FIXED DEPOSIT (3.0% P.A.)</span>
+                  <span className="jom-kicker">Fixed Deposit (3.0% / yr)</span>
                   <span className="jom-tag font-tabular">
                     +RM {(finalFd - finalInvested).toLocaleString()}
                   </span>
@@ -1568,7 +1725,7 @@ export function EducationalHub({
                   RM {finalFd.toLocaleString()}
                 </div>
                 <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  Equity spread: +RM {(finalWealth - finalFd).toLocaleString()}
+                  Stocks difference: +RM {(finalWealth - finalFd).toLocaleString()}
                 </div>
               </div>
             </div>
@@ -1576,7 +1733,7 @@ export function EducationalHub({
         </div>
       )}
 
-      {/* TAB 2: CURRICULUM MODULES */}
+      {/* TAB 2: 5-MINUTE LESSONS */}
       {activeTab === 'curriculum' && (
         <div className="grid md:grid-cols-3 gap-6">
           {articleItems.map(article => {
@@ -1591,12 +1748,15 @@ export function EducationalHub({
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       <span className="jom-tag font-tabular">{article.code}</span>
-                      <span className="jom-tag">{article.badge}</span>
+                      <span className="jom-tag jom-tag-shariah">{article.badge}</span>
                     </div>
                     {isDone ? (
-                      <span className="jom-tag jom-tag-up">VERIFIED</span>
+                      <span className="jom-tag jom-tag-up">Completed</span>
                     ) : (
-                      <span className="font-tabular text-xs flex items-center gap-1" style={{ color: 'var(--ink-muted)' }}>
+                      <span
+                        className="font-tabular text-xs flex items-center gap-1"
+                        style={{ color: 'var(--ink-muted)' }}
+                      >
                         <Clock size={12} />
                         {article.meta}
                       </span>
@@ -1637,7 +1797,7 @@ export function EducationalHub({
         </div>
       )}
 
-      {/* TAB 3: VIDEO BRIEFINGS */}
+      {/* TAB 3: VIDEO GUIDES */}
       {activeTab === 'briefings' && (
         <div className="grid md:grid-cols-2 gap-6">
           {tutorialItems.map((tutorial, index) => {
@@ -1649,15 +1809,18 @@ export function EducationalHub({
                 className="jom-panel overflow-hidden flex flex-col justify-between cursor-pointer transition-colors hover:border-[var(--border-strong)]"
               >
                 <div>
-                  <div className="relative aspect-video bg-black/10 overflow-hidden border-b" style={{ borderColor: 'var(--border-hairline)' }}>
+                  <div
+                    className="relative aspect-video bg-black/10 overflow-hidden border-b"
+                    style={{ borderColor: 'var(--border-hairline)' }}
+                  >
                     <ImageWithFallback
                       src={
                         index % 2 === 0
                           ? 'https://images.unsplash.com/photo-1579226905180-636b76d96082?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
                           : 'https://images.unsplash.com/photo-1668092547893-6402c0387885?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
                       }
-                      alt="Briefing visual"
-                      className="w-full h-full object-cover grayscale contrast-110"
+                      alt="Video guide thumbnail"
+                      className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
                       <div
@@ -1665,7 +1828,7 @@ export function EducationalHub({
                         style={{
                           backgroundColor: 'var(--bg-surface)',
                           borderColor: 'var(--border-hairline)',
-                          color: 'var(--ink-primary)'
+                          color: 'var(--accent-brand)'
                         }}
                       >
                         <Play size={18} className="ml-0.5" fill="currentColor" />
@@ -1677,12 +1840,15 @@ export function EducationalHub({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className="jom-tag font-tabular">{tutorial.code}</span>
-                        <span className="jom-tag">{tutorial.badge}</span>
+                        <span className="jom-tag jom-tag-shariah">{tutorial.badge}</span>
                       </div>
                       {isDone ? (
-                        <span className="jom-tag jom-tag-up">VERIFIED</span>
+                        <span className="jom-tag jom-tag-up">Completed</span>
                       ) : (
-                        <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
+                        <span
+                          className="font-tabular text-xs"
+                          style={{ color: 'var(--ink-muted)' }}
+                        >
                           {tutorial.meta}
                         </span>
                       )}
@@ -1717,7 +1883,7 @@ export function EducationalHub({
         </div>
       )}
 
-      {/* CURRICULUM / BRIEFING VERIFICATION MODAL */}
+      {/* LESSON & QUIZ MODAL */}
       {activeLearningItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="jom-panel w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -1731,7 +1897,7 @@ export function EducationalHub({
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="jom-tag font-tabular">{activeLearningItem.code}</span>
-                  <span className="jom-tag">{activeLearningItem.badge}</span>
+                  <span className="jom-tag jom-tag-shariah">{activeLearningItem.badge}</span>
                   <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
                     {activeLearningItem.meta}
                   </span>
@@ -1753,8 +1919,11 @@ export function EducationalHub({
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Reading Notes */}
-              <div className="space-y-3 text-sm leading-relaxed" style={{ color: 'var(--ink-primary)' }}>
+              {/* Lesson Content */}
+              <div
+                className="space-y-3 text-sm leading-relaxed"
+                style={{ color: 'var(--ink-primary)' }}
+              >
                 {(language === 'ENG'
                   ? activeLearningItem.contentEng
                   : activeLearningItem.contentBm
@@ -1763,14 +1932,15 @@ export function EducationalHub({
                 ))}
               </div>
 
-              {/* Key Institutional Takeaways */}
+              {/* Key Takeaways */}
               <div className="jom-panel-subtle p-4 space-y-2">
                 <div className="jom-kicker">
-                  {language === 'ENG'
-                    ? 'KEY BURSA MALAYSIA TAKEAWAYS'
-                    : 'INTIPATI UTAMA PASARAN BURSA MALAYSIA'}
+                  {language === 'ENG' ? 'Key Takeaways to Remember' : 'Intipati Penting'}
                 </div>
-                <ul className="list-disc list-inside text-xs space-y-1.5" style={{ color: 'var(--ink-secondary)' }}>
+                <ul
+                  className="list-disc list-inside text-xs space-y-1.5"
+                  style={{ color: 'var(--ink-secondary)' }}
+                >
                   {(language === 'ENG'
                     ? activeLearningItem.takeawaysEng
                     : activeLearningItem.takeawaysBm
@@ -1780,18 +1950,20 @@ export function EducationalHub({
                 </ul>
               </div>
 
-              {/* 2-Question Verification Check */}
+              {/* Quick 2-Question Check-In */}
               <div className="jom-panel p-5 space-y-4">
                 <div
                   className="flex items-center justify-between pb-3 border-b"
                   style={{ borderColor: 'var(--border-hairline)' }}
                 >
                   <div>
-                    <div className="jom-kicker">COMPREHENSION VERIFICATION</div>
+                    <div className="jom-kicker">
+                      {language === 'ENG' ? 'Quick Knowledge Check' : 'Kuiz Ringkas'}
+                    </div>
                     <h4 className="font-editorial text-xl">
                       {language === 'ENG'
-                        ? '2-Question Analyst Verification Check'
-                        : 'Semakan Pengesahan Penganalisis 2-Soalan'}
+                        ? 'Answer 2 Questions to Earn +25 XP'
+                        : 'Jawab 2 Soalan Untuk Kumpul +25 XP'}
                     </h4>
                   </div>
                   <span className="jom-tag jom-tag-shariah font-tabular">+25 XP</span>
@@ -1802,7 +1974,7 @@ export function EducationalHub({
                   return (
                     <div key={qIdx} className="space-y-2">
                       <p className="text-xs font-semibold">
-                        0{qIdx + 1}. {language === 'ENG' ? q.qEng : q.qBm}
+                        {qIdx + 1}. {language === 'ENG' ? q.qEng : q.qBm}
                       </p>
                       <div className="space-y-1.5">
                         {options.map((opt, optIdx) => {
@@ -1813,8 +1985,8 @@ export function EducationalHub({
                           let bgColor = 'var(--bg-surface)';
 
                           if (isSelected) {
-                            borderColor = 'var(--ink-primary)';
-                            bgColor = 'var(--bg-subtle)';
+                            borderColor = 'var(--accent-brand)';
+                            bgColor = 'var(--accent-brand-subtle)';
                           }
                           if (quizSubmitted) {
                             if (isCorrect) {
@@ -1834,12 +2006,12 @@ export function EducationalHub({
                                 setQuizSubmitted(false);
                                 setQuizAnswers(prev => ({ ...prev, [qIdx]: optIdx }));
                               }}
-                              className="w-full text-left text-xs p-3 rounded-md border transition-colors flex items-center justify-between"
+                              className="w-full text-left text-xs p-3 rounded-xl border transition-colors flex items-center justify-between"
                               style={{ borderColor, backgroundColor: bgColor }}
                             >
                               <span>{opt}</span>
                               {quizSubmitted && isCorrect && (
-                                <span className="jom-tag jom-tag-up">CORRECT</span>
+                                <span className="jom-tag jom-tag-up">Correct</span>
                               )}
                             </button>
                           );
@@ -1869,8 +2041,8 @@ export function EducationalHub({
                     onClick={handleQuizSubmit}
                   >
                     {language === 'ENG'
-                      ? 'Verify Answers & Claim +25 XP'
-                      : 'Sahkan Jawapan & Tuntut +25 XP'}
+                      ? 'Check Answers & Claim +25 XP'
+                      : 'Semak Jawapan & Tuntut +25 XP'}
                   </button>
                 </div>
               </div>

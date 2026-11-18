@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, RotateCcw, RefreshCw, Save, Edit3 } from 'lucide-react';
+import { Plus, RotateCcw, RefreshCw, Save, Edit3, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Screen, PortfolioItem, TradeRecord } from '../App';
 
@@ -50,54 +50,46 @@ export function ProfileSettings({
 
   const texts = {
     ENG: {
-      kicker: 'ACCOUNT & MANDATE LEDGER',
-      title: 'Investor Identity, Capital Controls & Analyst Milestones',
+      kicker: 'Profile, Wallet & Preferences',
+      title: 'Your Investor Profile & Learning Milestones',
       subtitle:
-        'Manage your investment risk mandate, simulated Bursa Malaysia practice capital, workspace preferences, and verified analyst milestones.',
-      editBtn: 'Edit Account Details',
-      saveBtn: 'Save Account Details',
-      retakeMandate: 'Retake Risk Mandate Assessment',
-      capitalKicker: 'PRACTICE CAPITAL CONTROLS',
-      capitalTitle: 'Simulated Bursa Clearing Account',
+        'Manage your personal investor style, top up your practice cash wallet, and track your Bursa learning milestones.',
+      editBtn: 'Edit Profile',
+      saveBtn: 'Save Changes',
+      retakeMandate: 'Retake Investor Style Quiz',
+      capitalKicker: 'Virtual Wallet',
+      capitalTitle: 'Practice Cash Wallet Top-Up',
       capitalDesc:
-        'Credit additional practice liquidity or reset your position ledger and contract note history back to the RM 10,000.00 opening balance.',
-      creditBtn: '+ Credit RM 5,000',
-      resetBtn: 'Reset Account',
-      milestonesKicker: 'ACCREDITATION & TELEMETRY',
-      milestonesTitle: 'Analyst Milestones & Verification',
-      colCode: 'Code',
-      colMilestone: 'Milestone',
-      colCriteria: 'Verification Criteria & Live Telemetry',
-      colStatus: 'Standing',
-      prefsKicker: 'WORKSPACE PREFERENCES',
-      prefsTitle: 'Display & Localization',
-      themeLabel: 'Color Palette',
-      langLabel: 'Interface Language'
+        'Add RM 5,000 in virtual practice cash anytime to test new investment ideas, or reset your demo portfolio back to RM 10,000.00.',
+      creditBtn: '+ Add RM 5,000 Cash',
+      resetBtn: 'Reset Practice Account',
+      milestonesKicker: 'Your Learning Journey',
+      milestonesTitle: 'Investor Learning Milestones',
+      prefsKicker: 'App Appearance & Language',
+      prefsTitle: 'Display & Language Settings',
+      themeLabel: 'Appearance',
+      langLabel: 'App Language'
     },
     BM: {
-      kicker: 'LEJAR AKAUN & MANDAT',
-      title: 'Identiti Pelabur, Kawalan Modal & Pencapaian Penganalisis',
+      kicker: 'Profil, Dompet & Tetapan',
+      title: 'Profil Pelabur & Pencapaian Pembelajaran Anda',
       subtitle:
-        'Urus mandat risiko pelaburan anda, modal latihan simulasi Bursa Malaysia, tetapan ruang kerja, dan pencapaian penganalisis.',
-      editBtn: 'kemas Kini Butiran',
-      saveBtn: 'Simpan Butiran Akaun',
-      retakeMandate: 'Ambil Semula Penilaian Mandat Risiko',
-      capitalKicker: 'KAWALAN MODAL LATIHAN',
-      capitalTitle: 'Akaun Penjelasan Simulasi Bursa',
+        'Urus gaya pelaburan anda, tambah nilai dompet tunai latihan, dan jejak pencapaian pembelajaran Bursa anda.',
+      editBtn: 'Kemas Kini Profil',
+      saveBtn: 'Simpan Perubahan',
+      retakeMandate: 'Ambil Semula Kuiz Gaya Pelabur',
+      capitalKicker: 'Dompet Maya',
+      capitalTitle: 'Tambah Nilai Dompet Tunai Latihan',
       capitalDesc:
-        'Kreditkan kecairan latihan tambahan atau tetapkan semula lejar posisi dan sejarah nota kontrak kepada baki permulaan RM 10,000.00.',
-      creditBtn: '+ Kredit RM 5,000',
+        'Tambah RM 5,000 tunai latihan pada bila-bila masa untuk mencuba idea pelaburan baharu, atau tetapkan semula akaun ke RM 10,000.00.',
+      creditBtn: '+ Tambah RM 5,000 Tunai',
       resetBtn: 'Tetapkan Semula Akaun',
-      milestonesKicker: 'AKREDITASI & TELEMETRI',
-      milestonesTitle: 'Pencapaian & Pengesahan Penganalisis',
-      colCode: 'Kod',
-      colMilestone: 'Pencapaian',
-      colCriteria: 'Kriteria Pengesahan & Telemetri Semasa',
-      colStatus: 'Status',
-      prefsKicker: 'TETAPAN RUANG KERJA',
-      prefsTitle: 'Paparan & Bahasa',
-      themeLabel: 'Tema Warna',
-      langLabel: 'Bahasa Antara Muka'
+      milestonesKicker: 'Perjalanan Pembelajaran Anda',
+      milestonesTitle: 'Pencapaian Pembelajaran Pelabur',
+      prefsKicker: 'Paparan & Bahasa Aplikasi',
+      prefsTitle: 'Tetapan Paparan & Bahasa',
+      themeLabel: 'Tema Paparan',
+      langLabel: 'Bahasa Aplikasi'
     }
   };
 
@@ -135,45 +127,45 @@ export function ProfileSettings({
   const dynamicMilestones = useMemo(
     () => [
       {
-        code: 'MS-01',
-        titleEng: 'Initial Order Execution',
-        titleBm: 'Pelaksanaan Pesanan Pertama',
-        descEng: `Execute at least 1 simulated contract note on Bursa Malaysia (${tradeHistory.length} contract note(s) logged).`,
-        descBm: `Laksanakan sekurang-kurangnya 1 nota kontrak simulasi di Bursa Malaysia (${tradeHistory.length} nota kontrak direkodkan).`,
+        code: 'Step 1',
+        titleEng: 'First Practice Investment',
+        titleBm: 'Pelaburan Latihan Pertama',
+        descEng: `Place at least 1 practice buy or sell order on Bursa Malaysia (${tradeHistory.length} trade(s) completed).`,
+        descBm: `Lakukan sekurang-kurangnya 1 pesanan belian atau jualan latihan di Bursa Malaysia (${tradeHistory.length} dagangan selesai).`,
         unlocked: tradeHistory.length > 0 || portfolio.length > 0
       },
       {
-        code: 'MS-02',
-        titleEng: 'Capital Deployment & Equity Growth',
-        titleBm: 'Peruntukan Modal & Pertumbuhan Ekuiti',
-        descEng: `Maintain RM 2,000+ in active equity holdings or exceed RM 10,500 net liquidity (Holdings: RM ${holdingsValue.toFixed(2)} | Net Liquidity: RM ${totalNetLiquidity.toFixed(2)}).`,
-        descBm: `Pegang RM 2,000+ dalam saham aktif atau melebihi kecairan bersih RM 10,500 (Pegangan: RM ${holdingsValue.toFixed(2)}).`,
+        code: 'Step 2',
+        titleEng: 'Putting Your Cash to Work',
+        titleBm: 'Mengembangkan Modal Latihan',
+        descEng: `Invest RM 2,000+ in stocks or grow your total portfolio above RM 10,500 (Currently invested: RM ${holdingsValue.toFixed(2)}).`,
+        descBm: `Laburkan RM 2,000+ dalam saham atau kembangkan nilai portfolio melebihi RM 10,500 (Dilabur: RM ${holdingsValue.toFixed(2)}).`,
         unlocked: holdingsValue >= 2000 || totalNetLiquidity > 10500
       },
       {
-        code: 'MS-03',
-        titleEng: 'Lexicon & Factor Mastery',
-        titleBm: 'Penguasaan Istilah & Faktor Kewangan',
-        descEng: `Master at least 3 financial valuation terms in the Equity Terminal (${hasLearnedTerm.length} / 3 terms verified).`,
-        descBm: `Kuasai sekurang-kurangnya 3 istilah penilaian kewangan di Terminal Ekuiti (${hasLearnedTerm.length} / 3 istilah disahkan).`,
+        code: 'Step 3',
+        titleEng: 'Key Metric Explorer',
+        titleBm: 'Peneroka Metrik Utama',
+        descEng: `Tap and learn at least 3 financial terms on any Stock Overview page (${hasLearnedTerm.length} / 3 terms learned).`,
+        descBm: `Tekan dan pelajari sekurang-kurangnya 3 istilah kewangan di halaman Gambaran Saham (${hasLearnedTerm.length} / 3 istilah dipelajari).`,
         unlocked: hasLearnedTerm.length >= 3
       },
       {
-        code: 'MS-04',
-        titleEng: 'Multi-Sector Diversification',
-        titleBm: 'Kepelbagaian Pelbagai Sektor',
-        descEng: `Allocate equity capital across 3 or more uncorrelated Bursa Malaysia sectors (${uniqueSectorsCount} / 3 sectors active).`,
-        descBm: `Agihkan modal ekuiti merentasi 3 atau lebih sektor Bursa Malaysia (${uniqueSectorsCount} / 3 sektor aktif).`,
+        code: 'Step 4',
+        titleEng: 'Well-Diversified Builder',
+        titleBm: 'Pembina Portfolio Pelbagai Sektor',
+        descEng: `Spread your investments across 3 or more different Bursa industries (${uniqueSectorsCount} / 3 sectors owned).`,
+        descBm: `Agihkan pelaburan anda merentasi 3 atau lebih sektor Bursa Malaysia (${uniqueSectorsCount} / 3 sektor dimiliki).`,
         unlocked: uniqueSectorsCount >= 3
       },
       {
-        code: 'MS-05',
-        titleEng: 'SAC Shariah & Yield Mandate',
-        titleBm: 'Mandat Syariah MPS & Hasil Dividen',
+        code: 'Step 5',
+        titleEng: 'Shariah & Passive Income Mix',
+        titleBm: 'Gabungan Syariah & Pendapatan Pasif',
         descEng:
-          'Hold at least 1 SAC Shariah-compliant security alongside 1 security yielding >4.0% p.a.',
+          'Own at least 1 Shariah-compliant stock alongside 1 dividend stock paying over 4.0% per year.',
         descBm:
-          'Pegang sekurang-kurangnya 1 sekuriti patuh Syariah MPS dan 1 sekuriti dengan hasil dividen >4.0% setahun.',
+          'Miliki sekurang-kurangnya 1 saham patuh Syariah bersama 1 saham dividen yang membayar lebih 4.0% setahun.',
         unlocked: hasShariahAndDividend
       }
     ],
@@ -197,8 +189,8 @@ export function ProfileSettings({
       setIsEditing(false);
       toast.success(
         language === 'ENG'
-          ? 'Investor account details updated.'
-          : 'Butiran akaun pelabur dikemas kini.'
+          ? 'Your profile details have been saved.'
+          : 'Butiran profil anda telah disimpan.'
       );
     } else {
       setDraftName(userName);
@@ -219,7 +211,7 @@ export function ProfileSettings({
 
   return (
     <div className="jom-container space-y-8">
-      {/* Editorial Header */}
+      {/* Friendly Consumer Header */}
       <div
         className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b"
         style={{ borderColor: 'var(--border-hairline)' }}
@@ -243,16 +235,21 @@ export function ProfileSettings({
         </div>
       </div>
 
-      {/* 4-Cell Account & Tier Telemetry Strip */}
+      {/* 4-Card Learning & Account Summary Strip */}
       <div className="jom-ledger-strip">
         <div className="jom-ledger-cell space-y-1.5">
-          <div className="jom-kicker">ANALYST TIER</div>
-          <div className="font-tabular text-2xl font-semibold">
-            LEVEL 0{safeLevel}
+          <div className="jom-kicker">
+            {language === 'ENG' ? 'Learning Level' : 'Tahap Pembelajaran'}
           </div>
-          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--bg-subtle)' }}>
+          <div className="font-tabular text-2xl font-semibold">
+            Level {safeLevel}
+          </div>
+          <div
+            className="w-full h-1.5 rounded-full overflow-hidden"
+            style={{ backgroundColor: 'var(--bg-subtle)' }}
+          >
             <div
-              className="h-full transition-all duration-300"
+              className="h-full transition-all duration-300 rounded-full"
               style={{
                 width: `${progressPercentage}%`,
                 backgroundColor: 'var(--accent-brand)'
@@ -262,25 +259,32 @@ export function ProfileSettings({
         </div>
 
         <div className="jom-ledger-cell space-y-1.5">
-          <div className="jom-kicker">ACCUMULATED XP</div>
+          <div className="jom-kicker">
+            {language === 'ENG' ? 'Total Learning XP' : 'Jumlah XP Pembelajaran'}
+          </div>
           <div className="font-tabular text-2xl font-semibold">{safeXP} XP</div>
           <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-            {currentLevelXP} / {xpForNextLevel} XP to Level 0{safeLevel + 1}
+            {currentLevelXP} / {xpForNextLevel} XP to Level {safeLevel + 1}
           </div>
         </div>
 
         <div className="jom-ledger-cell space-y-1.5">
-          <div className="jom-kicker">TOTAL NET LIQUIDITY</div>
+          <div className="jom-kicker">
+            {language === 'ENG' ? 'Total Portfolio Value' : 'Jumlah Nilai Portfolio'}
+          </div>
           <div className="font-tabular text-2xl font-semibold">
             RM {formatRM(totalNetLiquidity)}
           </div>
           <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-            Holdings: RM {formatRM(holdingsValue)}
+            {language === 'ENG' ? 'Invested in stocks' : 'Dilabur dalam saham'}: RM{' '}
+            {formatRM(holdingsValue)}
           </div>
         </div>
 
         <div className="jom-ledger-cell space-y-1.5">
-          <div className="jom-kicker">AVAILABLE BUYING POWER</div>
+          <div className="jom-kicker">
+            {language === 'ENG' ? 'Practice Cash Available' : 'Tunai Latihan Tersedia'}
+          </div>
           <div
             className="font-tabular text-2xl font-semibold"
             style={{ color: 'var(--signal-up)' }}
@@ -288,31 +292,28 @@ export function ProfileSettings({
             RM {formatRM(cashBalance)}
           </div>
           <div className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-            {tradeHistory.length} contract note(s) settled
+            {tradeHistory.length}{' '}
+            {language === 'ENG' ? 'practice trade(s) completed' : 'dagangan latihan selesai'}
           </div>
         </div>
       </div>
 
-      {/* Two-Column Grid: Account Mandate + Practice Capital Controls */}
+      {/* Two-Column Grid: Investor Profile + Practice Cash Wallet */}
       <div className="grid md:grid-cols-12 gap-6">
-        {/* Left 7 cols: Investor Identity & Mandate */}
+        {/* Left 7 cols: Personal Profile & Investor Style */}
         <section className="md:col-span-7 jom-panel p-6 flex flex-col justify-between space-y-6">
           <div
             className="flex items-start justify-between gap-4 pb-4 border-b"
             style={{ borderColor: 'var(--border-hairline)' }}
           >
             <div className="flex items-center gap-3.5">
-              <div
-                className="w-11 h-11 rounded-md flex items-center justify-center font-tabular text-sm font-semibold border shrink-0"
-                style={{
-                  backgroundColor: 'var(--bg-subtle)',
-                  borderColor: 'var(--border-hairline)'
-                }}
-              >
+              <div className="jom-avatar jom-avatar-lg jom-avatar-emerald">
                 {initials}
               </div>
               <div>
-                <div className="jom-kicker">PRIMARY ACCOUNT HOLDER</div>
+                <div className="jom-kicker">
+                  {language === 'ENG' ? 'Investor Profile' : 'Profil Pelabur'}
+                </div>
                 <h2 className="font-editorial text-2xl">{userName}</h2>
               </div>
             </div>
@@ -338,7 +339,9 @@ export function ProfileSettings({
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="jom-kicker block">FULL NAME</label>
+              <label className="jom-kicker block">
+                {language === 'ENG' ? 'Your Name' : 'Nama Penuh'}
+              </label>
               {isEditing ? (
                 <input
                   type="text"
@@ -348,14 +351,16 @@ export function ProfileSettings({
                   placeholder="Full Name"
                 />
               ) : (
-                <div className="jom-panel-subtle px-3.5 py-2 text-sm font-medium">
+                <div className="jom-panel-subtle px-3.5 py-2.5 text-sm font-medium">
                   {userName}
                 </div>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <label className="jom-kicker block">REGISTERED EMAIL</label>
+              <label className="jom-kicker block">
+                {language === 'ENG' ? 'Email Address' : 'Alamat E-mel'}
+              </label>
               {isEditing ? (
                 <input
                   type="email"
@@ -365,7 +370,7 @@ export function ProfileSettings({
                   placeholder="Email Address"
                 />
               ) : (
-                <div className="jom-panel-subtle px-3.5 py-2 text-sm font-tabular">
+                <div className="jom-panel-subtle px-3.5 py-2.5 text-sm font-tabular">
                   {userEmail}
                 </div>
               )}
@@ -377,11 +382,13 @@ export function ProfileSettings({
             style={{ borderColor: 'var(--border-hairline)' }}
           >
             <div className="space-y-1">
-              <div className="jom-kicker">ASSIGNED RISK MANDATE</div>
+              <div className="jom-kicker">
+                {language === 'ENG' ? 'Your Investor Style' : 'Gaya Pelaburan Anda'}
+              </div>
               <div className="flex items-center gap-2">
                 <span className="jom-tag jom-tag-shariah">{userProfile}</span>
                 <span className="font-tabular text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  KLSE Practice CDS
+                  {language === 'ENG' ? 'Bursa Practice Account' : 'Akaun Latihan Bursa'}
                 </span>
               </div>
             </div>
@@ -397,7 +404,7 @@ export function ProfileSettings({
           </div>
         </section>
 
-        {/* Right 5 cols: Practice Capital Controls & Workspace Preferences */}
+        {/* Right 5 cols: Practice Cash Wallet Top-Up & App Preferences */}
         <section className="md:col-span-5 jom-panel p-6 flex flex-col justify-between space-y-6">
           <div className="space-y-4">
             <div
@@ -431,7 +438,7 @@ export function ProfileSettings({
             </div>
           </div>
 
-          {/* Workspace Preferences */}
+          {/* App Preferences */}
           <div
             className="pt-5 border-t space-y-3"
             style={{ borderColor: 'var(--border-hairline)' }}
@@ -448,14 +455,14 @@ export function ProfileSettings({
                   className={!darkMode ? 'active' : ''}
                   onClick={() => setDarkMode(false)}
                 >
-                  ALABASTER (LIGHT)
+                  {language === 'ENG' ? 'Light' : 'Cerah'}
                 </button>
                 <button
                   type="button"
                   className={darkMode ? 'active' : ''}
                   onClick={() => setDarkMode(true)}
                 >
-                  OBSIDIAN (DARK)
+                  {language === 'ENG' ? 'Dark' : 'Gelap'}
                 </button>
               </div>
             </div>
@@ -472,7 +479,7 @@ export function ProfileSettings({
                     if (language !== 'ENG') toggleLanguage();
                   }}
                 >
-                  ENGLISH
+                  English
                 </button>
                 <button
                   type="button"
@@ -481,7 +488,7 @@ export function ProfileSettings({
                     if (language !== 'BM') toggleLanguage();
                   }}
                 >
-                  BAHASA MELAYU
+                  Bahasa Melayu
                 </button>
               </div>
             </div>
@@ -489,52 +496,57 @@ export function ProfileSettings({
         </section>
       </div>
 
-      {/* 5-Row Institutional Analyst Milestones & Verification Table */}
-      <section className="jom-panel overflow-hidden">
+      {/* Friendly Learning Milestones Section */}
+      <section className="jom-panel p-6 space-y-5">
         <div
-          className="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+          className="pb-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2"
           style={{ borderColor: 'var(--border-hairline)' }}
         >
           <div>
             <div className="jom-kicker">{t.milestonesKicker}</div>
             <h2 className="font-editorial text-2xl mt-0.5">{t.milestonesTitle}</h2>
           </div>
-          <span className="jom-tag font-tabular">
-            {unlockedCount} / {dynamicMilestones.length} VERIFIED
+          <span className="jom-tag jom-tag-shariah font-tabular">
+            {unlockedCount} / {dynamicMilestones.length}{' '}
+            {language === 'ENG' ? 'Completed' : 'Selesai'}
           </span>
         </div>
 
-        <div className="jom-table-wrap">
-          <table className="jom-table">
-            <thead>
-              <tr>
-                <th>{t.colCode}</th>
-                <th>{t.colMilestone}</th>
-                <th>{t.colCriteria}</th>
-                <th className="text-right">{t.colStatus}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dynamicMilestones.map(m => (
-                <tr key={m.code} style={{ cursor: 'default' }}>
-                  <td className="font-tabular font-semibold whitespace-nowrap">{m.code}</td>
-                  <td className="font-semibold whitespace-nowrap">
-                    {language === 'ENG' ? m.titleEng : m.titleBm}
-                  </td>
-                  <td className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                    {language === 'ENG' ? m.descEng : m.descBm}
-                  </td>
-                  <td className="text-right whitespace-nowrap">
-                    {m.unlocked ? (
-                      <span className="jom-tag jom-tag-up">UNLOCKED</span>
-                    ) : (
-                      <span className="jom-tag">PENDING</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {dynamicMilestones.map(m => (
+            <div
+              key={m.code}
+              className="jom-panel-subtle p-4 flex flex-col justify-between space-y-3"
+              style={{
+                border: m.unlocked
+                  ? '1px solid var(--accent-brand)'
+                  : '1px solid var(--border-hairline)',
+                backgroundColor: m.unlocked ? 'var(--accent-brand-subtle)' : 'var(--bg-subtle)'
+              }}
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="jom-kicker">{m.code}</span>
+                  {m.unlocked ? (
+                    <span className="jom-tag jom-tag-up flex items-center gap-1">
+                      <Check size={11} />
+                      <span>{language === 'ENG' ? 'Unlocked' : 'Dicapai'}</span>
+                    </span>
+                  ) : (
+                    <span className="jom-tag">
+                      {language === 'ENG' ? 'In Progress' : 'Dalam Proses'}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-semibold text-sm">
+                  {language === 'ENG' ? m.titleEng : m.titleBm}
+                </h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                  {language === 'ENG' ? m.descEng : m.descBm}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </div>
