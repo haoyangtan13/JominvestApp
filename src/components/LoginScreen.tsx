@@ -21,58 +21,60 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
 
   const texts = {
     ENG: {
-      deskKicker: 'MALAYSIAN EQUITY RESEARCH & EXECUTION DESK',
-      headline: 'Disciplined equity research & practice for Bursa Malaysia.',
+      deskKicker: 'Malaysian Investing & Financial Literacy',
+      headline: 'Learn to invest on Bursa Malaysia, risk-free.',
       subhead:
-        'Analyze FBM KLCI constituents, inspect Securities Commission SAC Shariah ratios, and execute simulated board-lot orders with real Bursa Malaysia fee schedules.',
-      stat1Val: '26+',
-      stat1Label: 'FBM KLCI & Mid-Cap Securities',
-      stat2Val: 'SAC',
-      stat2Label: 'SAC Shariah Screening',
+        'Explore top Malaysian companies like Maybank, Tenaga Nasional, and Gamuda in plain English. Check Shariah compliance at a glance and practice buying shares with RM 10,000 in virtual cash.',
+      stat1Val: '26+ Stocks',
+      stat1Label: 'Top Bursa Malaysia companies explained simply',
+      stat2Val: 'Shariah Ready',
+      stat2Label: 'Clear SC Shariah compliance badges & ratios',
       stat3Val: 'RM 10,000',
-      stat3Label: 'RM 10,000 Practice Capital',
-      portalKicker: 'WORKSPACE ACCESS · KLSE',
-      loginTitle: 'Sign in to research desk',
-      loginDesc: 'Enter your credentials to access your practice mandate and Bursa screener.',
-      registerTitle: 'Open a practice mandate',
-      registerDesc: 'Initialize a RM 10,000 simulated account calibrated to your risk profile.',
-      email: 'Institutional or Personal Email',
+      stat3Label: 'Risk-free practice balance to build confidence',
+      topBadge: 'Free Practice Simulator',
+      portalKicker: 'Welcome to JomINVEST',
+      loginTitle: 'Sign in to your account',
+      loginDesc: 'Pick up right where you left off with your RM 10,000 practice portfolio and bite-sized lessons.',
+      registerTitle: 'Create your free account',
+      registerDesc: 'Start with RM 10,000 in virtual cash and discover your personal investing style in 60 seconds.',
+      email: 'Email address',
       password: 'Password',
-      confirmPassword: 'Confirm Password',
-      loginButton: 'Continue to Mandate Assessment',
-      registerButton: 'Initialize Mandate & Continue',
+      confirmPassword: 'Confirm password',
+      loginButton: 'Continue to Investing Style Quiz',
+      registerButton: 'Start Learning with RM 10,000',
       noAccount: 'New to JomINVEST?',
-      hasAccount: 'Already registered?',
-      registerLink: 'Create practice account',
+      hasAccount: 'Already have an account?',
+      registerLink: 'Create a free account',
       loginLink: 'Sign in',
-      footnote: 'Simulated trading environment. Market data delayed 15 minutes via Bursa Malaysia (KLSE).'
+      footnote: '100% educational practice simulator — no real money at risk. Prices reflect Bursa Malaysia (KLSE) data.'
     },
     BM: {
-      deskKicker: 'MEJA PENYELIDIKAN & SIMULASI EKUITI MALAYSIA',
-      headline: 'Penyelidikan & latihan ekuiti berdisiplin untuk Bursa Malaysia.',
+      deskKicker: 'Pendidikan Pelaburan & Literasi Kewangan Malaysia',
+      headline: 'Belajar melabur di Bursa Malaysia, tanpa risiko.',
       subhead:
-        'Analisis komponen FBM KLCI, semak nisbah Patuh Syariah MPS Suruhanjaya Sekuriti, dan laksanakan pesanan simulasi dengan jadual yuran sebenar Bursa Malaysia.',
-      stat1Val: '26+',
-      stat1Label: 'Sekuriti FBM KLCI & Modal Sederhana',
-      stat2Val: 'MPS',
-      stat2Label: 'Saringan Syariah MPS SC',
+        'Kenali syarikat utama Malaysia seperti Maybank, Tenaga Nasional, dan Gamuda dalam bahasa mudah. Semak status Patuh Syariah dengan pantas dan berlatih membeli saham menggunakan RM 10,000 tunai maya.',
+      stat1Val: '26+ Saham',
+      stat1Label: 'Syarikat utama Bursa Malaysia diterangkan secara mudah',
+      stat2Val: 'Patuh Syariah',
+      stat2Label: 'Label & nisbah saringan Syariah SC yang jelas',
       stat3Val: 'RM 10,000',
-      stat3Label: 'Modal Latihan RM 10,000',
-      portalKicker: 'AKSES RUANG KERJA · KLSE',
-      loginTitle: 'Log masuk ke meja penyelidikan',
-      loginDesc: 'Masukkan kelayakan anda untuk mengakses mandat latihan dan saringan Bursa.',
-      registerTitle: 'Buka mandat latihan baharu',
-      registerDesc: 'Mulakan akaun simulasi RM 10,000 yang disesuaikan dengan profil risiko anda.',
-      email: 'E-mel Institusi atau Peribadi',
-      password: 'Kata Laluan',
-      confirmPassword: 'Sahkan Kata Laluan',
-      loginButton: 'Teruskan ke Penilaian Mandat',
-      registerButton: 'Mulakan Mandat & Teruskan',
+      stat3Label: 'Baki latihan bebas risiko untuk membina keyakinan',
+      topBadge: 'Simulator Latihan Percuma',
+      portalKicker: 'Selamat Datang ke JomINVEST',
+      loginTitle: 'Log masuk ke akaun anda',
+      loginDesc: 'Teruskan pembelajaran dan urus portfolio latihan RM 10,000 anda.',
+      registerTitle: 'Buka akaun percuma anda',
+      registerDesc: 'Mulakan dengan RM 10,000 tunai maya dan kenali gaya pelaburan anda dalam 60 saat.',
+      email: 'Alamat e-mel',
+      password: 'Kata laluan',
+      confirmPassword: 'Sahkan kata laluan',
+      loginButton: 'Teruskan ke Kuiz Gaya Pelaburan',
+      registerButton: 'Mula Belajar dengan RM 10,000',
       noAccount: 'Baharu di JomINVEST?',
       hasAccount: 'Sudah mempunyai akaun?',
-      registerLink: 'Buka akaun latihan',
+      registerLink: 'Daftar akaun percuma',
       loginLink: 'Log masuk',
-      footnote: 'Persekitaran dagangan simulasi. Data pasaran lewat 15 minit melalui Bursa Malaysia (KLSE).'
+      footnote: 'Simulator pendidikan 100% — tiada wang sebenar digunakan. Harga berdasarkan data Bursa Malaysia (KLSE).'
     }
   };
 
@@ -80,7 +82,7 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
 
   return (
     <div className="grid lg:grid-cols-2 min-h-screen" style={{ backgroundColor: 'var(--bg-canvas)' }}>
-      {/* Left Architectural Brand Column */}
+      {/* Left Consumer Brand Story Column */}
       <div
         className="p-8 lg:p-12 flex flex-col justify-between"
         style={{ backgroundColor: 'var(--bg-inverse)', color: 'var(--ink-inverse)' }}
@@ -89,52 +91,68 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
           <div className="flex items-center gap-3">
             <span className="font-editorial text-2xl tracking-tight">JomINVEST</span>
             <span
-              className="font-tabular text-xs px-2 py-0.5 rounded border"
-              style={{ borderColor: 'rgba(246, 245, 240, 0.22)', color: 'var(--ink-inverse)' }}
+              className="text-xs font-semibold px-2.5 py-0.5 rounded-full border"
+              style={{ borderColor: 'rgba(248, 250, 252, 0.22)', color: 'var(--ink-inverse)' }}
             >
-              JomINVEST · KLSE
+              Bursa Malaysia
             </span>
           </div>
-          <span className="font-tabular text-xs" style={{ opacity: 0.6 }}>
-            MYR · KUALA LUMPUR
+          <span className="text-xs font-medium" style={{ opacity: 0.7 }}>
+            Kuala Lumpur · MYR
           </span>
         </div>
 
         <div className="my-12 space-y-6 max-w-xl">
           <div
-            className="font-tabular text-xs uppercase tracking-wider"
-            style={{ opacity: 0.65, letterSpacing: '0.08em' }}
+            className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full"
+            style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#6EE7B7' }}
           >
-            {t.deskKicker}
+            <span>{t.deskKicker}</span>
           </div>
           <h1 className="font-editorial text-4xl sm:text-5xl leading-tight">
             {t.headline}
           </h1>
-          <p className="text-sm sm:text-base leading-relaxed" style={{ opacity: 0.76 }}>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ opacity: 0.82 }}>
             {t.subhead}
           </p>
+
+          {/* Sample Company Monogram Preview Strip */}
+          <div className="pt-2 flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}>
+              <span className="jom-avatar jom-avatar-amber" style={{ width: '28px', height: '28px', fontSize: '0.7rem', borderRadius: '8px' }}>MB</span>
+              <span className="text-xs font-medium">Maybank</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}>
+              <span className="jom-avatar jom-avatar-blue" style={{ width: '28px', height: '28px', fontSize: '0.7rem', borderRadius: '8px' }}>TN</span>
+              <span className="text-xs font-medium">Tenaga Nasional</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}>
+              <span className="jom-avatar jom-avatar-emerald" style={{ width: '28px', height: '28px', fontSize: '0.7rem', borderRadius: '8px' }}>GM</span>
+              <span className="text-xs font-medium">Gamuda</span>
+            </div>
+          </div>
         </div>
 
-        {/* Bottom 3-Metric Institutional Strip */}
+        {/* Bottom 3-Highlight Strip */}
         <div
           className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 border-t"
-          style={{ borderColor: 'rgba(246, 245, 240, 0.16)' }}
+          style={{ borderColor: 'rgba(248, 250, 252, 0.14)' }}
         >
           <div>
-            <div className="font-tabular text-2xl font-semibold">{t.stat1Val}</div>
-            <div className="text-xs mt-1" style={{ opacity: 0.7 }}>
+            <div className="font-tabular text-2xl font-bold">{t.stat1Val}</div>
+            <div className="text-xs mt-1 leading-relaxed" style={{ opacity: 0.75 }}>
               {t.stat1Label}
             </div>
           </div>
           <div>
-            <div className="font-tabular text-2xl font-semibold">{t.stat2Val}</div>
-            <div className="text-xs mt-1" style={{ opacity: 0.7 }}>
+            <div className="font-tabular text-2xl font-bold">{t.stat2Val}</div>
+            <div className="text-xs mt-1 leading-relaxed" style={{ opacity: 0.75 }}>
               {t.stat2Label}
             </div>
           </div>
           <div>
-            <div className="font-tabular text-2xl font-semibold">{t.stat3Val}</div>
-            <div className="text-xs mt-1" style={{ opacity: 0.7 }}>
+            <div className="font-tabular text-2xl font-bold">{t.stat3Val}</div>
+            <div className="text-xs mt-1 leading-relaxed" style={{ opacity: 0.75 }}>
               {t.stat3Label}
             </div>
           </div>
@@ -147,7 +165,7 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
         style={{ backgroundColor: 'var(--bg-canvas)' }}
       >
         <div className="flex items-center justify-between">
-          <div className="jom-kicker">BURSA MALAYSIA SIMULATOR</div>
+          <span className="jom-tag jom-tag-shariah">{t.topBadge}</span>
           <div className="jom-segmented">
             <button
               type="button"
@@ -189,7 +207,7 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
                   className="jom-input"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder={language === 'ENG' ? 'analyst@jominvest.my' : 'penganalisis@jominvest.my'}
+                  placeholder="you@email.com"
                   required
                 />
               </div>
@@ -243,7 +261,7 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
                 className="font-semibold underline cursor-pointer"
-                style={{ color: 'var(--ink-primary)' }}
+                style={{ color: 'var(--accent-brand)' }}
               >
                 {isLogin ? t.registerLink : t.loginLink}
               </button>
@@ -258,3 +276,4 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
     </div>
   );
 }
+

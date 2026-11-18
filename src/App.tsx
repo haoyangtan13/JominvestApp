@@ -215,8 +215,8 @@ export default function App() {
       }
       toast.success(
         language === 'ENG'
-          ? 'Market feed synchronized (30m cache updated)'
-          : 'Suapan pasaran Bursa Malaysia dikemas kini'
+          ? 'Bursa Malaysia prices updated'
+          : 'Harga pasaran Bursa Malaysia dikemas kini'
       );
     } finally {
       setIsRefreshingMarket(false);
@@ -238,7 +238,7 @@ export default function App() {
       const newLevel = Math.floor(newXP / 100) + 1;
       setUserLevel(prevLevel => {
         if (newLevel > prevLevel) {
-          toast.success(`Tier Advanced — Level ${newLevel} (+${amount} XP · ${reason})`);
+          toast.success(`Level Up! You reached Level ${newLevel} (+${amount} XP · ${reason})`);
           return newLevel;
         }
         toast.success(`+${amount} XP · ${reason}`);
@@ -256,8 +256,8 @@ export default function App() {
     if (cashBalance < fees.netTotal) {
       toast.error(
         language === 'ENG'
-          ? `Insufficient buying power. Required: RM ${fees.netTotal.toFixed(2)} (incl. RM ${fees.totalFees.toFixed(2)} fees). Available: RM ${cashBalance.toFixed(2)}.`
-          : `Kuasa beli tidak mencukupi. Perlu RM ${fees.netTotal.toFixed(2)}, baki RM ${cashBalance.toFixed(2)}.`
+          ? `Not enough cash to invest. Needed: RM ${fees.netTotal.toFixed(2)} (incl. RM ${fees.totalFees.toFixed(2)} fees). Available: RM ${cashBalance.toFixed(2)}.`
+          : `Baki tunai tidak mencukupi. Perlu RM ${fees.netTotal.toFixed(2)}, baki RM ${cashBalance.toFixed(2)}.`
       );
       return false;
     }
@@ -308,10 +308,10 @@ export default function App() {
 
     toast.success(
       language === 'ENG'
-        ? `Order Filled · Bought ${quantity} sh ${stock.ticker} @ RM ${price.toFixed(2)} (Net RM ${fees.netTotal.toFixed(2)})`
-        : `Pesanan Berjaya · Beli ${quantity} unit ${stock.ticker} (Bersih RM ${fees.netTotal.toFixed(2)})`
+        ? `Bought ${quantity} shares of ${stock.ticker} @ RM ${price.toFixed(2)} (Total RM ${fees.netTotal.toFixed(2)})`
+        : `Berjaya membeli ${quantity} unit ${stock.ticker} (Jumlah RM ${fees.netTotal.toFixed(2)})`
     );
-    addXP(50, `Executed buy order on ${stock.ticker}`);
+    addXP(50, `Practiced buying ${stock.ticker}`);
     return true;
   };
 
@@ -320,7 +320,7 @@ export default function App() {
     if (!existingItem || existingItem.quantity <= 0) {
       toast.error(
         language === 'ENG'
-          ? `No open position in ${stockToSell.ticker} available to sell.`
+          ? `You don't own any shares of ${stockToSell.ticker} to sell.`
           : `Tiada pegangan ${stockToSell.ticker} untuk dijual.`
       );
       return false;
@@ -358,10 +358,10 @@ export default function App() {
 
     toast.success(
       language === 'ENG'
-        ? `Order Filled · Sold ${sellQty} sh ${stockToSell.ticker} (Net Proceeds RM ${fees.netTotal.toFixed(2)})`
-        : `Pesanan Berjaya · Jual ${sellQty} unit ${stockToSell.ticker} (RM ${fees.netTotal.toFixed(2)})`
+        ? `Sold ${sellQty} shares of ${stockToSell.ticker} (Received RM ${fees.netTotal.toFixed(2)})`
+        : `Berjaya menjual ${sellQty} unit ${stockToSell.ticker} (RM ${fees.netTotal.toFixed(2)})`
     );
-    addXP(30, `Closed position on ${stockToSell.ticker}`);
+    addXP(30, `Practiced selling ${stockToSell.ticker}`);
     return true;
   };
 
@@ -373,8 +373,8 @@ export default function App() {
     if (!watchlist.some(s => s.id === stock.id)) {
       setWatchlist(prev => [...prev, stock]);
       updateStockInState(stock);
-      toast.success(`${stock.ticker} added to watchlist.`);
-      addXP(5, `Tracked ${stock.ticker}`);
+      toast.success(`${stock.ticker} saved to your watchlist.`);
+      addXP(5, `Saved ${stock.ticker} to Watchlist`);
     } else {
       toast.info(`${stock.ticker} is already in your watchlist.`);
     }
@@ -389,8 +389,8 @@ export default function App() {
     setCashBalance(prev => parseFloat((prev + amount).toFixed(2)));
     toast.success(
       language === 'ENG'
-        ? `Credited RM ${amount.toLocaleString()} practice capital to account.`
-        : `RM ${amount.toLocaleString()} modal latihan dikreditkan.`
+        ? `Added RM ${amount.toLocaleString()} in practice cash to your account.`
+        : `RM ${amount.toLocaleString()} tunai latihan telah ditambah.`
     );
   };
 
@@ -405,8 +405,8 @@ export default function App() {
     setHasLearnedTerm([]);
     toast.success(
       language === 'ENG'
-        ? 'Account reset to RM 10,000.00 opening capital.'
-        : 'Akaun ditetapkan semula kepada modal RM 10,000.00.'
+        ? 'Practice account reset to RM 10,000.00 starting balance.'
+        : 'Akaun latihan ditetapkan semula kepada baki permulaan RM 10,000.00.'
     );
   };
 
@@ -437,18 +437,18 @@ export default function App() {
   const marketOpen = isBursaMarketOpen();
 
   const navItems: { id: Screen; labelEng: string; labelBm: string; icon: any; count?: number }[] = [
-    { id: 'dashboard', labelEng: 'Market & Screener', labelBm: 'Pasaran & Saringan', icon: BarChart2 },
-    { id: 'stock-details', labelEng: 'Equity Terminal', labelBm: 'Terminal Ekuiti', icon: TrendingUp },
-    { id: 'portfolio', labelEng: 'Portfolio Ledger', labelBm: 'Lejar Portfolio', icon: Briefcase, count: portfolio.length },
+    { id: 'dashboard', labelEng: 'Home & Markets', labelBm: 'Utama & Pasaran', icon: BarChart2 },
+    { id: 'stock-details', labelEng: 'Stock Overview', labelBm: 'Ringkasan Saham', icon: TrendingUp },
+    { id: 'portfolio', labelEng: 'My Portfolio', labelBm: 'Portfolio Saya', icon: Briefcase, count: portfolio.length },
     { id: 'watchlist', labelEng: 'Watchlist', labelBm: 'Senarai Pantau', icon: Bookmark, count: watchlist.length },
-    { id: 'ai-recommendation', labelEng: 'Conviction Notes', labelBm: 'Nota Konviksi', icon: Compass },
-    { id: 'educational-hub', labelEng: 'Research & Academy', labelBm: 'Penyelidikan & Akademi', icon: BookOpen },
-    { id: 'profile', labelEng: 'Account & Mandate', labelBm: 'Akaun & Mandat', icon: Sliders }
+    { id: 'ai-recommendation', labelEng: 'Guided Picks', labelBm: 'Pilihan Panduan', icon: Compass },
+    { id: 'educational-hub', labelEng: 'Learn & Research', labelBm: 'Belajar & Kajian', icon: BookOpen },
+    { id: 'profile', labelEng: 'Profile & Goals', labelBm: 'Profil & Matlamat', icon: Sliders }
   ];
 
   return (
     <div className={`jom-shell ${darkMode ? 'dark' : ''}`}>
-      {/* Architectural Left Navigation Rail */}
+      {/* Friendly Consumer Left Navigation Rail */}
       <aside className="jom-sidebar">
         <div className="p-5 space-y-6">
           {/* Brand Lockup */}
@@ -460,10 +460,10 @@ export default function App() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-editorial text-2xl tracking-tight">JomINVEST</span>
-                <span className="jom-tag">KLSE</span>
+                <span className="jom-tag jom-tag-shariah">Bursa Malaysia</span>
               </div>
               <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                {language === 'ENG' ? 'Bursa Research & Practice Desk' : 'Meja Penyelidikan & Latihan Bursa'}
+                {language === 'ENG' ? 'Learn & Practice Investing' : 'Belajar & Latihan Pelaburan'}
               </p>
             </div>
           </div>
@@ -471,7 +471,7 @@ export default function App() {
           {/* Primary Navigation */}
           <nav className="space-y-1">
             <div className="jom-kicker px-3 pb-2">
-              {language === 'ENG' ? 'Workspace' : 'Ruang Kerja'}
+              {language === 'ENG' ? 'Menu' : 'Menu Utama'}
             </div>
             {navItems.map(item => {
               const Icon = item.icon;
@@ -495,26 +495,32 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Bottom Investor Mandate & Tier Block */}
+        {/* Bottom Learning Progress & Practice Balance Block */}
         <div className="p-4 border-t space-y-3" style={{ borderColor: 'var(--border-hairline)' }}>
-          <div className="jom-panel-subtle p-3 space-y-2">
+          <div className="jom-panel-subtle p-3.5 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="jom-kicker">{language === 'ENG' ? 'Analyst Tier' : 'Tahap Penganalisis'}</span>
-              <span className="font-tabular text-xs font-semibold">
-                LVL 0{userLevel} · {userXP} XP
+              <span className="jom-kicker">
+                {language === 'ENG'
+                  ? `Learning Progress · Level ${userLevel} (${userXP} XP)`
+                  : `Kemajuan Belajar · Tahap ${userLevel} (${userXP} XP)`}
               </span>
             </div>
-            <div className="w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-hairline)' }}>
+            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-hairline)' }}>
               <div
                 className="h-full transition-all duration-300"
                 style={{
-                  width: `${userXP % 100}%`,
+                  width: `${Math.max(8, userXP % 100)}%`,
                   backgroundColor: 'var(--accent-brand)'
                 }}
               />
             </div>
-            <div className="text-xs truncate" style={{ color: 'var(--ink-secondary)' }}>
-              {userName} · <span style={{ color: 'var(--ink-muted)' }}>{userProfile.split('(')[0].trim()}</span>
+            <div className="flex items-center justify-between text-xs pt-0.5">
+              <span className="truncate font-medium" style={{ color: 'var(--ink-primary)' }}>
+                {userName}
+              </span>
+              <span className="truncate" style={{ color: 'var(--ink-muted)' }}>
+                {userProfile.split('(')[0].trim()}
+              </span>
             </div>
           </div>
         </div>
@@ -522,18 +528,22 @@ export default function App() {
 
       {/* Main Content Column */}
       <div className="jom-main-wrap">
-        {/* Top Institutional Status Bar */}
+        {/* Top Consumer Status Bar */}
         <header className="jom-topbar">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: marketOpen ? 'var(--signal-up)' : 'var(--ink-muted)' }}
               />
-              <span className="font-tabular text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
+              <span className="text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
                 {marketOpen
-                  ? 'BURSA MALAYSIA · CONTINUOUS TRADING'
-                  : 'BURSA MALAYSIA · EOD / 15M DELAYED'}
+                  ? language === 'ENG'
+                    ? 'Bursa Malaysia · Market Open'
+                    : 'Bursa Malaysia · Pasaran Dibuka'
+                  : language === 'ENG'
+                  ? 'Bursa Malaysia · Market Closed (Practice Mode Active)'
+                  : 'Bursa Malaysia · Pasaran Ditutup (Mod Latihan Aktif)'}
               </span>
             </div>
             <button
@@ -542,19 +552,19 @@ export default function App() {
               className="jom-btn py-1 px-2.5 text-xs"
             >
               <RefreshCw size={12} className={isRefreshingMarket ? 'animate-spin' : ''} />
-              <span>{isRefreshingMarket ? 'Syncing' : language === 'ENG' ? 'Sync Feed' : 'Kemas Kini'}</span>
+              <span>{isRefreshingMarket ? 'Updating...' : language === 'ENG' ? 'Refresh Prices' : 'Segar Semula'}</span>
             </button>
           </div>
 
-          {/* Right Account Telemetry & Controls */}
+          {/* Right Account Balances & Controls */}
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-5 pr-3 border-r" style={{ borderColor: 'var(--border-hairline)' }}>
               <div className="text-right">
-                <div className="jom-kicker">{language === 'ENG' ? 'Net Liquidity' : 'Kecairan Bersih'}</div>
+                <div className="jom-kicker">{language === 'ENG' ? 'Total Balance' : 'Jumlah Baki'}</div>
                 <div className="font-tabular text-xs font-semibold">RM {netLiquidity.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </div>
               <div className="text-right">
-                <div className="jom-kicker">{language === 'ENG' ? 'Buying Power' : 'Kuasa Beli'}</div>
+                <div className="jom-kicker">{language === 'ENG' ? 'Cash to Invest' : 'Tunai Pelaburan'}</div>
                 <div className="font-tabular text-xs font-semibold" style={{ color: 'var(--signal-up)' }}>
                   RM {cashBalance.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
@@ -564,13 +574,13 @@ export default function App() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsCopilotOpen(true)}
-                className="jom-btn jom-btn-inverse py-1.5 px-3 text-xs"
+                className="jom-btn jom-btn-primary py-1.5 px-3.5 text-xs"
               >
                 <MessageSquare size={13} />
-                <span>{language === 'ENG' ? 'Research Copilot' : 'Pembantu AI'}</span>
+                <span>{language === 'ENG' ? 'Ask JomAI' : 'Tanya JomAI'}</span>
               </button>
               <button onClick={toggleLanguage} className="jom-btn py-1.5 px-2.5 font-tabular text-xs">
-                {language}
+                {language === 'ENG' ? 'EN' : 'BM'}
               </button>
               <button
                 onClick={() => setDarkMode(!darkMode)}
@@ -713,3 +723,4 @@ export default function App() {
     </div>
   );
 }
+

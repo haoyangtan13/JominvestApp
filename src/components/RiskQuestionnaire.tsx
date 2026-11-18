@@ -19,82 +19,82 @@ interface Question {
 
 const questions: Question[] = [
   {
-    eng: 'When allocating capital to Malaysian equities, what is your primary objective?',
-    bm: 'Apabila memperuntukkan modal ke dalam ekuiti Malaysia, apakah objektif utama anda?',
+    eng: 'What is your main goal as you start investing in Malaysian stocks?',
+    bm: 'Apakah matlamat utama anda apabila mula melabur dalam saham Malaysia?',
     options: {
       eng: [
-        'A) Capital Preservation — Prioritize stable FBM KLCI dividend payers',
-        'B) Balanced Compounding — Blend steady dividend income with mid-cap growth',
-        'C) Capital Appreciation — Target high-conviction growth and momentum leaders'
+        'A) Steady Passive Income — Focus on reliable dividend payers like Maybank & Tenaga',
+        'B) Balanced Growth & Dividends — Mix steady dividends with growing Malaysian companies',
+        'C) Long-Term Wealth Growth — Focus on faster-growing infrastructure & tech leaders'
       ],
       bm: [
-        'A) Pemeliharaan Modal — Utamakan pembayar dividen FBM KLCI yang stabil',
-        'B) Pertumbuhan Seimbang — Gabungan pendapatan dividen dan pertumbuhan sederhana',
-        'C) Peningkatan Modal — Sasarkan saham pertumbuhan tinggi dan peneraju momentum'
+        'A) Pendapatan Pasif Stabil — Fokus kepada pembayar dividen kukuh seperti Maybank & Tenaga',
+        'B) Pertumbuhan & Dividen Seimbang — Gabungan dividen stabil dan syarikat berkembang',
+        'C) Pertumbuhan Kekayaan Jangka Panjang — Fokus kepada peneraju infrastruktur & teknologi'
       ]
     }
   },
   {
-    eng: 'If your portfolio experiences a 20% market drawdown on Bursa Malaysia, how do you respond?',
-    bm: 'Jika portfolio anda mengalami penurunan pasaran sebanyak 20% di Bursa Malaysia, apakah tindakan anda?',
+    eng: 'Imagine the stock market drops 20% next month. What would you most likely do?',
+    bm: 'Bayangkan pasaran saham turun 20% bulan depan. Apakah tindakan yang paling mungkin anda ambil?',
     options: {
       eng: [
-        'A) Reduce exposure immediately to preserve remaining principal',
-        'B) Maintain existing positions and wait for fundamental recovery',
-        'C) Accumulate additional board lots at discounted valuations'
+        'A) Sell some shares so I can protect my remaining savings',
+        'B) Stay calm, hold my shares, and wait for the market to recover',
+        'C) Treat it like a discount sale and buy more shares of strong companies'
       ],
       bm: [
-        'A) Kurangkan pendedahan segera untuk melindungi baki modal',
-        'B) Kekalkan pegangan sedia ada dan tunggu pemulihan asas',
-        'C) Tambah pegangan pada penilaian harga yang lebih rendah'
+        'A) Jual sebahagian saham untuk melindungi baki simpanan saya',
+        'B) Kekal tenang, simpan pegangan sedia ada, dan tunggu pasaran pulih',
+        'C) Anggap ia sebagai diskaun dan tambah pegangan dalam syarikat kukuh'
       ]
     }
   },
   {
-    eng: 'What is your intended investment horizon for this equity mandate?',
-    bm: 'Apakah tempoh ufuk pelaburan anda bagi mandat ekuiti ini?',
+    eng: 'How long do you plan to keep this money invested before you need it?',
+    bm: 'Berapa lama anda merancang untuk melaburkan wang ini sebelum memerlukannya?',
     options: {
       eng: [
-        'A) Short-Term Horizon (1 – 3 Years)',
-        'B) Medium-Term Horizon (3 – 7 Years)',
-        'C) Long-Term Institutional Horizon (7+ Years)'
+        'A) Short term (1 – 3 years)',
+        'B) Medium term (3 – 7 years)',
+        'C) Long term (7+ years)'
       ],
       bm: [
-        'A) Jangka Pendek (1 – 3 Tahun)',
-        'B) Jangka Sederhana (3 – 7 Tahun)',
-        'C) Jangka Panjang (7+ Tahun)'
+        'A) Jangka pendek (1 – 3 tahun)',
+        'B) Jangka sederhana (3 – 7 tahun)',
+        'C) Jangka panjang (7+ tahun)'
       ]
     }
   },
   {
-    eng: 'What proportion of your liquid net worth would you allocate to listed equities?',
-    bm: 'Berapakah bahagian daripada aset cair anda yang akan diperuntukkan kepada ekuiti tersenarai?',
+    eng: 'Out of your total savings (after emergency funds), how much would you put into stocks?',
+    bm: 'Daripada jumlah simpanan anda (selepas tabung kecemasan), berapa banyak yang ingin dilaburkan dalam saham?',
     options: {
       eng: [
-        'A) Conservative Allocation (Under 20%)',
-        'B) Core Allocation (20% – 50%)',
-        'C) High-Conviction Allocation (Over 50%)'
+        'A) A small portion (Under 20% — mostly in ASB, Tabung Haji, or Fixed Deposits)',
+        'B) A balanced portion (20% – 50% alongside my safe savings)',
+        'C) A larger portion (Over 50% focused on building long-term wealth)'
       ],
       bm: [
-        'A) Peruntukan Konservatif (Kurang daripada 20%)',
-        'B) Peruntukan Teras (20% – 50%)',
-        'C) Peruntukan Konviksi Tinggi (Lebih daripada 50%)'
+        'A) Bahagian kecil (Bawah 20% — selebihnya dalam ASB, Tabung Haji, atau FD)',
+        'B) Bahagian seimbang (20% – 50% bersama simpanan selamat saya)',
+        'C) Bahagian lebih besar (Lebih 50% fokus membina kekayaan jangka panjang)'
       ]
     }
   },
   {
-    eng: 'How familiar are you with financial ratios, board lots, and SAC Shariah screening?',
-    bm: 'Sejauh manakah pengetahuan anda tentang nisbah kewangan, lot papan, dan saringan Syariah MPS?',
+    eng: 'How comfortable are you with Bursa Malaysia terms like P/E ratio, lots, and Shariah screening?',
+    bm: 'Sejauh manakah keselesaan anda dengan istilah Bursa Malaysia seperti nisbah P/E, unit lot, dan saringan Syariah?',
     options: {
       eng: [
-        'A) Foundational — New to reading financial statements and Bursa mechanics',
-        'B) Intermediate — Familiar with P/E ratios, dividend yields, and sector cycles',
-        'C) Advanced — Experienced with fundamental valuation and portfolio construction'
+        'A) Brand new — I want simple, plain-English explanations from scratch',
+        'B) Getting the hang of it — I know the basics of dividends and stock prices',
+        'C) Pretty confident — I have read about financial ratios and company earnings before'
       ],
       bm: [
-        'A) Asas — Baharu dalam memahami penyata kewangan dan mekanik Bursa',
-        'B) Pertengahan — Biasa dengan nisbah P/E, hasil dividen, dan kitaran sektor',
-        'C) Mahir — Berpengalaman dalam penilaian asas dan pembinaan portfolio'
+        'A) Masih baharu — Saya mahukan penerangan mudah dari asas',
+        'B) Mula memahami — Saya tahu asas dividen dan pergerakan harga saham',
+        'C) Agak yakin — Saya pernah membaca tentang nisbah kewangan dan untung syarikat'
       ]
     }
   }
@@ -106,8 +106,6 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
-  const stepNum = String(currentQuestion + 1).padStart(2, '0');
-  const totalSteps = String(questions.length).padStart(2, '0');
 
   const handleNext = () => {
     const newAnswers = [...answers];
@@ -151,20 +149,20 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
       style={{ backgroundColor: 'var(--bg-canvas)' }}
     >
       <div className="jom-panel p-8 max-w-2xl w-full space-y-8">
-        {/* Top Metadata & 2px Progress Bar */}
+        {/* Top Header & Progress Bar */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="jom-kicker">
               {language === 'ENG'
-                ? `MANDATE ASSESSMENT · STEP ${stepNum} OF ${totalSteps}`
-                : `PENILAIAN MANDAT · LANGKAH ${stepNum} DARIPADA ${totalSteps}`}
+                ? `Find your investing style in 60 seconds · Question ${currentQuestion + 1} of ${questions.length}`
+                : `Kenali gaya pelaburan anda dalam 60 saat · Soalan ${currentQuestion + 1} daripada ${questions.length}`}
             </span>
-            <span className="jom-tag">JomINVEST · KLSE</span>
+            <span className="jom-tag jom-tag-shariah">JomINVEST</span>
           </div>
 
           <div
             className="w-full overflow-hidden rounded-full"
-            style={{ height: '2px', backgroundColor: 'var(--border-hairline)' }}
+            style={{ height: '6px', backgroundColor: 'var(--border-hairline)' }}
           >
             <div
               className="h-full transition-all duration-300"
@@ -175,17 +173,17 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
 
         {/* Question Prompt */}
         <div className="space-y-2">
-          <h2 className="font-editorial text-3xl leading-snug" style={{ color: 'var(--ink-primary)' }}>
+          <h2 className="font-editorial text-2xl sm:text-3xl leading-snug" style={{ color: 'var(--ink-primary)' }}>
             {questionText}
           </h2>
-          <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
             {language === 'ENG'
-              ? 'Your response calibrates equity screening weights and conviction ideas.'
-              : 'Jawapan anda menentukan pemberat saringan ekuiti dan cadangan konviksi.'}
+              ? 'There are no wrong answers — we use this to personalize your starter stock picks and learning tips.'
+              : 'Tiada jawapan yang salah — kami gunakan ini untuk menyesuaikan cadangan saham dan tip pembelajaran anda.'}
           </p>
         </div>
 
-        {/* Selectable Mandate Options */}
+        {/* Selectable Options */}
         <div className="space-y-3">
           {options.map((option, index) => {
             const isSelected = selectedAnswer === option;
@@ -197,18 +195,18 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
                 key={index}
                 type="button"
                 onClick={() => setSelectedAnswer(option)}
-                className="w-full text-left p-4 rounded-lg border transition-all flex items-start gap-3.5 cursor-pointer"
+                className="w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 cursor-pointer"
                 style={{
-                  borderColor: isSelected ? 'var(--ink-primary)' : 'var(--border-hairline)',
-                  backgroundColor: isSelected ? 'var(--bg-subtle)' : 'var(--bg-surface)'
+                  borderColor: isSelected ? 'var(--accent-brand)' : 'var(--border-hairline)',
+                  backgroundColor: isSelected ? 'var(--accent-brand-subtle)' : 'var(--bg-surface)'
                 }}
               >
                 <span
-                  className="font-tabular text-xs font-semibold px-2 py-0.5 rounded border shrink-0 mt-0.5"
+                  className="font-tabular text-xs font-bold px-2.5 py-1 rounded-lg border shrink-0 mt-0.5"
                   style={{
-                    borderColor: isSelected ? 'var(--ink-primary)' : 'var(--border-hairline)',
-                    backgroundColor: isSelected ? 'var(--ink-primary)' : 'transparent',
-                    color: isSelected ? 'var(--ink-inverse)' : 'var(--ink-secondary)'
+                    borderColor: isSelected ? 'var(--accent-brand)' : 'var(--border-hairline)',
+                    backgroundColor: isSelected ? 'var(--accent-brand)' : 'var(--bg-subtle)',
+                    color: isSelected ? '#FFFFFF' : 'var(--ink-secondary)'
                   }}
                 >
                   {codeLetter.replace(')', '')}
@@ -236,7 +234,7 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
             className="jom-btn"
           >
             <ArrowLeft size={15} />
-            <span>{language === 'ENG' ? 'Previous' : 'Kembali'}</span>
+            <span>{language === 'ENG' ? 'Back' : 'Kembali'}</span>
           </button>
 
           <button
@@ -248,11 +246,11 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
             <span>
               {currentQuestion === questions.length - 1
                 ? language === 'ENG'
-                  ? 'Confirm Investor Mandate'
-                  : 'Sahkan Mandat Pelabur'
+                  ? 'See My Investing Style & Dashboard'
+                  : 'Lihat Gaya Pelaburan & Papan Pemuka'
                 : language === 'ENG'
-                ? 'Continue'
-                : 'Seterusnya'}
+                ? 'Next Question'
+                : 'Soalan Seterusnya'}
             </span>
             <ArrowRight size={15} />
           </button>
@@ -261,3 +259,4 @@ export function RiskQuestionnaire({ navigateTo, setUserProfile, language }: Risk
     </div>
   );
 }
+
