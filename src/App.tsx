@@ -429,172 +429,89 @@ export default function App() {
     );
   }
 
-  const holdingsValue = portfolio.reduce(
-    (acc, item) => acc + parseFloat(item.stock.price) * item.quantity,
-    0
-  );
-  const netLiquidity = holdingsValue + cashBalance;
-  const marketOpen = isBursaMarketOpen();
-
-  const navItems: { id: Screen; labelEng: string; labelBm: string; icon: any; count?: number }[] = [
-    { id: 'dashboard', labelEng: 'Home & Markets', labelBm: 'Utama & Pasaran', icon: BarChart2 },
-    { id: 'stock-details', labelEng: 'Stock Overview', labelBm: 'Ringkasan Saham', icon: TrendingUp },
-    { id: 'portfolio', labelEng: 'My Portfolio', labelBm: 'Portfolio Saya', icon: Briefcase, count: portfolio.length },
-    { id: 'watchlist', labelEng: 'Watchlist', labelBm: 'Senarai Pantau', icon: Bookmark, count: watchlist.length },
-    { id: 'ai-recommendation', labelEng: 'Guided Picks', labelBm: 'Pilihan Panduan', icon: Compass },
-    { id: 'educational-hub', labelEng: 'Learn & Research', labelBm: 'Belajar & Kajian', icon: BookOpen },
-    { id: 'profile', labelEng: 'Profile & Goals', labelBm: 'Profil & Matlamat', icon: Sliders }
+  const navItems: { id: Screen; labelEng: string; labelBm: string }[] = [
+    { id: 'dashboard', labelEng: 'Invest', labelBm: 'Melabur' },
+    { id: 'portfolio', labelEng: 'Portfolio', labelBm: 'Portfolio' },
+    { id: 'watchlist', labelEng: 'Watchlist', labelBm: ' Pantau' },
+    { id: 'educational-hub', labelEng: 'Learn & Tools', labelBm: 'Belajar' },
+    { id: 'ai-recommendation', labelEng: 'Ideas', labelBm: 'Idea' },
+    { id: 'profile', labelEng: 'Account', labelBm: 'Akaun' }
   ];
 
   return (
-    <div className={`jom-shell ${darkMode ? 'dark' : ''}`}>
-      {/* Friendly Consumer Left Navigation Rail */}
-      <aside className="jom-sidebar">
-        <div className="p-5 space-y-6">
-          {/* Brand Lockup */}
-          <div
-            className="flex items-center justify-between cursor-pointer pb-4 border-b"
-            style={{ borderColor: 'var(--border-hairline)' }}
-            onClick={() => navigateTo('dashboard')}
-          >
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-editorial text-2xl tracking-tight">JomINVEST</span>
-                <span className="jom-tag jom-tag-shariah">Bursa Malaysia</span>
-              </div>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                {language === 'ENG' ? 'Learn & Practice Investing' : 'Belajar & Latihan Pelaburan'}
-              </p>
-            </div>
-          </div>
-
-          {/* Primary Navigation */}
-          <nav className="space-y-1">
-            <div className="jom-kicker px-3 pb-2">
-              {language === 'ENG' ? 'Menu' : 'Menu Utama'}
-            </div>
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const isActive = currentScreen === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigateTo(item.id)}
-                  className={`jom-nav-item ${isActive ? 'active' : ''}`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Icon size={15} strokeWidth={1.8} />
-                    <span>{language === 'ENG' ? item.labelEng : item.labelBm}</span>
-                  </span>
-                  {typeof item.count === 'number' && (
-                    <span className="font-tabular text-xs opacity-75">{item.count}</span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Bottom Learning Progress & Practice Balance Block */}
-        <div className="p-4 border-t space-y-3" style={{ borderColor: 'var(--border-hairline)' }}>
-          <div className="jom-panel-subtle p-3.5 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="jom-kicker">
-                {language === 'ENG'
-                  ? `Learning Progress · Level ${userLevel} (${userXP} XP)`
-                  : `Kemajuan Belajar · Tahap ${userLevel} (${userXP} XP)`}
-              </span>
-            </div>
-            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-hairline)' }}>
-              <div
-                className="h-full transition-all duration-300"
-                style={{
-                  width: `${Math.max(8, userXP % 100)}%`,
-                  backgroundColor: 'var(--accent-brand)'
-                }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <span className="truncate font-medium" style={{ color: 'var(--ink-primary)' }}>
-                {userName}
-              </span>
-              <span className="truncate" style={{ color: 'var(--ink-muted)' }}>
-                {userProfile.split('(')[0].trim()}
-              </span>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Column */}
-      <div className="jom-main-wrap">
-        {/* Top Consumer Status Bar */}
-        <header className="jom-topbar">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: marketOpen ? 'var(--signal-up)' : 'var(--ink-muted)' }}
-              />
-              <span className="text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
-                {marketOpen
-                  ? language === 'ENG'
-                    ? 'Bursa Malaysia · Market Open'
-                    : 'Bursa Malaysia · Pasaran Dibuka'
-                  : language === 'ENG'
-                  ? 'Bursa Malaysia · Market Closed (Practice Mode Active)'
-                  : 'Bursa Malaysia · Pasaran Ditutup (Mod Latihan Aktif)'}
-              </span>
-            </div>
+    <div className={`rh-app ${darkMode ? 'dark' : ''}`}>
+      {/* Clean Single Top Navigation Bar (Robinhood / Wealthsimple Pattern) */}
+      <header className="rh-topnav">
+        <div className="rh-topnav-inner">
+          <div className="flex items-center gap-6">
             <button
+              type="button"
+              onClick={() => navigateTo('dashboard')}
+              className="rh-brand"
+            >
+              <span className="rh-brand-dot" />
+              <span>JomINVEST</span>
+            </button>
+
+            <nav className="rh-nav-links">
+              {navItems.map(item => {
+                const isActive =
+                  currentScreen === item.id ||
+                  (item.id === 'dashboard' && currentScreen === 'stock-details');
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => navigateTo(item.id)}
+                    className={`rh-nav-link ${isActive ? 'active' : ''}`}
+                  >
+                    {language === 'ENG' ? item.labelEng : item.labelBm}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
               onClick={refreshMarketPrices}
               disabled={isRefreshingMarket}
-              className="jom-btn py-1 px-2.5 text-xs"
+              className="jom-btn py-1.5 px-2.5 text-xs"
+              title={language === 'ENG' ? 'Refresh Bursa quotes' : 'Segar semula harga'}
             >
-              <RefreshCw size={12} className={isRefreshingMarket ? 'animate-spin' : ''} />
-              <span>{isRefreshingMarket ? 'Updating...' : language === 'ENG' ? 'Refresh Prices' : 'Segar Semula'}</span>
+              <RefreshCw size={13} className={isRefreshingMarket ? 'animate-spin' : ''} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCopilotOpen(true)}
+              className="jom-btn jom-btn-primary py-1.5 px-3.5 text-xs"
+            >
+              <MessageSquare size={13} />
+              <span>{language === 'ENG' ? 'Ask AI' : 'Tanya AI'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="jom-btn py-1.5 px-2.5 font-tabular text-xs"
+            >
+              {language === 'ENG' ? 'EN' : 'BM'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDarkMode(!darkMode)}
+              className="jom-btn py-1.5 px-2.5 text-xs"
+              title="Toggle theme"
+            >
+              {darkMode ? <Sun size={14} /> : <Moon size={14} />}
             </button>
           </div>
+        </div>
+      </header>
 
-          {/* Right Account Balances & Controls */}
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-5 pr-3 border-r" style={{ borderColor: 'var(--border-hairline)' }}>
-              <div className="text-right">
-                <div className="jom-kicker">{language === 'ENG' ? 'Total Balance' : 'Jumlah Baki'}</div>
-                <div className="font-tabular text-xs font-semibold">RM {netLiquidity.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-              </div>
-              <div className="text-right">
-                <div className="jom-kicker">{language === 'ENG' ? 'Cash to Invest' : 'Tunai Pelaburan'}</div>
-                <div className="font-tabular text-xs font-semibold" style={{ color: 'var(--signal-up)' }}>
-                  RM {cashBalance.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsCopilotOpen(true)}
-                className="jom-btn jom-btn-primary py-1.5 px-3.5 text-xs"
-              >
-                <MessageSquare size={13} />
-                <span>{language === 'ENG' ? 'Ask JomAI' : 'Tanya JomAI'}</span>
-              </button>
-              <button onClick={toggleLanguage} className="jom-btn py-1.5 px-2.5 font-tabular text-xs">
-                {language === 'ENG' ? 'EN' : 'BM'}
-              </button>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="jom-btn py-1.5 px-2.5 text-xs"
-                title="Toggle Theme"
-              >
-                {darkMode ? <Sun size={14} /> : <Moon size={14} />}
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Active Screen Viewport */}
-        <div className="flex-1">
+      {/* Main Content */}
+      <main className="flex-1">
+        <div>
           {currentScreen === 'dashboard' && (
             <Dashboard
               navigateTo={navigateTo}
@@ -705,7 +622,7 @@ export default function App() {
             />
           )}
         </div>
-      </div>
+      </main>
 
       {/* Global Research Copilot Drawer */}
       <ChatbotModal
