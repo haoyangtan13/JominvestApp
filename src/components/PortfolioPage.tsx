@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
-import { PieChart, TrendingUp, TrendingDown, DollarSign, Wallet, Plus } from 'lucide-react';
+import { PieChart as PieChartIcon, TrendingUp, TrendingDown, DollarSign, Wallet, Plus } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { Screen, PortfolioItem } from '../App';
 import type { StockData } from '../data/stocks';
+import { StockBadge } from './StockVisuals';
 
 interface PortfolioPageProps {
   navigateTo: (screen: Screen) => void;
@@ -33,7 +35,7 @@ export function PortfolioPage({
       avgPrice: 'Avg Cost',
       quantity: 'Units',
       marketValue: 'Market Value',
-      noData: 'Buy stocks to see sector breakdown',
+      noData: 'Buy stocks to see interactive sector ring',
     },
     BM: {
       myPortfolio: 'Portfolio Simulasi Saya',
@@ -49,7 +51,7 @@ export function PortfolioPage({
       avgPrice: 'Kos Purata',
       quantity: 'Unit',
       marketValue: 'Nilai Pasaran',
-      noData: 'Beli saham untuk lihat pecahan sektor',
+      noData: 'Beli saham untuk lihat cincin sektor interaktif',
     },
   };
 
@@ -75,26 +77,12 @@ export function PortfolioPage({
     return Object.entries(sectors)
       .map(([name, value], index) => ({
         name,
-        value,
+        value: Number(value.toFixed(2)),
         percentage: Math.round((value / total) * 100),
         color: colors[index % colors.length],
       }))
       .sort((a, b) => b.value - a.value);
   }, [portfolio]);
-
-  const conicGradient = useMemo(() => {
-    if (portfolio.length === 0 || totalValueNum === 0) return '#e6f4ef 0deg 360deg';
-
-    let currentDeg = 0;
-    return sectorData
-      .map((sector) => {
-        const deg = (sector.value / totalValueNum) * 360;
-        const str = `${sector.color} ${currentDeg}deg ${currentDeg + deg}deg`;
-        currentDeg += deg;
-        return str;
-      })
-      .join(', ');
-  }, [sectorData, totalValueNum, portfolio.length]);
 
   const calculateReturn = (currentPrice: number, avgPrice: number) => {
     if (avgPrice === 0) return '0.00';
@@ -118,9 +106,10 @@ export function PortfolioPage({
             <span
               className="jomi-nums"
               style={{
-                padding: '0.25rem 0.75rem',
+                padding: '0.3rem 0.8rem',
                 borderRadius: '9999px',
-                backgroundColor: 'rgba(255,255,255,0.18)',
+                backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                border: '1px solid rgba(255,255,255,0.2)',
                 fontSize: '0.78rem',
                 fontWeight: 800,
               }}
@@ -138,35 +127,47 @@ export function PortfolioPage({
           </div>
         </div>
 
-        {/* Sector Allocation Donut */}
+        {/* Interactive Recharts Sector Allocation Ring */}
         <div className="jomi-card jomi-card-pad jomi-stack-md">
           <h3 className="jomi-display jomi-title-md jomi-cluster">
-            <PieChart size={19} color="#0d9488" />
+            <PieChartIcon size={19} color="#0d9488" />
             <span>{t.sectorAllocation}</span>
           </h3>
 
-          <div className="jomi-cluster" style={{ gap: '1.5rem', flexWrap: 'nowrap' }}>
-            <div
-              style={{
-                width: '7.5rem',
-                height: '7.5rem',
-                borderRadius: '9999px',
-                background: `conic-gradient(${conicGradient})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                border: '2px solid var(--jomi-border)',
-              }}
-            >
-              <div
-                style={{
-                  width: '4.5rem',
-                  height: '4.5rem',
-                  borderRadius: '9999px',
-                  backgroundColor: '#ffffff',
-                }}
-              />
+          <div className="jomi-cluster" style={{ gap: '1.25rem', flexWrap: 'nowrap' }}>
+            <div style={{ width: '132px', height: '132px', flexShrink: 0 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={sectorData.length > 0 ? sectorData : [{ name: 'Empty', value: 1, color: '#e6f4ef' }]}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={38}
+                    outerRadius={60}
+                    paddingAngle={sectorData.length > 1 ? 4 : 0}
+                    stroke="#ffffff"
+                    strokeWidth={2}
+                  >
+                    {(sectorData.length > 0 ? sectorData : [{ name: 'Empty', value: 1, color: '#e6f4ef' }]).map((entry, idx) => (
+                      <Cell key={idx} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  {sectorData.length > 0 && (
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const d = payload[0].payload;
+                        return (
+                          <div className="jomi-chart-tooltip jomi-nums">
+                            <div style={{ fontSize: '0.72rem', color: '#a7f3d0' }}>{d.name}</div>
+                            <div>RM {d.value} ({d.percentage}%)</div>
+                          </div>
+                        );
+                      }}
+                    />
+                  )}
+                </PieChart>
+              </ResponsiveContainer>
             </div>
 
             <div style={{ flex: 1 }} className="jomi-stack-xs">
@@ -176,8 +177,8 @@ export function PortfolioPage({
                     <span className="jomi-cluster" style={{ gap: '0.45rem', fontWeight: 700 }}>
                       <span
                         style={{
-                          width: '0.65rem',
-                          height: '0.65rem',
+                          width: '0.68rem',
+                          height: '0.68rem',
                           borderRadius: '9999px',
                           backgroundColor: sector.color,
                           display: 'inline-block',
@@ -214,8 +215,7 @@ export function PortfolioPage({
               return (
                 <div
                   key={`${stock.id}-${index}`}
-                  className="jomi-card jomi-card-pad jomi-between"
-                  style={{ cursor: setSelectedStock ? 'pointer' : 'default' }}
+                  className="jomi-card jomi-card-interactive jomi-card-pad jomi-between"
                   onClick={() => {
                     if (setSelectedStock) {
                       setSelectedStock(stock);
@@ -224,7 +224,7 @@ export function PortfolioPage({
                   }}
                 >
                   <div className="jomi-cluster" style={{ gap: '0.9rem' }}>
-                    <div className="jomi-ticker-badge jomi-ticker-badge-lg">{stock.ticker.slice(0, 3)}</div>
+                    <StockBadge ticker={stock.ticker} sector={stock.sector} size="lg" />
                     <div className="jomi-stack-xs">
                       <div className="jomi-cluster">
                         <h4 className="jomi-display jomi-title-md">{stock.name}</h4>

@@ -427,13 +427,33 @@ p {
 }
 
 .jomi-hero {
-  background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+  position: relative;
+  overflow: hidden;
+  background-color: #059669;
+  background-image:
+    radial-gradient(circle at 88% 18%, rgba(251, 191, 36, 0.24) 0%, transparent 42%),
+    radial-gradient(circle at 12% 92%, rgba(167, 243, 208, 0.22) 0%, transparent 46%),
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(135deg, #0d9488 0%, #059669 55%, #047857 100%);
+  background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px, 100% 100%;
   color: #ffffff;
-  border: 2px solid var(--jomi-emerald-dark);
+  border: 2px solid #065f46;
   border-radius: 1.5rem;
-  box-shadow: 0 6px 0 0 #065f46;
+  box-shadow: 0 6px 0 0 #064e3b;
   padding: 1.5rem;
   transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.jomi-chart-tooltip {
+  background-color: #0f2926;
+  color: #ffffff;
+  border: 2px solid #10b981;
+  border-radius: 0.85rem;
+  padding: 0.55rem 0.8rem;
+  box-shadow: 0 8px 20px rgba(15, 41, 38, 0.25);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .jomi-hero h1,

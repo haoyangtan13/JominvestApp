@@ -8,9 +8,12 @@ import {
   Sparkles,
   Plus,
   ArrowUpRight,
+  Compass,
+  Award,
 } from 'lucide-react';
 import type { Screen, PortfolioItem } from '../App';
 import { StockData, stocks } from '../data/stocks';
+import { StockBadge, MiniSparkline } from './StockVisuals';
 
 interface DashboardProps {
   navigateTo: (screen: Screen) => void;
@@ -29,6 +32,8 @@ export function Dashboard({
   language,
   setSelectedStock,
   portfolio,
+  userXP,
+  userLevel,
   watchlist,
 }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +60,9 @@ export function Dashboard({
       addToWatchlist: 'Manage Watchlist',
       searchResults: 'Search Results',
       noResults: 'No matching stocks found.',
-      portfolioCount: 'Stocks Held',
+      portfolioCount: 'Positions',
+      watchingCount: 'Watching',
+      xpStat: 'Investor Rank',
     },
     BM: {
       welcome: 'Selamat kembali, Tan!',
@@ -77,7 +84,9 @@ export function Dashboard({
       addToWatchlist: 'Urus Senarai Pantau',
       searchResults: 'Keputusan Carian',
       noResults: 'Tiada saham ditemui.',
-      portfolioCount: 'Pegangan Saham',
+      portfolioCount: 'Pegangan',
+      watchingCount: 'Dipantau',
+      xpStat: 'Tahap Pelabur',
     },
   };
 
@@ -95,43 +104,20 @@ export function Dashboard({
   const topGainers = [...stocks].sort((a, b) => parseFloat(b.change) - parseFloat(a.change)).slice(0, 5);
   const topLosers = [...stocks].sort((a, b) => parseFloat(a.change) - parseFloat(b.change)).slice(0, 5);
 
-  const portfolioValue = portfolio
-    .reduce((acc, item) => acc + parseFloat(item.stock.price) * item.quantity, 0)
-    .toFixed(2);
+  const portfolioValueNum = portfolio.reduce(
+    (acc, item) => acc + parseFloat(item.stock.price) * item.quantity,
+    0
+  );
+  const portfolioCostNum = portfolio.reduce(
+    (acc, item) => acc + item.averagePrice * item.quantity,
+    0
+  );
+  const pnlDiff = portfolioValueNum - portfolioCostNum;
+  const portfolioValue = portfolioValueNum.toFixed(2);
 
   const handleStockClick = (stock: StockData) => {
     setSelectedStock(stock);
     navigateTo('stock-details');
-  };
-
-  const renderSparkline = (data: number[], isPositive: boolean = true) => {
-    if (!data || data.length === 0) return null;
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-    const width = 68;
-    const height = 26;
-
-    const points = data
-      .map((value, index) => {
-        const x = (index / (data.length - 1)) * width;
-        const y = height - ((value - min) / range) * (height - 4) - 2;
-        return `${x},${y}`;
-      })
-      .join(' ');
-
-    return (
-      <svg width={width} height={height} style={{ flexShrink: 0 }} aria-hidden="true">
-        <polyline
-          points={points}
-          fill="none"
-          stroke={isPositive ? '#10b981' : '#ef4444'}
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
   };
 
   return (
@@ -143,6 +129,7 @@ export function Dashboard({
           <div className="jomi-cluster jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
             <span>{t.profile}</span>
             <span className="jomi-pill-gain">
+              <Compass size={12} />
               {userProfile || 'Jom-Explorer (Aggressive)'}
             </span>
           </div>
@@ -153,9 +140,9 @@ export function Dashboard({
       <div className="jomi-bento-main">
         {/* Left Column */}
         <div className="jomi-stack-lg">
-          {/* Portfolio Hero Banner */}
+          {/* Portfolio Hero Banner with Textured Grid + Multi-Stat Strip */}
           <div
-            className="jomi-hero"
+            className="jomi-hero jomi-stack-md"
             onClick={() => navigateTo('portfolio')}
             role="button"
             tabIndex={0}
@@ -170,25 +157,9 @@ export function Dashboard({
             <div className="jomi-between" style={{ alignItems: 'flex-start' }}>
               <div className="jomi-stack-xs">
                 <p className="jomi-hero-label">{t.portfolio}</p>
-                <div className="jomi-display jomi-nums" style={{ fontSize: '2.35rem', fontWeight: 700, lineHeight: 1.15 }}>
+                <div className="jomi-display jomi-nums" style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.1 }}>
                   RM {portfolioValue}
                 </div>
-                <span
-                  className="jomi-nums"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '9999px',
-                    backgroundColor: 'rgba(255,255,255,0.18)',
-                    fontSize: '0.75rem',
-                    fontWeight: 800,
-                    width: 'fit-content',
-                    marginTop: '0.25rem',
-                  }}
-                >
-                  {portfolio.length} {t.portfolioCount}
-                </span>
               </div>
 
               <div className="jomi-cluster">
@@ -215,6 +186,68 @@ export function Dashboard({
                   <span>{t.aiAdvisor}</span>
                 </button>
               </div>
+            </div>
+
+            {/* Bottom Stat Chips inside Hero */}
+            <div className="jomi-cluster" style={{ gap: '0.65rem', paddingTop: '0.25rem' }}>
+              <div
+                className="jomi-nums"
+                style={{
+                  padding: '0.35rem 0.8rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                }}
+              >
+                {portfolio.length} {t.portfolioCount}
+              </div>
+              <div
+                className="jomi-nums"
+                style={{
+                  padding: '0.35rem 0.8rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                }}
+              >
+                {watchlist.length} {t.watchingCount}
+              </div>
+              <div
+                className="jomi-nums"
+                style={{
+                  padding: '0.35rem 0.8rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                }}
+              >
+                <Award size={13} color="#fcd34d" />
+                <span>Lv.{userLevel} ({userXP} XP)</span>
+              </div>
+              {portfolio.length > 0 && (
+                <div
+                  className="jomi-nums"
+                  style={{
+                    padding: '0.35rem 0.8rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: pnlDiff >= 0 ? 'rgba(236, 253, 245, 0.22)' : 'rgba(254, 242, 242, 0.22)',
+                    border: '1px solid rgba(255,255,255,0.28)',
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
+                  }}
+                >
+                  {pnlDiff >= 0 ? '+' : ''}RM {pnlDiff.toFixed(2)} P&amp;L
+                </div>
+              )}
             </div>
           </div>
 
@@ -244,7 +277,7 @@ export function Dashboard({
                       onClick={() => handleStockClick(stock)}
                     >
                       <div className="jomi-cluster" style={{ flexWrap: 'nowrap' }}>
-                        <div className="jomi-ticker-badge">{stock.ticker.slice(0, 3)}</div>
+                        <StockBadge ticker={stock.ticker} sector={stock.sector} />
                         <div>
                           <h4 className="jomi-title-md">{stock.name}</h4>
                           <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{stock.ticker}</p>
@@ -268,16 +301,17 @@ export function Dashboard({
             </div>
           ) : (
             <>
-              {/* Top AI Picks — Uniform 2x2 Grid */}
+              {/* Top AI Picks — Uniform 2x2 Grid with Sector Badges & Gradient Sparklines */}
               <section className="jomi-stack-md">
                 <div className="jomi-cluster">
                   <div
                     style={{
-                      width: '2rem',
-                      height: '2rem',
-                      borderRadius: '0.65rem',
+                      width: '2.1rem',
+                      height: '2.1rem',
+                      borderRadius: '0.7rem',
                       backgroundColor: 'var(--jomi-gold-soft)',
-                      border: '1.5px solid var(--jomi-gold-border)',
+                      border: '2px solid var(--jomi-gold-border)',
+                      boxShadow: '0 2px 0 0 var(--jomi-gold-border)',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -293,33 +327,44 @@ export function Dashboard({
                     <div
                       key={stock.id}
                       className="jomi-card jomi-card-interactive jomi-card-pad"
-                      style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}
+                      style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.1rem' }}
                       onClick={() => handleStockClick(stock)}
                     >
-                      <div className="jomi-stack-xs">
-                        <div className="jomi-between" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
-                          <div>
+                      <div className="jomi-between" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                        <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
+                          <StockBadge ticker={stock.ticker} sector={stock.sector} />
+                          <div style={{ minWidth: 0 }}>
                             <div className="jomi-display" style={{ fontSize: '1.05rem', fontWeight: 700 }}>
                               {stock.ticker}
                             </div>
-                            <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600 }}>
+                            <p
+                              className="jomi-text-xs jomi-muted"
+                              style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                            >
                               {stock.name}
                             </p>
+                            <div style={{ marginTop: '0.35rem' }}>
+                              <span className="jomi-pill-sector">{stock.sector}</span>
+                            </div>
                           </div>
-                          <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
-                            {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            {stock.changePercent}
-                          </span>
                         </div>
-                        <span className="jomi-pill-sector">{stock.sector}</span>
+
+                        <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
+                          {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                          {stock.changePercent}
+                        </span>
                       </div>
 
-                      <div className="jomi-between" style={{ alignItems: 'flex-end' }}>
+                      <div className="jomi-between" style={{ alignItems: 'flex-end', paddingTop: '0.25rem', borderTop: '1.5px solid var(--jomi-canvas)' }}>
                         <div className="jomi-cluster" style={{ gap: '0.75rem' }}>
                           <span className="jomi-display jomi-nums" style={{ fontSize: '1.45rem', fontWeight: 700 }}>
                             RM {stock.price}
                           </span>
-                          {renderSparkline(stock.sparkline, stock.isPositive)}
+                          <MiniSparkline
+                            data={stock.sparkline}
+                            isPositive={stock.isPositive}
+                            idSuffix={`pick-${stock.id}`}
+                          />
                         </div>
                         <button
                           type="button"
@@ -342,11 +387,12 @@ export function Dashboard({
                 <div className="jomi-cluster">
                   <div
                     style={{
-                      width: '2rem',
-                      height: '2rem',
-                      borderRadius: '0.65rem',
+                      width: '2.1rem',
+                      height: '2.1rem',
+                      borderRadius: '0.7rem',
                       backgroundColor: 'var(--jomi-emerald-soft)',
-                      border: '1.5px solid var(--jomi-emerald-border)',
+                      border: '2px solid var(--jomi-emerald-border)',
+                      boxShadow: '0 2px 0 0 var(--jomi-emerald-border)',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -367,7 +413,7 @@ export function Dashboard({
                     >
                       <div className="jomi-between" style={{ flexWrap: 'nowrap' }}>
                         <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
-                          <div className="jomi-ticker-badge">{stock.ticker.slice(0, 3)}</div>
+                          <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
                           <div style={{ minWidth: 0 }}>
                             <h4
                               style={{
@@ -492,13 +538,16 @@ export function Dashboard({
                   className="jomi-row"
                   onClick={() => handleStockClick(stock)}
                 >
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {stock.name}
-                    </p>
-                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
-                      {stock.ticker}
-                    </p>
+                  <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
+                    <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontSize: '0.86rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {stock.name}
+                      </p>
+                      <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                        {stock.ticker}
+                      </p>
+                    </div>
                   </div>
                   <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
                     {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -521,9 +570,7 @@ export function Dashboard({
                   onClick={() => handleStockClick(stock)}
                 >
                   <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
-                    <div className="jomi-ticker-badge" style={{ width: '2.35rem', height: '2.35rem', fontSize: '0.7rem' }}>
-                      {stock.ticker.slice(0, 3)}
-                    </div>
+                    <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {stock.name}
@@ -534,7 +581,13 @@ export function Dashboard({
                     </div>
                   </div>
                   <div className="jomi-cluster" style={{ flexWrap: 'nowrap', flexShrink: 0 }}>
-                    {renderSparkline(stock.sparkline, stock.isPositive)}
+                    <MiniSparkline
+                      data={stock.sparkline}
+                      isPositive={stock.isPositive}
+                      width={64}
+                      height={24}
+                      idSuffix={`wl-${stock.id}`}
+                    />
                     <span className="jomi-nums" style={{ fontSize: '0.85rem', fontWeight: 800 }}>
                       RM {stock.price}
                     </span>

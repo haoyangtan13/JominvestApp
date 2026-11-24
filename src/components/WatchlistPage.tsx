@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trash2, Plus, Search, TrendingUp, TrendingDown, Bookmark } from 'lucide-react';
 import { StockData, stocks } from '../data/stocks';
 import type { Screen } from '../App';
+import { StockBadge, MiniSparkline } from './StockVisuals';
 
 interface WatchlistPageProps {
   navigateTo: (screen: Screen) => void;
@@ -54,31 +55,6 @@ export function WatchlistPage({
         s.ticker.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const renderSparkline = (data: number[], isPositive: boolean) => {
-    if (!data || data.length === 0) return null;
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-    const width = 84;
-    const height = 28;
-    const points = data
-      .map((val, idx) => `${(idx / (data.length - 1)) * width},${height - ((val - min) / range) * (height - 4) - 2}`)
-      .join(' ');
-
-    return (
-      <svg width={width} height={height} style={{ flexShrink: 0 }} aria-hidden="true">
-        <polyline
-          points={points}
-          fill="none"
-          stroke={isPositive ? '#10b981' : '#ef4444'}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  };
-
   return (
     <div className="jomi-stack-lg">
       {/* Header */}
@@ -110,7 +86,7 @@ export function WatchlistPage({
               availableStocks.slice(0, 4).map((stock) => (
                 <div key={stock.id} className="jomi-row" style={{ cursor: 'default' }}>
                   <div className="jomi-cluster">
-                    <div className="jomi-ticker-badge">{stock.ticker.slice(0, 3)}</div>
+                    <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
                     <div>
                       <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>{stock.name}</p>
                       <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
@@ -162,7 +138,7 @@ export function WatchlistPage({
               }}
             >
               <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
-                <div className="jomi-ticker-badge">{stock.ticker.slice(0, 3)}</div>
+                <StockBadge ticker={stock.ticker} sector={stock.sector} />
                 <div style={{ minWidth: 0 }} className="jomi-stack-xs">
                   <div className="jomi-cluster">
                     <span className="jomi-display" style={{ fontWeight: 700, fontSize: '1.05rem' }}>
@@ -180,7 +156,11 @@ export function WatchlistPage({
               </div>
 
               <div className="jomi-cluster" style={{ flexWrap: 'nowrap', gap: '0.85rem' }}>
-                {renderSparkline(stock.sparkline, stock.isPositive)}
+                <MiniSparkline
+                  data={stock.sparkline}
+                  isPositive={stock.isPositive}
+                  idSuffix={`watchpage-${stock.id}`}
+                />
                 <div style={{ textAlign: 'right' }} className="jomi-stack-xs">
                   <p className="jomi-display jomi-nums" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
                     RM {stock.price}

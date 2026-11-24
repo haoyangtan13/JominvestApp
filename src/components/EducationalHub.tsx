@@ -502,7 +502,20 @@ export function EducationalHub({ language }: EducationalHubProps) {
                         tickLine={false}
                         width={54}
                       />
-                      <Tooltip />
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload || !payload.length) return null;
+                          return (
+                            <div className="jomi-chart-tooltip jomi-nums">
+                              <div style={{ fontSize: '0.72rem', color: '#a7f3d0', marginBottom: '2px' }}>{label}</div>
+                              <div>Wealth: RM {Number(payload[0]?.value || 0).toLocaleString()}</div>
+                              <div style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>
+                                Invested: RM {Number(payload[1]?.value || 0).toLocaleString()}
+                              </div>
+                            </div>
+                          );
+                        }}
+                      />
                       <Area type="monotone" dataKey="wealth" stroke="#0d9488" strokeWidth={3} fillOpacity={1} fill="url(#jomiWealthGrad)" />
                       <Area type="monotone" dataKey="invested" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />
                     </AreaChart>

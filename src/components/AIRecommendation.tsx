@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, CheckCircle2, Sparkles, ArrowUpRight } from 'lucide-react';
 import type { Screen } from '../App';
 import { StockData, stocks } from '../data/stocks';
+import { StockBadge } from './StockVisuals';
 
 interface AIRecommendationProps {
   navigateTo: (screen: Screen) => void;
@@ -79,23 +80,7 @@ export function AIRecommendation({
       <div className="jomi-hero jomi-stack-md">
         <div className="jomi-between" style={{ alignItems: 'flex-start' }}>
           <div className="jomi-cluster" style={{ gap: '1rem' }}>
-            <div
-              className="jomi-display"
-              style={{
-                width: '3.5rem',
-                height: '3.5rem',
-                borderRadius: '1rem',
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                border: '2px solid rgba(255,255,255,0.35)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '1.05rem',
-              }}
-            >
-              TNB
-            </div>
+            <StockBadge ticker={featuredStock.ticker} sector={featuredStock.sector} size="lg" />
             <div>
               <h3 className="jomi-display" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
                 {featuredStock.name}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ArrowLeft,
   HelpCircle,
@@ -20,10 +20,12 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  ReferenceLine,
   Tooltip as RechartsTooltip,
 } from 'recharts';
 import type { Screen } from '../App';
 import type { StockData } from '../data/stocks';
+import { StockBadge } from './StockVisuals';
 
 interface StockDetailsProps {
   navigateTo: (screen: Screen) => void;
@@ -47,6 +49,7 @@ export function StockDetails({
   const [quantity, setQuantity] = useState(1);
   const [learningTerm, setLearningTerm] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'news'>('overview');
+  const [timeframe, setTimeframe] = useState<'7D' | '15D' | '1M'>('1M');
 
   const definitions: Record<string, { ENG: { simple: string; detail: string }; BM: { simple: string; detail: string } }> = {
     Price: {
@@ -74,9 +77,8 @@ export function StockDetails({
   const texts = {
     ENG: {
       back: 'Back to Dashboard',
-      priceChart: '30-Day Price Trend',
+      priceChart: 'Interactive Price Action',
       keyMetrics: 'Tap a Metric to Learn (+10 XP)',
-      price: 'Current Share Price',
       peRatio: 'P/E Ratio',
       dividend: 'Dividend Yield',
       marketCap: 'Market Cap',
@@ -95,12 +97,14 @@ export function StockDetails({
       quickLearn: 'Jom-Learn Quick Tip',
       knowledgeGained: 'Knowledge Gained!',
       aiInsight: 'JomINVEST AI Insight',
+      periodHigh: 'Period High',
+      periodLow: 'Period Low',
+      periodAvg: 'Avg Baseline',
     },
     BM: {
       back: 'Kembali ke Papan Pemuka',
-      priceChart: 'Trend Harga 30 Hari',
+      priceChart: 'Carta Pergerakan Harga',
       keyMetrics: 'Ketik Metrik Untuk Belajar (+10 XP)',
-      price: 'Harga Saham Semasa',
       peRatio: 'Nisbah P/E',
       dividend: 'Hasil Dividen',
       marketCap: 'Modal Pasaran',
@@ -119,10 +123,29 @@ export function StockDetails({
       quickLearn: 'Tip Pantas Jom-Belajar',
       knowledgeGained: 'Ilmu Diperolehi!',
       aiInsight: 'Wawasan AI JomINVEST',
+      periodHigh: 'Tertinggi',
+      periodLow: 'Terendah',
+      periodAvg: 'Purata',
     },
   };
 
   const t = texts[language];
+
+  const chartSlice = useMemo(() => {
+    if (!stock?.history) return [];
+    if (timeframe === '7D') return stock.history.slice(-7);
+    if (timeframe === '15D') return stock.history.slice(-15);
+    return stock.history;
+  }, [stock, timeframe]);
+
+  const chartStats = useMemo(() => {
+    if (!chartSlice.length) return { high: 0, low: 0, avg: 0 };
+    const prices = chartSlice.map((p) => p.price);
+    const high = Math.max(...prices);
+    const low = Math.min(...prices);
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    return { high, low, avg };
+  }, [chartSlice]);
 
   if (!stock) {
     return (
@@ -233,7 +256,7 @@ export function StockDetails({
       <div className="jomi-card jomi-card-pad">
         <div className="jomi-between">
           <div className="jomi-cluster" style={{ gap: '1rem' }}>
-            <div className="jomi-ticker-badge jomi-ticker-badge-lg">{stock.ticker.slice(0, 3)}</div>
+            <StockBadge ticker={stock.ticker} sector={stock.sector} size="lg" />
             <div className="jomi-stack-xs">
               <div className="jomi-cluster">
                 <h2 className="jomi-display jomi-title-lg">{stock.name}</h2>
@@ -246,7 +269,7 @@ export function StockDetails({
           </div>
 
           <div style={{ textAlign: 'right' }} className="jomi-stack-xs">
-            <div className="jomi-display jomi-nums" style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1.1 }}>
+            <div className="jomi-display jomi-nums" style={{ fontSize: '2.1rem', fontWeight: 700, lineHeight: 1.1 }}>
               RM {stock.price}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -277,7 +300,7 @@ export function StockDetails({
 
       {activeTab === 'overview' && (
         <div className="jomi-bento-main">
-          {/* Left: Chart + Description + Tap-to-Learn Metrics */}
+          {/* Left: Rich Price Chart + Description + Tap-to-Learn Metrics */}
           <div className="jomi-stack-lg">
             {/* AI Insight Banner */}
             <div className="jomi-card-soft jomi-stack-xs">
@@ -297,46 +320,103 @@ export function StockDetails({
               </p>
             </div>
 
-            {/* Price Chart Card */}
+            {/* Interactive Timeframe Price Chart Card */}
             <div className="jomi-card jomi-card-pad jomi-stack-md">
-              <h3 className="jomi-display jomi-title-md">{t.priceChart}</h3>
-              <div style={{ width: '100%', height: 280 }}>
+              <div className="jomi-between">
+                <h3 className="jomi-display jomi-title-md">{t.priceChart}</h3>
+                <div className="jomi-tabs-bar">
+                  {(['7D', '15D', '1M'] as const).map((tf) => (
+                    <button
+                      key={tf}
+                      type="button"
+                      onClick={() => setTimeframe(tf)}
+                      className={`jomi-tab-btn ${timeframe === tf ? 'jomi-tab-btn-active' : ''}`}
+                      style={{ padding: '0.3rem 0.7rem', fontSize: '0.74rem' }}
+                    >
+                      {tf}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* High / Low / Average Callout Strip */}
+              <div className="jomi-grid-3">
+                <div style={{ padding: '0.6rem 0.85rem', borderRadius: '0.85rem', backgroundColor: 'var(--jomi-emerald-soft)', border: '1.5px solid var(--jomi-emerald-border)' }}>
+                  <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>{t.periodHigh}</p>
+                  <p className="jomi-display jomi-nums" style={{ fontWeight: 700, fontSize: '1.05rem', color: '#047857' }}>
+                    RM {chartStats.high.toFixed(2)}
+                  </p>
+                </div>
+                <div style={{ padding: '0.6rem 0.85rem', borderRadius: '0.85rem', backgroundColor: 'var(--jomi-canvas)', border: '1.5px solid var(--jomi-border)' }}>
+                  <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>{t.periodAvg}</p>
+                  <p className="jomi-display jomi-nums" style={{ fontWeight: 700, fontSize: '1.05rem' }}>
+                    RM {chartStats.avg.toFixed(2)}
+                  </p>
+                </div>
+                <div style={{ padding: '0.6rem 0.85rem', borderRadius: '0.85rem', backgroundColor: 'var(--jomi-coral-soft)', border: '1.5px solid var(--jomi-coral-border)' }}>
+                  <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>{t.periodLow}</p>
+                  <p className="jomi-display jomi-nums" style={{ fontWeight: 700, fontSize: '1.05rem', color: '#b91c1c' }}>
+                    RM {chartStats.low.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stock.history}>
+                  <AreaChart data={chartSlice} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="jomiStockPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={chartColor} stopOpacity={0.35} />
-                        <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
+                        <stop offset="0%" stopColor={chartColor} stopOpacity={0.42} />
+                        <stop offset="85%" stopColor={chartColor} stopOpacity={0.04} />
+                        <stop offset="100%" stopColor={chartColor} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e6f4ef" />
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#d6eae3" />
                     <XAxis
                       dataKey="date"
                       tickFormatter={(str) => {
                         const d = new Date(str);
                         return `${d.getDate()}/${d.getMonth() + 1}`;
                       }}
-                      tick={{ fontSize: 11, fill: '#527972' }}
+                      tick={{ fontSize: 11, fill: '#527972', fontWeight: 700 }}
                       axisLine={false}
                       tickLine={false}
-                      minTickGap={28}
+                      minTickGap={24}
                     />
                     <YAxis
-                      domain={['auto', 'auto']}
-                      tick={{ fontSize: 11, fill: '#527972' }}
+                      domain={['dataMin - 0.12', 'dataMax + 0.12']}
+                      tickFormatter={(v) => v.toFixed(2)}
+                      tick={{ fontSize: 11, fill: '#527972', fontWeight: 700 }}
                       axisLine={false}
                       tickLine={false}
-                      width={46}
+                      width={48}
+                    />
+                    <ReferenceLine
+                      y={chartStats.avg}
+                      stroke="#94a3b8"
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
                     />
                     <RechartsTooltip
-                      formatter={(value: number) => [`RM ${value.toFixed(2)}`, 'Price']}
-                      labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const val = Number(payload[0].value);
+                        return (
+                          <div className="jomi-chart-tooltip jomi-nums">
+                            <div style={{ fontSize: '0.7rem', color: '#a7f3d0', marginBottom: '2px' }}>
+                              {new Date(label).toLocaleDateString()}
+                            </div>
+                            <div style={{ fontSize: '1rem', fontWeight: 800 }}>RM {val.toFixed(2)}</div>
+                          </div>
+                        );
+                      }}
                     />
                     <Area
                       type="monotone"
                       dataKey="price"
                       stroke={chartColor}
-                      strokeWidth={2.8}
+                      strokeWidth={3}
+                      activeDot={{ r: 6, stroke: '#ffffff', strokeWidth: 2, fill: chartColor }}
                       fillOpacity={1}
                       fill="url(#jomiStockPrice)"
                     />
