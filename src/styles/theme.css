@@ -150,6 +150,36 @@ h4,
   box-shadow: 0 6px 0 0 #fbbf24;
 }
 
+.jomi-hero-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #ccfbf1;
+}
+
+.jomi-edu-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  background-color: var(--jomi-gold);
+  color: var(--jomi-ink);
+  box-shadow: 0 3px 0 0 var(--jomi-gold-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.jomi-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--jomi-muted-ink);
+  pointer-events: none;
+}
+
 /* Tactile Buttons */
 [data-slot="button"] {
   cursor: pointer;
