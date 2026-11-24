@@ -1,14 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Badge } from './ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Switch } from './ui/switch';
-import { Label } from './ui/label';
-import { ArrowLeft, BookOpen, Play, Clock, TrendingUp, Sparkles, FileText, Zap, BarChart, Activity, Gauge, Loader2, Link, Bot, Newspaper, MessageSquare } from 'lucide-react';
+import {
+  BookOpen,
+  Play,
+  Clock,
+  TrendingUp,
+  Sparkles,
+  FileText,
+  Zap,
+  BarChart,
+  Activity,
+  Gauge,
+  Loader2,
+  Link,
+  Bot,
+  Newspaper,
+  MessageSquare,
+} from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import type { Screen } from '../App';
 
 interface EducationalHubProps {
@@ -20,24 +38,24 @@ const articles = [
   {
     titleEng: 'What is a Dividend?',
     titleBm: 'Apakah Dividen?',
-    descEng: 'Learn how companies share profits with shareholders',
-    descBm: 'Pelajari bagaimana syarikat berkongsi keuntungan dengan pemegang saham',
+    descEng: 'Learn how companies share profits with shareholders every quarter or year.',
+    descBm: 'Pelajari bagaimana syarikat berkongsi keuntungan dengan pemegang saham.',
     readTime: '5 min',
     category: 'Basics',
   },
   {
     titleEng: 'Understanding Bursa Malaysia',
     titleBm: 'Memahami Bursa Malaysia',
-    descEng: 'A complete guide to Malaysia\'s stock exchange',
-    descBm: 'Panduan lengkap tentang bursa saham Malaysia',
+    descEng: "A friendly starter guide to Malaysia's stock exchange, board lots, and trading hours.",
+    descBm: 'Panduan permulaan mesra pelajar tentang bursa saham Malaysia.',
     readTime: '8 min',
     category: 'Market',
   },
   {
     titleEng: 'Risk vs. Return',
     titleBm: 'Risiko vs. Pulangan',
-    descEng: 'Balance risk and reward in your investment strategy',
-    descBm: 'Seimbangkan risiko dan ganjaran dalam strategi pelaburan anda',
+    descEng: 'How to balance growth potential and downside protection in your portfolio.',
+    descBm: 'Cara mengimbangi potensi pertumbuhan dan perlindungan risiko.',
     readTime: '6 min',
     category: 'Strategy',
   },
@@ -47,91 +65,86 @@ const tutorials = [
   {
     titleEng: 'How to Read a Stock Chart',
     titleBm: 'Cara Membaca Carta Saham',
-    descEng: 'Master the basics of technical analysis',
-    descBm: 'Kuasai asas analisis teknikal',
+    descEng: 'Master support, trends, and volume without confusing jargon.',
+    descBm: 'Kuasai asas membaca trend dan volum tanpa istilah mengelirukan.',
     duration: '12 min',
     level: 'Beginner',
   },
   {
     titleEng: 'What is Risk Management?',
     titleBm: 'Apakah Pengurusan Risiko?',
-    descEng: 'Protect your investments with smart strategies',
-    descBm: 'Lindungi pelaburan anda dengan strategi pintar',
+    descEng: 'Protect your student capital with smart position sizing and diversification.',
+    descBm: 'Lindungi modal anda dengan kepelbagaian sektor yang bijak.',
     duration: '15 min',
     level: 'Beginner',
   },
 ];
 
-export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
+export function EducationalHub({ language }: EducationalHubProps) {
+  const [activeTab, setActiveTab] = useState<'ai-tools' | 'articles' | 'tutorials'>('ai-tools');
+
   // Wealth Projector State
   const [monthlyInvest, setMonthlyInvest] = useState(500);
   const [riskLevel, setRiskLevel] = useState(5);
   const [inflationAdjusted, setInflationAdjusted] = useState(false);
 
   // JomRingkas State
-  const [selectedReport, setSelectedReport] = useState("tenaga");
+  const [selectedReport, setSelectedReport] = useState<'tenaga' | 'maybank'>('tenaga');
   const [isScanning, setIsScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
-
-  // Animation State for Scanning
-  const [loadingText, setLoadingText] = useState("Analyzing...");
+  const [loadingText, setLoadingText] = useState('Analyzing...');
 
   useEffect(() => {
     if (isScanning) {
-      const texts = ["Reading PDF...", "Extracting Data...", "Summarizing Risks...", "Finalizing..."];
+      const steps = ['Reading PDF...', 'Extracting Financials...', 'Summarizing Risks...', 'Finalizing...'];
       let i = 0;
       const interval = setInterval(() => {
-        setLoadingText(texts[i % texts.length]);
+        setLoadingText(steps[i % steps.length]);
         i++;
       }, 500);
       return () => clearInterval(interval);
     }
   }, [isScanning]);
 
-
   const texts = {
     ENG: {
-      back: 'Back to Dashboard',
-      title: 'Educational Hub',
-      subtitle: 'Learn to invest with confidence',
+      title: 'Learn & AI Lab',
+      subtitle: 'Interactive AI tools, bite-sized guides, and compound calculators built for student investors',
       articles: 'Articles',
-      tutorials: 'Video Tutorials',
-      aiTools: 'AI Tools',
-      readMore: 'Read More',
-      watchNow: 'Watch Now',
+      tutorials: 'Video Guides',
+      aiTools: 'AI Lab Tools',
+      readMore: 'Read Guide',
+      watchNow: 'Watch Lesson',
     },
     BM: {
-      back: 'Kembali ke Dashboard',
-      title: 'Hab Pendidikan',
-      subtitle: 'Belajar melabur dengan yakin',
+      title: 'Makmal Ilmu & AI',
+      subtitle: 'Alat AI interaktif, panduan ringkas, dan kalkulator kompaun untuk pelabur pelajar',
       articles: 'Artikel',
-      tutorials: 'Tutorial Video',
-      aiTools: 'Alat AI',
-      readMore: 'Baca Lagi',
-      watchNow: 'Tonton Sekarang',
-    }
+      tutorials: 'Panduan Video',
+      aiTools: 'Alat Makmal AI',
+      readMore: 'Baca Panduan',
+      watchNow: 'Tonton Pelajaran',
+    },
   };
 
   const t = texts[language];
 
-  // Logic 1: Wealth Calculation
   const generateWealthData = () => {
     const data = [];
     let currentWealth = 0;
     let totalInvested = 0;
     const years = 10;
-    let annualReturn = 0.04 + (riskLevel * 0.008);
+    let annualReturn = 0.04 + riskLevel * 0.008;
     if (inflationAdjusted) annualReturn -= 0.03;
 
     for (let year = 0; year <= years; year++) {
       data.push({
-        year: `Year ${year}`,
+        year: `Yr ${year}`,
         wealth: Math.round(currentWealth),
         invested: Math.round(totalInvested),
       });
-      // Compound
-      currentWealth = (currentWealth + (monthlyInvest * 12)) * (1 + annualReturn);
-      totalInvested += (monthlyInvest * 12);
+      currentWealth = (currentWealth + monthlyInvest * 12) * (1 + annualReturn);
+      totalInvested += monthlyInvest * 12;
     }
     return data;
   };
@@ -140,497 +153,542 @@ export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
   const finalWealth = wealthData[wealthData.length - 1].wealth;
   const finalInvested = wealthData[wealthData.length - 1].invested;
 
-  // Logic 2: JomRingkas Scan
   const handleAnalyze = () => {
     setIsScanning(true);
     setScanComplete(false);
     setTimeout(() => {
       setIsScanning(false);
       setScanComplete(true);
-    }, 2500);
+    }, 2200);
   };
 
-  const reportData: any = {
+  const reportData = {
     tenaga: {
-      title: "Tenaga Nasional Annual Report 2025",
-      growth: "CEO promises RM 2B investment in Renewable Energy Grid. Expected to boost long-term revenue by 15%. (pg. 12)",
-      risk: "High coal prices may impact profit margins in Q3 2026 if fuel costs are not passed through to consumers. (pg. 45)",
-      dividend: "Consistent Payout. Declared 30 sen/share total for FY25. Yield is attractive at 4.5%. (pg. 8)",
-      score: 85
+      title: 'Tenaga Nasional Annual Report 2025',
+      growth: 'CEO commits RM 2B into Renewable Energy Grid upgrades, projected to lift long-term revenue by 15%. (pg. 12)',
+      risk: 'Elevated fuel input prices could squeeze Q3 margins if pass-through adjustments lag. (pg. 45)',
+      dividend: 'Steady payout track record: 30 sen/share declared for FY25 (~4.5% yield). (pg. 8)',
+      score: 85,
     },
     maybank: {
-      title: "Maybank Integrated Report 2024",
-      growth: "Digital Banking adoption grew 40% YoY. New 'MAE' app features driving dominance in SME sector. (pg. 4)",
-      risk: "Exposure to global interest rate volatility could compress Net Interest Margin (NIM) by 5bps. (pg. 67)",
-      dividend: "Solid Dividend Aristocrat. Payout ratio maintained at 75% of profits. Yield ~6.2%. (pg. 102)",
-      score: 92
-    }
+      title: 'Maybank Integrated Report 2024',
+      growth: "Digital banking adoption rose 40% YoY, with MAE app leading SME onboarding across ASEAN. (pg. 4)",
+      risk: 'Regional interest-rate shifts may compress Net Interest Margin (NIM) by ~5 bps. (pg. 67)',
+      dividend: 'Dividend aristocrat maintaining ~75% profit payout ratio (~6.2% yield). (pg. 102)',
+      score: 92,
+    },
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10 backdrop-blur-md bg-white/80 supports-[backdrop-filter]:bg-white/60">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={() => navigateTo('dashboard')} className="hover:bg-gray-100/50">
-            <ArrowLeft className="mr-2" size={16} />
-            {t.back}
-          </Button>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Animated Hero Section */}
-        <div className="mb-10 text-center md:text-left">
-          <div className="inline-flex items-center justify-center p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-purple-200 mb-4 animate-in fade-in zoom-in duration-500">
-            <BookOpen size={32} className="text-white" />
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-purple-800 to-gray-900">
-            {t.title}
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl">{t.subtitle}</p>
+    <div className="jomi-stack-lg">
+      {/* Header Banner */}
+      <div className="jomi-between">
+        <div className="jomi-stack-xs">
+          <h2 className="jomi-display jomi-title-xl">{t.title}</h2>
+          <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{t.subtitle}</p>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="ai-tools" className="space-y-8">
-          <div className="flex justify-center md:justify-start">
-            <TabsList className="grid grid-cols-3 w-full max-w-md bg-white border shadow-sm p-1 h-auto rounded-xl">
-              <TabsTrigger value="ai-tools" className="rounded-lg py-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 font-medium transition-all">
-                <Sparkles size={16} className="mr-2 text-purple-600" /> {t.aiTools}
-              </TabsTrigger>
-              <TabsTrigger value="articles" className="rounded-lg py-2 data-[state=active]:bg-gray-100">{t.articles}</TabsTrigger>
-              <TabsTrigger value="tutorials" className="rounded-lg py-2 data-[state=active]:bg-gray-100">{t.tutorials}</TabsTrigger>
-            </TabsList>
-          </div>
+        <div className="jomi-tabs-bar">
+          <button
+            type="button"
+            onClick={() => setActiveTab('ai-tools')}
+            className={`jomi-tab-btn ${activeTab === 'ai-tools' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <Sparkles size={15} color="#0d9488" />
+            <span>{t.aiTools}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('articles')}
+            className={`jomi-tab-btn ${activeTab === 'articles' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <span>{t.articles}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tutorials')}
+            className={`jomi-tab-btn ${activeTab === 'tutorials' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <span>{t.tutorials}</span>
+          </button>
+        </div>
+      </div>
 
-          {/* === DETAILED AI TOOLS TAB === */}
-          <TabsContent value="ai-tools" className="space-y-12 animate-in slide-in-from-bottom-5 fade-in duration-500">
-
-            {/* 1. JomRingkas */}
-            <section className="relative group">
-              {/* Background Glow - ALWAYS VISIBLE (opacity-30) */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-30 transition duration-1000"></div>
-
-              <Card className="relative border-none shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500"></div>
-
-                <CardContent className="p-0">
-                  <div className="grid md:grid-cols-12 min-h-[500px]">
-                    {/* Left Panel: Control */}
-                    <div className="md:col-span-5 bg-gray-50 p-8 flex flex-col justify-center border-b md:border-b-0 md:border-r border-gray-100">
-                      <div className="mb-8">
-                        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 mb-2 flex items-center gap-2">
-                          <FileText className="text-purple-600" /> JomRingkas
-                        </h2>
-                        <p className="text-sm text-gray-500">AI-Powered Annual Report Analyzer</p>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="bg-white p-4 rounded-xl border shadow-sm hover:border-purple-300 transition-colors">
-                          <Label className="text-xs text-gray-400 font-bold tracking-wider mb-2 block uppercase">Select Document</Label>
-                          <Select value={selectedReport} onValueChange={setSelectedReport}>
-                            <SelectTrigger className="border-none shadow-none p-0 h-auto font-medium text-lg focus:ring-0 w-full">
-                              <SelectValue placeholder="Select Report" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="tenaga">Tenaga Nasional '25</SelectItem>
-                              <SelectItem value="maybank">Maybank Integrated '24</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <Button
-                          className="w-full h-12 text-lg font-bold !bg-purple-600 hover:!bg-purple-700 !text-white shadow-md transition-colors"
-                          onClick={handleAnalyze}
-                          disabled={isScanning}
-                        >
-                          {isScanning ? (
-                            <><Loader2 className="mr-2 animate-spin" /> {loadingText}</>
-                          ) : (
-                            <><Sparkles className="mr-2" /> Analyze Document</>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Right Panel: Visualization */}
-                    <div className="md:col-span-7 p-8 bg-white relative">
-                      {/* Empty State */}
-                      {!scanComplete && !isScanning && (
-                        <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12 text-gray-400">
-                          <div className="p-6 bg-gray-50 rounded-full">
-                            <Bot size={48} className="text-gray-300" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-medium text-gray-600">No Report Analyzed</h3>
-                            <p className="text-sm max-w-xs mx-auto mt-2">Pick a report from the menu to extract insights automatically.</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Scanning Animation */}
-                      {isScanning && (
-                        <div className="h-full flex flex-col items-center justify-center">
-                          <div className="relative w-32 h-40 border-2 border-gray-100 rounded-lg bg-white shadow-sm flex items-center justify-center overflow-hidden mb-6">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)] animate-[scan_2s_ease-in-out_infinite] z-10"></div>
-                            <div className="space-y-2 p-4 w-full opacity-30">
-                              <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                              <div className="h-2 bg-gray-200 rounded w-full"></div>
-                              <div className="h-2 bg-gray-200 rounded w-5/6"></div>
-                              <div className="h-2 bg-gray-200 rounded w-full"></div>
-                            </div>
-                          </div>
-                          <p className="font-mono text-purple-600 animate-pulse text-sm font-bold">{loadingText}</p>
-                        </div>
-                      )}
-
-                      {/* Results */}
-                      {scanComplete && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                          <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-                            <div>
-                              <Badge variant="secondary" className="mb-2 bg-green-50 text-green-700 hover:bg-green-100">Complete</Badge>
-                              <h3 className="text-xl font-bold text-gray-900">Executive Summary</h3>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Confidence</p>
-                              <p className="text-2xl font-black text-green-600">{reportData[selectedReport].score}%</p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            {[
-                              { icon: TrendingUp, color: "text-green-600", bg: "bg-green-50", border: "border-green-100", title: "Growth Driver", text: reportData[selectedReport].growth },
-                              { icon: Activity, color: "text-red-500", bg: "bg-red-50", border: "border-red-100", title: "Key Risk", text: reportData[selectedReport].risk },
-                              { icon: Zap, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", title: "Dividend Verdict", text: reportData[selectedReport].dividend }
-                            ].map((item, idx) => (
-                              <div key={idx} className={`p-4 ${item.bg} border ${item.border} rounded-xl group hover:shadow-md transition-all`}>
-                                <div className="flex items-center gap-3">
-                                  <div className={`p-1.5 bg-white rounded-lg shadow-sm h-fit ${item.color}`}>
-                                    <item.icon size={18} />
-                                  </div>
-                                  <div>
-                                    <h4 className={`font-bold ${item.color} text-sm mb-1 uppercase tracking-wide`}>{item.title}</h4>
-                                    <p className="text-gray-800 text-sm leading-relaxed">{item.text}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="flex gap-3 justify-end pt-2">
-                            <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:text-purple-600">
-                              <Link size={12} className="mr-1" /> Open PDF
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-xs">Export</Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-
-            {/* 2. JomSentimen */}
-            <section className="grid md:grid-cols-2 gap-8">
-              {/* Gauge Card */}
-              <Card className="border-none shadow-lg bg-gradient-to-b from-white to-gray-50 overflow-hidden relative min-h-[300px]">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full blur-[60px] opacity-40 pointer-events-none"></div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <span className="p-2 bg-orange-100 rounded-lg text-orange-600"><Gauge size={18} /></span>
-                    JomSentimen
-                  </CardTitle>
-                  <CardDescription>Market Emotion Radar</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center pt-4">
-                  {/* Corrected Gauge Visual - SVG Implementation */}
-                  <div className="relative w-64 h-32 mb-8 mx-auto">
-                    {/* SVG Gauge */}
-                    <svg viewBox="0 0 200 100" className="w-full h-full overflow-visible">
-                      {/* Background Arc */}
-                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#f3f4f6" strokeWidth="20" strokeLinecap="round" />
-
-                      {/* Colored Segments */}
-                      {/* Fear (Red) */}
-                      <path d="M 20 100 A 80 80 0 0 1 65 35" fill="none" stroke="#ef4444" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
-                      {/* Neutral (Yellow) */}
-                      <path d="M 65 35 A 80 80 0 0 1 135 35" fill="none" stroke="#eab308" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
-                      {/* Greed (Green) */}
-                      <path d="M 135 35 A 80 80 0 0 1 180 100" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
-
-                      {/* Needle */}
-                      {/* Score 78 -> 50.4 degrees */}
-                      {/* Explicit transformOrigin ensures it rotates around 100,100 */}
-                      <g
-                        className="transition-all duration-1000 ease-out"
-                        style={{
-                          transform: `rotate(${(78 / 100 * 180) - 90}deg)`,
-                          transformOrigin: '100px 100px'
-                        }}
-                      >
-                        <path d="M 100 100 L 100 20" stroke="#1e293b" strokeWidth="4" />
-                        <circle cx="100" cy="100" r="6" fill="#1e293b" stroke="white" strokeWidth="2" />
-                      </g>
-                    </svg>
-                  </div>
-
-                  {/* Grid for labels below gauge */}
-                  <div className="flex justify-between w-64 text-[10px] font-bold uppercase tracking-widest text-gray-400 -mt-6 mb-4 px-2">
-                    <span className="text-red-500">Fear</span>
-                    <span className="text-yellow-500">Neutral</span>
-                    <span className="text-green-600">Greed</span>
-                  </div>
-
-                  <div className="text-center space-y-1 mt-2">
-                    <div className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 font-bold text-xs mb-2 shadow-sm border border-green-200">
-                      Updated 5m ago
-                    </div>
-                    <h3 className="text-4xl font-black text-slate-800 tracking-tight">GREED</h3>
-                    <p className="text-gray-500 text-sm">Score: <span className="font-bold text-slate-800">78</span> / 100</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* News Feed - Fixed Alignment */}
-              <Card className="border-none shadow-lg bg-white h-full relative overflow-hidden flex flex-col">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-4">
-                  <CardTitle className="flex justify-between items-center text-base">
-                    <span>Live Analysis</span>
-                    <span className="flex items-center gap-1.5 text-[0.65rem] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-100">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> LIVE
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 flex-1">
-                  <div className="divide-y divide-gray-100">
-                    {[
-                      { source: "The Edge", time: "10m ago", text: "Tech sector rally continues as major data center confirmed in Johor.", sentiment: "Positive", color: "text-green-700", bg: "bg-green-100", border: "border-green-200", icon: Newspaper },
-                      { source: "X Trending", time: "32m ago", text: "Palm oil futures drop below RM 3800. Worrying for plantation stocks.", sentiment: "Negative", color: "text-red-700", bg: "bg-red-100", border: "border-red-200", icon: MessageSquare },
-                      { source: "StarBiz", time: "1h ago", text: "Bank Negara holds OPR at 3.00%. Stability expected.", sentiment: "Neutral", color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200", icon: Newspaper },
-                    ].map((news, i) => (
-                      <div key={i} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer block">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <news.icon size={12} className="text-gray-400" />
-                            <span className="text-xs font-bold text-gray-700">{news.source}</span>
-                            <span className="text-[10px] text-gray-400">• {news.time}</span>
-                          </div>
-                          <Badge variant="outline" className={`${news.bg} ${news.color} ${news.border} text-[10px] uppercase font-bold shrink-0 self-center`}>
-                            {news.sentiment}
-                          </Badge>
-                        </div>
-                        <p className="text-sm font-medium text-gray-800 leading-snug">"{news.text}"</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <div className="p-3 bg-gray-50/80 text-center border-t border-gray-100 mt-auto">
-                  <Button variant="link" size="sm" className="text-gray-500 h-auto py-0 text-xs">View All Sources</Button>
+      {/* TAB 1: AI LAB TOOLS */}
+      {activeTab === 'ai-tools' && (
+        <div className="jomi-stack-lg">
+          {/* 1. JomRingkas Annual Report Scanner */}
+          <section className="jomi-card jomi-card-pad">
+            <div className="jomi-bento-main" style={{ alignItems: 'stretch' }}>
+              {/* Left Controls */}
+              <div className="jomi-card-soft jomi-stack-md" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div className="jomi-stack-xs">
+                  <span className="jomi-pill-gain">
+                    <FileText size={13} />
+                    AI Report Decoder
+                  </span>
+                  <h3 className="jomi-display jomi-title-lg" style={{ marginTop: '0.25rem' }}>JomRingkas</h3>
+                  <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                    Turn 300-page Bursa Malaysia annual reports into 3 student-friendly takeaways in seconds.
+                  </p>
                 </div>
-              </Card>
-            </section>
 
-            {/* 3. Wealth Projector - Fixed Chart Height */}
-            <section className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-3xl opacity-5 transform rotate-1 scale-[1.01]"></div>
-
-              <Card className="border-none shadow-xl bg-white relative z-10 overflow-hidden">
-                <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
-
-                <CardHeader className="md:flex md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-6">
+                <div className="jomi-stack-md">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-xl mb-1">
-                      <span className="p-2 bg-blue-100 rounded-lg text-blue-600"><BarChart size={20} /></span>
-                      AI Wealth Projector
-                    </CardTitle>
-                    <CardDescription>Simulate the power of compound interest over 10 years.</CardDescription>
+                    <label htmlFor="report-select" className="jomi-label">Select Annual Report</label>
+                    <select
+                      id="report-select"
+                      value={selectedReport}
+                      onChange={(e) => {
+                        setSelectedReport(e.target.value as 'tenaga' | 'maybank');
+                        setScanComplete(false);
+                      }}
+                      className="jomi-input"
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <option value="tenaga">Tenaga Nasional Annual Report &apos;25</option>
+                      <option value="maybank">Maybank Integrated Report &apos;24</option>
+                    </select>
                   </div>
-                  <div className="hidden md:block text-right">
-                    <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Projected Total</p>
-                    <p className="text-3xl font-black text-blue-600">RM {finalWealth.toLocaleString()}</p>
-                  </div>
-                </CardHeader>
 
-                <CardContent className="p-0">
-                  <div className="grid lg:grid-cols-12 min-h-[400px]">
-                    {/* Chart - FORCED HEIGHT */}
-                    <div className="lg:col-span-8 p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col justify-between h-[450px]">
-                      <div className="h-full w-full relative">
-                        {/* ResponsiveContainer needs a parent with definite height */}
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={wealthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                            <defs>
-                              <linearGradient id="colorWealth" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
-                                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} dy={10} />
-                            <YAxis tickFormatter={(value) => `RM${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={50} />
-                            <Tooltip
-                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', padding: '12px', fontSize: '13px' }}
-                            />
-                            <Area type="monotone" dataKey="wealth" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorWealth)" />
-                            <Area type="monotone" dataKey="invested" stroke="#CBD5E1" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 justify-center mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> Total Wealth
-                          </div>
-                          <span className="text-xl font-black text-blue-600">RM {finalWealth.toLocaleString()}</span>
-                        </div>
-                        <div className="hidden sm:block w-px bg-gray-300"></div>
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
-                            <span className="w-2 h-2 rounded-full bg-gray-400"></span> Cash Invested
-                          </div>
-                          <span className="text-xl font-black text-gray-600">RM {finalInvested.toLocaleString()}</span>
-                        </div>
-                        <div className="hidden sm:block w-px bg-gray-300"></div>
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-2 text-xs font-bold text-green-600 uppercase tracking-wide mb-1">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span> Net Profit
-                          </div>
-                          <span className="text-xl font-black text-green-600">+ RM {(finalWealth - finalInvested).toLocaleString()}</span>
-                        </div>
-                      </div>
+                  <button
+                    type="button"
+                    className="jomi-btn jomi-btn-primary jomi-btn-lg jomi-btn-full"
+                    onClick={handleAnalyze}
+                    disabled={isScanning}
+                  >
+                    {isScanning ? (
+                      <>
+                        <Loader2 size={18} />
+                        <span>{loadingText}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={18} />
+                        <span>Analyze Annual Report</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Output */}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '280px' }}>
+                {!scanComplete && !isScanning && (
+                  <div className="jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center', padding: '2rem 1rem' }}>
+                    <div className="jomi-ticker-badge jomi-ticker-badge-lg">
+                      <Bot size={26} />
                     </div>
-
-                    {/* Controls */}
-                    <div className="lg:col-span-4 p-6 md:p-8 bg-gray-50/50 space-y-8 flex flex-col justify-center">
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          <Label className="text-sm font-bold text-gray-700">Monthly Investment</Label>
-                          <span className="text-blue-600 font-bold bg-blue-100 px-2 py-1 rounded text-xs">RM {monthlyInvest}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="100"
-                          max="5000"
-                          step="100"
-                          value={monthlyInvest}
-                          onChange={(e) => setMonthlyInvest(parseInt(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-700 transition-colors"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          <Label className="text-sm font-bold text-gray-700">Risk Profile</Label>
-                          <span className={`font-bold px-2 py-1 rounded text-xs ${riskLevel > 7 ? 'text-red-700 bg-red-100' : riskLevel > 4 ? 'text-yellow-700 bg-yellow-100' : 'text-green-700 bg-green-100'}`}>
-                            {riskLevel}/10
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min="1"
-                          max="10"
-                          step="1"
-                          value={riskLevel}
-                          onChange={(e) => setRiskLevel(parseInt(e.target.value))}
-                          className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${riskLevel > 7 ? 'accent-red-500' : riskLevel > 4 ? 'accent-yellow-500' : 'accent-green-500'} transition-all`}
-                        />
-                        <div className="mt-3 p-3 rounded-lg bg-white border border-gray-200 text-xs text-gray-500 leading-relaxed shadow-sm">
-                          {riskLevel <= 3 ? "🛡️ Conservative: Gov Bonds & Blue Chips (Est. 4-6% p.a)" :
-                            riskLevel <= 7 ? "⚖️ Balanced: Mixed Equity & Bonds (Est. 6-9% p.a)" :
-                              "🚀 Aggressive: Growth Stocks & Tech (Est. 9-12% p.a)"}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                        <div>
-                          <Label className="font-bold text-sm cursor-pointer" onClick={() => setInflationAdjusted(!inflationAdjusted)}>Inflation Adjusted</Label>
-                          <p className="text-[10px] text-gray-400">Real purchasing power (3%)</p>
-                        </div>
-                        <Switch checked={inflationAdjusted} onCheckedChange={setInflationAdjusted} />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-
-          </TabsContent>
-
-          {/* Existing Tabs Content - Unchanged */}
-          <TabsContent value="articles" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {articles.map((article, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge variant="secondary">{article.category}</Badge>
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
-                        <Clock size={14} />
-                        {article.readTime}
-                      </div>
-                    </div>
-                    <CardTitle className="text-xl">
-                      {language === 'ENG' ? article.titleEng : article.titleBm}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4">
-                      {language === 'ENG' ? article.descEng : article.descBm}
+                    <h4 className="jomi-display jomi-title-md">Ready to Scan</h4>
+                    <p className="jomi-text-sm jomi-muted" style={{ maxWidth: '320px', fontWeight: 600 }}>
+                      Choose a Bursa company report on the left and click Analyze to extract growth, risks, and dividend highlights.
                     </p>
-                    <Button variant="outline" className="w-full">
-                      <BookOpen className="mr-2" size={16} />
-                      {t.readMore}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+                  </div>
+                )}
 
-          <TabsContent value="tutorials" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {tutorials.map((tutorial, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
-                  <div className="relative aspect-video bg-gray-200">
-                    <ImageWithFallback
-                      src={index % 2 === 0
-                        ? "https://images.unsplash.com/photo-1579226905180-636b76d96082?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdG9jayUyMHRyYWRpbmclMjBkYXRhfGVufDF8fHx8MTc2MTkwMDk2N3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                        : "https://images.unsplash.com/photo-1668092547893-6402c0387885?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMGVkdWNhdGlvbiUyMGxlYXJuaW5nfGVufDF8fHx8MTc2MTgyMDI5M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                      }
-                      alt="Tutorial thumbnail"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                        <Play className="text-green-600 ml-1" size={28} fill="currentColor" />
+                {isScanning && (
+                  <div className="jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center', padding: '2rem 1rem' }}>
+                    <div className="jomi-pill-neutral" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                      <Loader2 size={16} />
+                      <span>{loadingText}</span>
+                    </div>
+                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                      Scanning {reportData[selectedReport].title}...
+                    </p>
+                  </div>
+                )}
+
+                {scanComplete && (
+                  <div className="jomi-stack-md">
+                    <div className="jomi-between" style={{ paddingBottom: '0.75rem', borderBottom: '1.5px solid var(--jomi-border)' }}>
+                      <div>
+                        <span className="jomi-pill-gain">Summary Ready</span>
+                        <h4 className="jomi-display jomi-title-md" style={{ marginTop: '0.35rem' }}>
+                          {reportData[selectedReport].title}
+                        </h4>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800, textTransform: 'uppercase' }}>AI Confidence</p>
+                        <p className="jomi-display jomi-nums" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#047857' }}>
+                          {reportData[selectedReport].score}%
+                        </p>
                       </div>
                     </div>
-                  </div>
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant={tutorial.level === 'Beginner' ? 'secondary' : 'default'}>{tutorial.level}</Badge>
+
+                    <div className="jomi-stack-sm">
+                      <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start' }}>
+                        <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                          <TrendingUp size={18} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>Growth Driver</p>
+                            <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{reportData[selectedReport].growth}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', backgroundColor: 'var(--jomi-coral-soft)', borderColor: 'var(--jomi-coral-border)' }}>
+                        <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                          <Activity size={18} color="#b91c1c" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#b91c1c' }}>Key Risk</p>
+                            <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{reportData[selectedReport].risk}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', backgroundColor: 'var(--jomi-gold-soft)', borderColor: 'var(--jomi-gold-border)' }}>
+                        <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                          <Zap size={18} color="#b45309" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#92400e' }}>Dividend Verdict</p>
+                            <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{reportData[selectedReport].dividend}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <CardTitle className="text-xl">
-                      {language === 'ENG' ? tutorial.titleEng : tutorial.titleBm}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4">
-                      {language === 'ENG' ? tutorial.descEng : tutorial.descBm}
-                    </p>
-                    <Button className="w-full bg-green-600 hover:bg-green-700">
-                      <Play className="mr-2" size={16} />
-                      {t.watchNow}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+
+                    <div className="jomi-cluster" style={{ justifyContent: 'flex-end' }}>
+                      <button type="button" className="jomi-btn jomi-btn-outline jomi-btn-sm">
+                        <Link size={13} />
+                        <span>Source PDF</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </main>
+          </section>
+
+          {/* 2. JomSentimen Radar + Live News */}
+          <section className="jomi-grid-2">
+            {/* Gauge Card */}
+            <div className="jomi-card jomi-card-pad jomi-stack-md" style={{ alignItems: 'center', textAlign: 'center' }}>
+              <div className="jomi-between" style={{ width: '100%', textAlign: 'left' }}>
+                <div className="jomi-cluster">
+                  <div className="jomi-ticker-badge">
+                    <Gauge size={18} />
+                  </div>
+                  <div>
+                    <h3 className="jomi-display jomi-title-md">JomSentimen</h3>
+                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>Bursa Market Emotion Radar</p>
+                  </div>
+                </div>
+                <span className="jomi-pill-gain">Updated 5m ago</span>
+              </div>
+
+              <div style={{ width: '240px', height: '125px', marginTop: '0.5rem' }}>
+                <svg viewBox="0 0 200 105" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                  <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e6f4ef" strokeWidth="18" strokeLinecap="round" />
+                  <path d="M 20 100 A 80 80 0 0 1 65 35" fill="none" stroke="#ef4444" strokeWidth="18" strokeLinecap="round" />
+                  <path d="M 65 35 A 80 80 0 0 1 135 35" fill="none" stroke="#f59e0b" strokeWidth="18" />
+                  <path d="M 135 35 A 80 80 0 0 1 180 100" fill="none" stroke="#10b981" strokeWidth="18" strokeLinecap="round" />
+                  <g
+                    style={{
+                      transform: `rotate(${(78 / 100) * 180 - 90}deg)`,
+                      transformOrigin: '100px 100px',
+                    }}
+                  >
+                    <path d="M 100 100 L 100 24" stroke="#0f2926" strokeWidth="4" strokeLinecap="round" />
+                    <circle cx="100" cy="100" r="6" fill="#0f2926" stroke="#ffffff" strokeWidth="2" />
+                  </g>
+                </svg>
+              </div>
+
+              <div className="jomi-between" style={{ width: '240px', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                <span style={{ color: '#b91c1c' }}>Fear</span>
+                <span style={{ color: '#b45309' }}>Neutral</span>
+                <span style={{ color: '#047857' }}>Greed</span>
+              </div>
+
+              <div>
+                <div className="jomi-display" style={{ fontSize: '2rem', fontWeight: 700, color: '#047857' }}>GREED</div>
+                <p className="jomi-text-sm jomi-muted jomi-nums" style={{ fontWeight: 700 }}>Score: 78 / 100</p>
+              </div>
+            </div>
+
+            {/* Live Headlines */}
+            <div className="jomi-card jomi-card-pad jomi-stack-md">
+              <div className="jomi-between">
+                <h3 className="jomi-display jomi-title-md">Live Headline Sentiment</h3>
+                <span className="jomi-pill-loss">LIVE</span>
+              </div>
+
+              <div className="jomi-stack-sm">
+                {[
+                  {
+                    source: 'The Edge',
+                    time: '10m ago',
+                    text: 'Tech sector rally continues as major data center confirmed in Johor.',
+                    sentiment: 'Positive',
+                    pill: 'jomi-pill-gain',
+                    icon: Newspaper,
+                  },
+                  {
+                    source: 'X Trending',
+                    time: '32m ago',
+                    text: 'Palm oil futures dip below RM 3,800; plantation counters cautious.',
+                    sentiment: 'Negative',
+                    pill: 'jomi-pill-loss',
+                    icon: MessageSquare,
+                  },
+                  {
+                    source: 'StarBiz',
+                    time: '1h ago',
+                    text: 'Bank Negara holds OPR steady at 3.00%, supporting banking stability.',
+                    sentiment: 'Neutral',
+                    pill: 'jomi-pill-neutral',
+                    icon: Newspaper,
+                  },
+                ].map((news, idx) => {
+                  const Icon = news.icon;
+                  return (
+                    <div key={idx} className="jomi-row" style={{ flexDirection: 'column', alignItems: 'stretch', cursor: 'default' }}>
+                      <div className="jomi-between">
+                        <span className="jomi-cluster jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>
+                          <Icon size={13} />
+                          <span>{news.source} · {news.time}</span>
+                        </span>
+                        <span className={news.pill}>{news.sentiment}</span>
+                      </div>
+                      <p className="jomi-text-sm" style={{ fontWeight: 700 }}>&ldquo;{news.text}&rdquo;</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* 3. AI Wealth Projector */}
+          <section className="jomi-card jomi-card-pad jomi-stack-md">
+            <div className="jomi-between">
+              <div className="jomi-cluster">
+                <div className="jomi-ticker-badge">
+                  <BarChart size={19} />
+                </div>
+                <div>
+                  <h3 className="jomi-display jomi-title-lg">AI Compound Wealth Projector</h3>
+                  <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                    Simulate 10 years of consistent monthly investing in Malaysia
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'right' }}>
+                <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800, textTransform: 'uppercase' }}>10-Year Projection</p>
+                <p className="jomi-display jomi-nums" style={{ fontSize: '1.85rem', fontWeight: 700, color: '#047857' }}>
+                  RM {finalWealth.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="jomi-bento-main">
+              {/* Chart + Summary Strip */}
+              <div className="jomi-stack-md">
+                <div style={{ width: '100%', height: 290 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={wealthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="jomiWealthGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.32} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e6f4ef" />
+                      <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#527972' }} axisLine={false} tickLine={false} />
+                      <YAxis
+                        tickFormatter={(value) => `RM${(value / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 11, fill: '#527972' }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={54}
+                      />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="wealth" stroke="#0d9488" strokeWidth={3} fillOpacity={1} fill="url(#jomiWealthGrad)" />
+                      <Area type="monotone" dataKey="invested" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="jomi-grid-3">
+                  <div className="jomi-card-soft jomi-stack-xs" style={{ padding: '0.85rem 1rem' }}>
+                    <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>PROJECTED WEALTH</span>
+                    <span className="jomi-display jomi-nums" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#047857' }}>
+                      RM {finalWealth.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="jomi-card-soft jomi-stack-xs" style={{ padding: '0.85rem 1rem', backgroundColor: 'var(--jomi-canvas)', borderColor: 'var(--jomi-border)' }}>
+                    <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>CASH INVESTED</span>
+                    <span className="jomi-display jomi-nums" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                      RM {finalInvested.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="jomi-card-gold jomi-stack-xs" style={{ padding: '0.85rem 1rem' }}>
+                    <span className="jomi-text-xs" style={{ fontWeight: 800, color: 'var(--jomi-gold-ink)' }}>COMPOUND GAIN</span>
+                    <span className="jomi-display jomi-nums" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--jomi-gold-ink)' }}>
+                      +RM {(finalWealth - finalInvested).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Controls */}
+              <div className="jomi-card-soft jomi-stack-md">
+                <div>
+                  <div className="jomi-between" style={{ marginBottom: '0.4rem' }}>
+                    <span className="jomi-text-sm" style={{ fontWeight: 800 }}>Monthly Contribution</span>
+                    <span className="jomi-pill-gain jomi-nums">RM {monthlyInvest}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="100"
+                    max="5000"
+                    step="100"
+                    value={monthlyInvest}
+                    onChange={(e) => setMonthlyInvest(parseInt(e.target.value, 10))}
+                    className="jomi-slider"
+                  />
+                </div>
+
+                <div>
+                  <div className="jomi-between" style={{ marginBottom: '0.4rem' }}>
+                    <span className="jomi-text-sm" style={{ fontWeight: 800 }}>Risk Level</span>
+                    <span className={`jomi-nums ${riskLevel > 7 ? 'jomi-pill-loss' : riskLevel > 4 ? 'jomi-pill-neutral' : 'jomi-pill-gain'}`}>
+                      {riskLevel} / 10
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    value={riskLevel}
+                    onChange={(e) => setRiskLevel(parseInt(e.target.value, 10))}
+                    className="jomi-slider"
+                  />
+                  <p className="jomi-text-xs jomi-muted" style={{ marginTop: '0.5rem', fontWeight: 700 }}>
+                    {riskLevel <= 3
+                      ? 'Conservative: Sukuk / Blue-Chip Dividends (~4–6% p.a.)'
+                      : riskLevel <= 7
+                        ? 'Balanced: Diversified Bursa Equities (~6–9% p.a.)'
+                        : 'Aggressive: Growth & Tech Counters (~9–12% p.a.)'}
+                  </p>
+                </div>
+
+                <div
+                  className="jomi-between"
+                  style={{ paddingTop: '0.85rem', borderTop: '1.5px solid var(--jomi-emerald-border)' }}
+                >
+                  <div>
+                    <p className="jomi-text-sm" style={{ fontWeight: 800 }}>Inflation Adjusted</p>
+                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600 }}>Real purchasing power (-3% p.a.)</p>
+                  </div>
+                  <Switch checked={inflationAdjusted} onCheckedChange={setInflationAdjusted} />
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* TAB 2: ARTICLES */}
+      {activeTab === 'articles' && (
+        <div className="jomi-grid-3">
+          {articles.map((article, index) => (
+            <div
+              key={index}
+              className="jomi-card jomi-card-interactive jomi-card-pad"
+              style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.25rem' }}
+            >
+              <div className="jomi-stack-sm">
+                <div className="jomi-between">
+                  <span className="jomi-pill-gain">{article.category}</span>
+                  <span className="jomi-cluster jomi-text-xs jomi-muted" style={{ gap: '0.25rem', fontWeight: 700 }}>
+                    <Clock size={13} />
+                    {article.readTime}
+                  </span>
+                </div>
+                <h3 className="jomi-display jomi-title-md">
+                  {language === 'ENG' ? article.titleEng : article.titleBm}
+                </h3>
+                <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                  {language === 'ENG' ? article.descEng : article.descBm}
+                </p>
+              </div>
+
+              <button type="button" className="jomi-btn jomi-btn-outline jomi-btn-full">
+                <BookOpen size={15} />
+                <span>{t.readMore}</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* TAB 3: VIDEO TUTORIALS */}
+      {activeTab === 'tutorials' && (
+        <div className="jomi-grid-2">
+          {tutorials.map((tutorial, index) => (
+            <div key={index} className="jomi-card jomi-card-interactive" style={{ overflow: 'hidden' }}>
+              <div style={{ position: 'relative', height: '190px', backgroundColor: '#e6f4ef' }}>
+                <ImageWithFallback
+                  src={
+                    index % 2 === 0
+                      ? 'https://images.unsplash.com/photo-1579226905180-636b76d96082?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
+                      : 'https://images.unsplash.com/photo-1668092547893-6402c0387885?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
+                  }
+                  alt="Tutorial thumbnail"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundColor: 'rgba(15, 41, 38, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '3.5rem',
+                      height: '3.5rem',
+                      borderRadius: '9999px',
+                      backgroundColor: '#ffffff',
+                      color: '#047857',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 0 0 #047857',
+                    }}
+                  >
+                    <Play size={22} fill="currentColor" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="jomi-card-pad jomi-stack-sm">
+                <div className="jomi-between">
+                  <span className="jomi-pill-neutral">{tutorial.level}</span>
+                  <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{tutorial.duration}</span>
+                </div>
+                <h3 className="jomi-display jomi-title-md">
+                  {language === 'ENG' ? tutorial.titleEng : tutorial.titleBm}
+                </h3>
+                <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                  {language === 'ENG' ? tutorial.descEng : tutorial.descBm}
+                </p>
+                <div style={{ paddingTop: '0.35rem' }}>
+                  <button type="button" className="jomi-btn jomi-btn-primary jomi-btn-full">
+                    <Play size={15} />
+                    <span>{t.watchNow}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
