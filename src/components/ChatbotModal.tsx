@@ -1,7 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Card } from './ui/card';
 import { X, Send, Sparkles } from 'lucide-react';
 
 interface ChatbotModalProps {
@@ -37,76 +34,68 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
 
   const texts = {
     ENG: {
-      title: 'JomAI Assistant',
+      title: 'JomAI Coach',
+      subtitle: 'Ask anything about Bursa stocks',
       placeholder: 'Ask JomAI...',
+      quickLabel: 'Quick Replies:',
+      typing: 'JomAI is thinking...',
       quickReplies: ['Analyze a stock', 'What is a dividend?', 'Contact Support'],
     },
     BM: {
-      title: 'Pembantu JomAI',
+      title: 'Jurulatih JomAI',
+      subtitle: 'Tanya apa sahaja tentang saham Bursa',
       placeholder: 'Tanya JomAI...',
+      quickLabel: 'Balasan Pantas:',
+      typing: 'JomAI sedang menaip...',
       quickReplies: ['Analisis saham', 'Apakah dividen?', 'Hubungi Sokongan'],
     }
   };
 
   const t = texts[language];
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
   const handleSendMessage = (text: string) => {
     if (!text.trim()) return;
 
-    // Add User Message
     const newUserMsg: Message = { role: 'user', content: text };
     setMessages(prev => [...prev, newUserMsg]);
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI Delay & Reply
     setTimeout(() => {
-      let aiResponse = "";
+      let aiResponse = '';
       const lowerText = text.toLowerCase();
 
-      // Specific Logic for Quick Replies
       if (lowerText.includes('analyze') || lowerText.includes('analisis')) {
         aiResponse = language === 'ENG'
-          ? "To analyze a stock, you can use the 'JomRingkas' tool in the Educational Hub or visit the Stock Details page for deep insights."
-          : "Untuk menganalisis saham, anda boleh menggunakan alat 'JomRingkas' di Hab Pendidikan atau melawat halaman Maklumat Saham.";
-      }
-      else if (lowerText.includes('dividend') || lowerText.includes('dividen')) {
+          ? "To analyze a stock, try 'JomRingkas' in the Educational Hub or click any stock card for deep insights and +10 XP learning tips."
+          : "Untuk menganalisis saham, cuba alat 'JomRingkas' di Hab Pendidikan atau klik mana-mana kad saham untuk maklumat terperinci.";
+      } else if (lowerText.includes('dividend') || lowerText.includes('dividen')) {
         aiResponse = language === 'ENG'
-          ? "A dividend is a portion of a company's profit paid to shareholders. It is usually paid quarterly. High yield stocks are great for passive income!"
-          : "Dividen adalah sebahagian daripada keuntungan syarikat yang dibayar kepada pemegang saham. Ia biasanya dibayar setiap suku tahun.";
-      }
-      else if (lowerText.includes('support') || lowerText.includes('sokongan')) {
+          ? "A dividend is a portion of a company's profit paid to shareholders. High-yield blue chips like MAYBANK (~6.2%) are popular for steady income!"
+          : "Dividen adalah sebahagian daripada keuntungan syarikat yang dibayar kepada pemegang saham. Saham dividen tinggi sesuai untuk pendapatan pasif!";
+      } else if (lowerText.includes('support') || lowerText.includes('sokongan')) {
         aiResponse = language === 'ENG'
           ? "You can reach our support team at support@jominvest.com or call 1-800-JOM-INVEST. We are here to help!"
           : "Anda boleh menghubungi pasukan sokongan kami di support@jominvest.com atau hubungi 1-800-JOM-INVEST. Kami sedia membantu!";
-      }
-      else {
-        // Fallback to random responses
+      } else {
         const responses = [
-          "That's an interesting question! Based on my data, the market is bullish.",
-          "I recommend checking the 'JomRingkas' tool for a detailed report.",
-          "Diversification is key to reducing risk. Have you looked at the sector breakdown?",
-          "Tenaga Nasional is showing strong dividend potential this year.",
-          "I'm just a demo AI for now, but I'm learning fast! 🚀",
-          "Could you clarify that? I want to make sure I give you the best investment advice."
+          "Great question! Diversification across sectors helps protect your portfolio from single-stock dips.",
+          "Try running 'JomRingkas' in the Learn tab for an instant executive summary of annual reports.",
+          "Check a stock's P/E Ratio and Dividend Yield before buying — tapping them in Stock Details gives you +10 XP!",
+          "Tenaga Nasional and Maybank are showing steady fundamentals in our Bursa tracker.",
+          "Could you tell me which Bursa stock or investing concept you'd like to explore?"
         ];
         aiResponse = responses[Math.floor(Math.random() * responses.length)];
       }
 
-      const newAiMsg: Message = { role: 'ai', content: aiResponse };
-      setMessages(prev => [...prev, newAiMsg]);
+      setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
       setIsTyping(false);
-    }, 1500);
+    }, 1200);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -116,52 +105,66 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-6">
-      {/* Backdrop */}
+    <div className="jomi-modal-backdrop" onClick={onClose}>
       <div
-        className="absolute inset-0 bg-black/20"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <Card className="relative w-full max-w-md h-[600px] flex flex-col shadow-2xl">
+        className="jomi-chat-panel"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label={t.title}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-lg">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+        <div className="jomi-chat-header">
+          <div className="jomi-cluster">
+            <div
+              style={{
+                width: '2.25rem',
+                height: '2.25rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <Sparkles size={18} />
             </div>
-            <h3 className="text-lg">{t.title}</h3>
+            <div>
+              <h3 className="jomi-display" style={{ color: '#ffffff', fontSize: '1.05rem', fontWeight: 700 }}>
+                {t.title}
+              </h3>
+              <p style={{ color: '#ccfbf1', fontSize: '0.72rem', fontWeight: 600 }}>{t.subtitle}</p>
+            </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-white hover:bg-white/20 p-1 rounded-full transition-colors"
+            aria-label="Close"
+            className="jomi-btn jomi-btn-ghost jomi-btn-icon"
+            style={{ color: '#ffffff' }}
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }} className="jomi-stack-sm">
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              style={{
+                display: 'flex',
+                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              }}
             >
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${message.role === 'user'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
-                  }`}
-              >
-                <p className="text-sm">{message.content}</p>
+              <div className={message.role === 'user' ? 'jomi-chat-bubble-user' : 'jomi-chat-bubble-ai'}>
+                <p>{message.content}</p>
               </div>
             </div>
           ))}
           {isTyping && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-lg p-3 text-gray-500 text-xs italic">
-                JomAI is typing...
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div className="jomi-chat-bubble-ai jomi-muted" style={{ fontStyle: 'italic', fontSize: '0.8rem' }}>
+                {t.typing}
               </div>
             </div>
           )}
@@ -169,46 +172,47 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
         </div>
 
         {/* Quick Replies */}
-        <div className="px-4 pb-2">
-          <p className="text-xs text-gray-500 mb-2">
-            {language === 'ENG' ? 'Quick Replies:' : 'Balasan Pantas:'}
+        <div style={{ padding: '0.5rem 1rem 0.65rem', borderTop: '1.5px solid var(--jomi-border)', backgroundColor: '#fafdfc' }}>
+          <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700, marginBottom: '0.4rem' }}>
+            {t.quickLabel}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="jomi-cluster">
             {t.quickReplies.map((reply, index) => (
-              <Button
+              <button
                 key={index}
-                variant="outline"
-                size="sm"
-                className="text-xs hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition-colors"
+                type="button"
+                className="jomi-btn jomi-btn-outline jomi-btn-sm"
                 onClick={() => handleSendMessage(reply)}
               >
                 {reply}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t">
-          <div className="flex gap-2">
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isTyping ? "JomAI is typing..." : t.placeholder}
-              className="flex-1"
-              disabled={isTyping}
-            />
-            <Button
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => handleSendMessage(inputValue)}
-              disabled={isTyping || !inputValue.trim()}
-            >
-              <Send size={18} />
-            </Button>
-          </div>
+        {/* Input */}
+        <div style={{ padding: '0.85rem 1rem', borderTop: '2px solid var(--jomi-border)', display: 'flex', gap: '0.5rem' }}>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={isTyping ? t.typing : t.placeholder}
+            className="jomi-input"
+            disabled={isTyping}
+          />
+          <button
+            type="button"
+            className="jomi-btn jomi-btn-primary jomi-btn-icon"
+            style={{ height: '2.85rem', width: '2.85rem' }}
+            onClick={() => handleSendMessage(inputValue)}
+            disabled={isTyping || !inputValue.trim()}
+            aria-label="Send"
+          >
+            <Send size={17} />
+          </button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

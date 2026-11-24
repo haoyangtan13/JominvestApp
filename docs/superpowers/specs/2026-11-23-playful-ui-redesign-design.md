@@ -1,70 +1,51 @@
-# JomINVEST UI Redesign — Tactile Playful Fintech Design Spec
+# JomINVEST Full UI Redesign — Tactile Playful Fintech Design Spec
 
 **Date:** 2026-11-23  
 **Direction:** Direction 1 — Tactile Playful Fintech (Duolingo × Wise)  
-**Target App:** JomINVEST (React 18 + Vite 6 + shadcn/ui + precompiled Tailwind v4 CSS)
+**Scope:** Complete layout + visual redesign from scratch across all 9 screens, preserving 100% of existing features, state, and business logic.
 
 ---
 
-## 1. Visual Identity & Core Principles
+## 1. Architecture: Shared App Shell + Dedicated Onboarding
 
-JomINVEST blends **gamified student learning** (XP, levels, Student Mode, Educational Hub) with **Bursa Malaysia simulated investing**. The UI must feel approachable, encouraging, and tactile without sacrificing financial clarity.
+Instead of 9 isolated screens with duplicate headers and mismatched styles:
 
-- **Light-mode first:** Soft warm-mint canvas (`#F4FAF8`) with crisp white elevated cards (`#FFFFFF`) and high-contrast deep ink text (`#0F2926`).
-- **Tactile depth:** Chunky rounded corners (`16px–24px`), crisp `2px` borders (`#D6EAE3`), and subtle bottom-edge 3D shadows (`0 4px 0 0`) on cards and primary buttons that depress smoothly (`translateY(3px)`) on press.
-- **No generic AI purple gradients:** Keep investing identity rooted in emerald/teal, with warm gold reserved for gamification (XP, levels, streaks, watchlist stars).
-- **Financial clarity:** All RM stock prices, portfolio values, and percentage changes use `font-variant-numeric: tabular-nums`. Gains use emerald (`#10B981`), losses use coral red (`#EF4444`), and badges never rely on color alone (always paired with `+`/`-` or directional icons).
-- **Accessibility & motion:** Minimum `4.5:1` contrast for body text, visible focus rings (`#0D9488`), `cursor: pointer` on all interactive controls, and `@media (prefers-reduced-motion: reduce)` support.
-
----
-
-## 2. Design Tokens (`src/styles/theme.css`)
-
-### Colors
-| Token | Hex | Usage |
-| --- | --- | --- |
-| `--jomi-canvas` / `--background` | `#F4FAF8` | App page background |
-| `--jomi-surface` / `--card` | `#FFFFFF` | Card, modal, header surfaces |
-| `--jomi-ink` / `--foreground` | `#0F2926` | Primary text & headings |
-| `--jomi-muted-ink` / `--muted-foreground` | `#527972` | Secondary labels & metadata |
-| `--jomi-border` / `--border` | `#D6EAE3` | Crisp 2px borders & card ledges |
-| `--jomi-primary` / `--primary` | `#0D9488` | Brand primary teal |
-| `--jomi-emerald` | `#10B981` | Positive gains, primary buy CTAs |
-| `--jomi-emerald-dark` | `#047857` | Tactile button bottom-shadow & hover |
-| `--jomi-gold` | `#F59E0B` | XP bars, level pills, streaks, reward CTAs |
-| `--jomi-gold-soft` | `#FEF3C7` | Gamification pill backgrounds |
-| `--jomi-gold-dark` | `#B45309` | Gold button shadow & text on gold-soft |
-| `--jomi-coral` / `--destructive` | `#EF4444` | Losses, sell/destructive CTAs |
-
-### Typography
-- **Display / Headings:** `Fredoka` (`500`, `600`, `700`) via Google Fonts in `index.html`, with rounded system fallbacks.
-- **Body / UI:** `Nunito` (`400`, `600`, `700`, `800`) via Google Fonts in `index.html`.
-- **Numbers:** `tabular-nums` utility (`.jomi-nums`) on all prices, percentages, and XP counters.
-
-### CSS Architecture Constraint
-`src/index.css` is a precompiled Tailwind v4.1.3 bundle exported from Figma Make (there is no Tailwind build step in `package.json`). Therefore:
-- Do **not** rely on uncompiled arbitrary Tailwind classes (e.g., `bg-[#0D9488]`).
-- Define all new design tokens and semantic tactile classes (`.jomi-page`, `.jomi-header`, `.jomi-card`, `.jomi-card-interactive`, `.jomi-hero`, `.jomi-btn-primary`, `.jomi-btn-gold`, `.jomi-btn-outline`, `.jomi-btn-danger`, `.jomi-pill-xp`, `.jomi-pill-gain`, `.jomi-pill-loss`, `.jomi-xp-track`, `.jomi-xp-fill`) in `src/styles/theme.css`, imported in `src/main.tsx` immediately after `./index.css`.
+1. **Onboarding Flow (`login`, `questionnaire`):**
+   - Full-canvas split/card layout on warm-mint canvas (`#f4faf8`) with brand badge, persistent `ENG / BM` switcher, tactile inputs, and interactive option cards.
+2. **Authenticated App Shell (`AppShell.tsx`)** wrapping `dashboard`, `portfolio`, `watchlist`, `ai-recommendation`, `stock-details`, `educational-hub`, and `profile`:
+   - **Desktop Left Sidebar (`260px`):** Brand logo, primary navigation (`Dashboard`, `Portfolio`, `Watchlist`, `AI Picks`, `Learn`, `Profile`), and a bottom **Level & XP Quest Card** with live progress bar (`userXP % 100`).
+   - **Sticky Top Bar:** Current screen title/context, `ENG / BM` language toggle, Level/XP badge, and **AI Coach** trigger button.
+   - **Mobile Bottom Nav:** Compact 5-tab bar (`Home`, `Portfolio`, `Watchlist`, `Learn`, `Profile`) on viewports `< 1024px`.
+   - **Global `ChatbotModal`:** Accessible from any authenticated screen via the top bar or floating AI Coach FAB.
 
 ---
 
-## 3. Component & Screen Scope (Phased)
+## 2. Design System (`src/styles/theme.css`)
 
-### Phase 1 — Foundation & Primitives
-- `index.html`: Load `Fredoka` & `Nunito` fonts, update page title to `JomINVEST — Gamified Student Investing`.
-- `src/styles/theme.css` + `src/main.tsx`: Global tokens, font rules, tactile card/button/badge/XP classes, reduced-motion rules.
-- `src/components/ui/button.tsx` & `src/components/ui/card.tsx`: Subtle tactile defaults (`cursor-pointer`, rounded corners, tactile focus states) preserving all existing variants and props.
+Because `src/index.css` is a precompiled CSS bundle without a Tailwind PostCSS step in `package.json`, **all layout, spacing, responsive grids, surfaces, typography, and component states for the redesign live in `src/styles/theme.css`** using semantic `.jomi-*` classes. Zero reliance on uncompiled Tailwind utility classes.
 
-### Phase 2 — Dashboard Hub
-- `src/components/Dashboard.tsx`:
-  - Sticky rounded tactile top navigation bar with brand mark, clickable Level/XP pill, Watchlist/Portfolio quick nav, and Profile button.
-  - Bento top row: Emerald-Teal **Portfolio Hero Card** (tabular RM value, held count, quick action CTAs) + **XP & Level Progress Card** (visual progress bar to next level, Educational Hub CTA).
-  - Playful tactile search bar with crisp focus ring and instant stock results.
-  - **Top AI Picks** & **Bursa Market Today** (Gainers / Losers / Watchlist tabs) upgraded to tactile stock cards with clean sparklines, green/coral delta pills, and hover lift.
-  - Floating tactile **AI Coach** FAB.
-  - Zero changes to business logic (`portfolio`, `watchlist`, `userXP`, `userLevel`, `language`, `navigateTo`).
+### Tokens
+- **Surfaces:** `--jomi-canvas: #f4faf8`, `--jomi-surface: #ffffff`, `--jomi-surface-soft: #f0fdf9`
+- **Typography:** `Fredoka` (`600–700`) for display/headings/numbers; clean system/rounded sans (`Nunito` + `system-ui`) for crisp small body text; `tabular-nums` on every RM price, percentage, and XP figure.
+- **Colors:**
+  - Brand Teal `#0d9488` & Gain Emerald `#10b981` (dark ledge `#047857`)
+  - Gamification Gold `#f59e0b` (soft `#fef3c7`, ledge `#b45309`)
+  - Loss Coral `#ef4444` (soft `#fef2f2`, ledge `#b91c1c`)
+  - Deep Ink `#0f2926`, Muted Ink `#527972`, Crisp Border `#d6eae3`
+- **Tactile Rules:** `2px` borders + bottom-ledge shadows (`0 4px 0 0`) on cards and primary buttons; smooth press (`translateY(3px)`); single-line `nowrap` pills with uniform padding/line-height so badges never wrap unevenly; `prefers-reduced-motion` support.
 
-### Phase 3 — Remaining 8 Screens (After Phase 1–2 Review)
-- Onboarding: `LoginScreen.tsx`, `RiskQuestionnaire.tsx`
-- Investing: `StockDetails.tsx`, `PortfolioPage.tsx`, `WatchlistPage.tsx`
-- AI & Learning: `AIRecommendation.tsx`, `EducationalHub.tsx`, `ChatbotModal.tsx`, `ProfileSettings.tsx`, `StudentModeToggle.tsx`, `LearningPopup.tsx`
+---
+
+## 3. Screen-by-Screen Feature & Layout Spec
+
+1. **`LoginScreen.tsx`:** Split hero + tactile auth card, Login/Register mode toggle, email/password/confirm fields, `ENG / BM` toggle, navigates to `questionnaire`.
+2. **`RiskQuestionnaire.tsx`:** Tactile step progress bar (`Step X of 5`), chunky selectable A/B/C answer cards with radio indicators, exact existing score calculation (`<=7` Protector, `<=11` Builder, else Explorer) -> `dashboard`.
+3. **`Dashboard.tsx`:** Clean Bento layout inside `AppShell` — Portfolio Hero banner + Investor Profile pill, instant Bursa stock search, horizontal/grid **Top AI Picks** (uniform StockCards), 2-column **Market Movers** (Gainers/Losers) + **Watchlist** preview, and **All Bursa Stocks** directory.
+4. **`StockDetails.tsx`:** Back bar, Stock Hero header (ticker badge, sector pill, live price + delta), **AI Insight** banner, 3 tabs (`Overview`, `Financials`, `News`), Recharts `AreaChart` in emerald/coral, tactile **Trade Ticket** (`-` / qty / `+`, estimated RM cost, Buy `+50 XP` & Sell buttons), and **Tap-to-Learn Key Metrics** (`+10 XP` badge, inline Quick Learn drawer, `hasLearnedTerm` tracking).
+5. **`PortfolioPage.tsx`:** Wealth summary hero + CSS conic-gradient **Sector Allocation** donut with legend, holdings list with Qty, Avg Price, Current Price, Market Value, Return `%` pill, and tactile `Sell Position` button (`+30 XP`), plus friendly empty state.
+6. **`WatchlistPage.tsx`:** Instant search-to-add bar (excluding already-watched stocks, Note: fixes `stockId: string` type mismatch cleanly while supporting existing `App.tsx`), watched stock cards with sparkline, price, 24h delta pill, click-through to `StockDetails`, and tactile remove button.
+7. **`AIRecommendation.tsx`:** Featured AI Pick spotlight (`TENAGA` + profile-tailored reasons), 3-reason checklist cards, Key Metrics strip, and working `Add to Simulated Portfolio` + `View Full Stock Details` actions.
+8. **`EducationalHub.tsx`:** Replaced legacy purple/pink glow with cohesive Tactile Emerald & Gold styling across all 3 tabs:
+   - **AI Tools:** `JomRingkas` PDF Annual Report scanner (`Tenaga` / `Maybank`, animated scan + Executive Summary), `JomSentimen` SVG Fear/Greed gauge + Live News sentiment feed, and `AI Wealth Projector` (10-year compound `AreaChart` + Monthly RM slider + Risk slider + Inflation switch).
+   - **Articles & Video Tutorials:** Clean tactile cards with read/duration badges and thumbnails.
+9. **`ProfileSettings.tsx` & `ChatbotModal.tsx`:** Editable user profile card (name/email edit & save!), Level & XP progress card, unlocked/locked Achievements grid (dynamically unlocking `Learned 3 Terms` when `hasLearnedTerm.length >= 3`), Language & Notification toggles, and a cohesive slide-up tactile `JomAI` coach drawer.
