@@ -311,15 +311,15 @@ export function Dashboard({ navigateTo, userProfile, language, setSelectedStock,
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="jomi-display text-base" style={{ fontWeight: 700 }}>{stock.ticker}</span>
-                                <span className="jomi-pill-sector">{stock.sector}</span>
-                              </div>
+                              <span className="jomi-display text-base block mb-1" style={{ fontWeight: 700 }}>{stock.ticker}</span>
                               <p className="text-xs" style={{ color: 'var(--jomi-muted-ink)' }}>{stock.name}</p>
                             </div>
                             <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
                               {stock.changePercent}
                             </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="jomi-pill-sector">{stock.sector}</span>
                           </div>
                         </CardHeader>
                         <CardContent>

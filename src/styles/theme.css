@@ -276,38 +276,47 @@ h4,
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.625rem;
   border-radius: 9999px;
   background-color: var(--jomi-emerald-soft);
   border: 1.5px solid var(--jomi-emerald-border);
   color: var(--jomi-emerald-dark);
   font-size: 0.75rem;
   font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .jomi-pill-loss {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.625rem;
   border-radius: 9999px;
   background-color: var(--jomi-coral-soft);
   border: 1.5px solid var(--jomi-coral-border);
   color: var(--jomi-coral-dark);
   font-size: 0.75rem;
   font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .jomi-pill-sector {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.55rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 9999px;
   background-color: var(--jomi-canvas);
   border: 1.5px solid var(--jomi-border);
   color: var(--jomi-muted-ink);
   font-size: 0.7rem;
   font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 /* Tactile Search Input */
