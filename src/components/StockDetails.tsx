@@ -12,6 +12,8 @@ import {
   X,
   Trophy,
   Sparkles,
+  ShieldCheck,
+  Coins,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -26,12 +28,16 @@ import {
 import type { Screen } from '../App';
 import type { StockData } from '../data/stocks';
 import { StockBadge } from './StockVisuals';
+import { formatRMFromSen, priceToSen } from '../lib/simulator';
 
 interface StockDetailsProps {
   navigateTo: (screen: Screen) => void;
   language: 'ENG' | 'BM';
   stock: StockData | null;
-  addToPortfolio: (stock: StockData, quantity: number) => void;
+  cashSen: number;
+  heldQuantity: number;
+  buyStock: (stock: StockData, quantity: number) => void;
+  sellStock: (stock: StockData, quantity: number) => void;
   addXP: (amount: number, reason: string) => void;
   hasLearnedTerm: string[];
   setHasLearnedTerm: (terms: string[]) => void;
@@ -41,21 +47,21 @@ export function StockDetails({
   navigateTo,
   language,
   stock,
-  addToPortfolio,
+  cashSen,
+  heldQuantity,
+  buyStock,
+  sellStock,
   addXP,
   hasLearnedTerm,
   setHasLearnedTerm,
 }: StockDetailsProps) {
-  const [quantity, setQuantity] = useState(1);
+  const [tradeSide, setTradeSide] = useState<'BUY' | 'SELL'>('BUY');
+  const [quantity, setQuantity] = useState(10);
   const [learningTerm, setLearningTerm] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'news'>('overview');
   const [timeframe, setTimeframe] = useState<'7D' | '15D' | '1M'>('1M');
 
   const definitions: Record<string, { ENG: { simple: string; detail: string }; BM: { simple: string; detail: string } }> = {
-    Price: {
-      ENG: { simple: 'The current cost to buy one share.', detail: 'Stock prices change every second based on supply and demand.' },
-      BM: { simple: 'Kos semasa untuk membeli satu saham.', detail: 'Harga saham berubah setiap saat berdasarkan permintaan dan penawaran.' },
-    },
     'P/E Ratio': {
       ENG: { simple: 'Are you overpaying?', detail: 'Price-to-Earnings Ratio. A high number (above 20) means the stock might be expensive relative to its profit.' },
       BM: { simple: 'Adakah anda bayar terlalu mahal?', detail: 'Nisbah Harga-kepada-Pendapatan. Nombor tinggi (atas 20) bermakna saham mungkin mahal berbanding keuntungannya.' },
@@ -77,7 +83,7 @@ export function StockDetails({
   const texts = {
     ENG: {
       back: 'Back to Dashboard',
-      priceChart: 'Interactive Price Action',
+      priceChart: 'Interactive KLSE Price Action',
       keyMetrics: 'Tap a Metric to Learn (+10 XP)',
       peRatio: 'P/E Ratio',
       dividend: 'Dividend Yield',
@@ -86,13 +92,13 @@ export function StockDetails({
       overview: 'Overview & Trade',
       financials: 'Financials',
       news: 'News',
-      buy: 'Simulate Buy (+50 XP)',
-      sell: 'View Portfolio',
+      buy: 'Execute Buy (+50 XP)',
+      sell: 'Execute Sell (+30 XP)',
       revenue: 'Annual Revenue',
       netProfit: 'Net Profit',
       debtEquity: 'Debt / Equity',
       units: 'Quantity (Units)',
-      estCost: 'Estimated Total Cost',
+      estCost: 'Order Value',
       xpReward: '+10 XP',
       quickLearn: 'Jom-Learn Quick Tip',
       knowledgeGained: 'Knowledge Gained!',
@@ -100,10 +106,14 @@ export function StockDetails({
       periodHigh: 'Period High',
       periodLow: 'Period Low',
       periodAvg: 'Avg Baseline',
+      availCash: 'Available Cash',
+      heldShares: 'You Hold',
+      insufficientCash: 'Exceeds virtual cash balance',
+      lotHint: '1 Bursa Lot = 100',
     },
     BM: {
       back: 'Kembali ke Papan Pemuka',
-      priceChart: 'Carta Pergerakan Harga',
+      priceChart: 'Carta Pergerakan Harga KLSE',
       keyMetrics: 'Ketik Metrik Untuk Belajar (+10 XP)',
       peRatio: 'Nisbah P/E',
       dividend: 'Hasil Dividen',
@@ -112,13 +122,13 @@ export function StockDetails({
       overview: 'Gambaran & Dagang',
       financials: 'Kewangan',
       news: 'Berita',
-      buy: 'Simulasi Beli (+50 XP)',
-      sell: 'Lihat Portfolio',
+      buy: 'Sahkan Belian (+50 XP)',
+      sell: 'Sahkan Jualan (+30 XP)',
       revenue: 'Hasil Tahunan',
       netProfit: 'Untung Bersih',
       debtEquity: 'Hutang / Ekuiti',
       units: 'Kuantiti (Unit)',
-      estCost: 'Anggaran Jumlah Kos',
+      estCost: 'Nilai Pesanan',
       xpReward: '+10 XP',
       quickLearn: 'Tip Pantas Jom-Belajar',
       knowledgeGained: 'Ilmu Diperolehi!',
@@ -126,6 +136,10 @@ export function StockDetails({
       periodHigh: 'Tertinggi',
       periodLow: 'Terendah',
       periodAvg: 'Purata',
+      availCash: 'Tunai Tersedia',
+      heldShares: 'Pegangan Anda',
+      insufficientCash: 'Melebihi baki tunai maya',
+      lotHint: '1 Lot Bursa = 100',
     },
   };
 
@@ -150,9 +164,7 @@ export function StockDetails({
   if (!stock) {
     return (
       <div className="jomi-card jomi-card-pad jomi-stack-md" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-        <p className="jomi-title-md">
-          {language === 'ENG' ? 'Select a stock from Dashboard to view details.' : 'Pilih saham daripada Papan Pemuka untuk melihat butiran.'}
-        </p>
+        <p className="jomi-title-md">Select a stock from Dashboard to view details.</p>
         <div>
           <button type="button" className="jomi-btn jomi-btn-primary" onClick={() => navigateTo('dashboard')}>
             {t.back}
@@ -162,14 +174,16 @@ export function StockDetails({
     );
   }
 
+  const unitPriceSen = priceToSen(stock.price);
+  const orderTotalSen = unitPriceSen * quantity;
+  const maxBuyable = unitPriceSen > 0 ? Math.floor(cashSen / unitPriceSen) : 0;
+  const canBuy = quantity >= 1 && orderTotalSen <= cashSen;
+  const canSell = quantity >= 1 && quantity <= heldQuantity;
+
   const handleQuantityChange = (val: string) => {
     const num = parseInt(val, 10);
-    if (!isNaN(num) && num > 0) setQuantity(num);
+    if (!isNaN(num) && num >= 1) setQuantity(num);
   };
-
-  const increment = () => setQuantity((q) => q + 1);
-  const decrement = () => setQuantity((q) => Math.max(1, q - 1));
-  const totalCost = (parseFloat(stock.price) * quantity).toFixed(2);
 
   const handleTermClick = (termKey: string) => {
     if (!hasLearnedTerm.includes(termKey)) {
@@ -261,9 +275,15 @@ export function StockDetails({
               <div className="jomi-cluster">
                 <h2 className="jomi-display jomi-title-lg">{stock.name}</h2>
                 <span className="jomi-pill-sector">{stock.sector}</span>
+                {stock.shariahCompliant && (
+                  <span className="jomi-pill-shariah">
+                    <ShieldCheck size={12} />
+                    Shariah-Compliant
+                  </span>
+                )}
               </div>
               <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>
-                {stock.ticker} · Bursa Malaysia
+                {stock.ticker} · {stock.klseCode} · Bursa Malaysia
               </p>
             </div>
           </div>
@@ -311,12 +331,12 @@ export function StockDetails({
               <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>
                 {stock.isPositive
                   ? (language === 'ENG' ? 'Bullish Momentum Detected' : 'Momentum Naik Dikesan')
-                  : (language === 'ENG' ? 'Potential Value Dip?' : 'Peluang Harga Diskaun?')}
+                  : (language === 'ENG' ? 'Consolidation / Pullback Zone' : 'Zon Penyusutan / Diskaun')}
               </p>
               <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
                 {language === 'ENG'
-                  ? `${stock.name} shows ${stock.isPositive ? 'positive' : 'soft'} short-term momentum. With a P/E of ${stock.peRatio}, it trades ${parseFloat(stock.peRatio) > 20 ? 'at a growth premium' : 'at a reasonable multiple'} relative to peers.`
-                  : `${stock.name} menunjukkan momentum jangka pendek yang ${stock.isPositive ? 'positif' : 'perlahan'}. Dengan P/E ${stock.peRatio}, penilaiannya kelihatan ${parseFloat(stock.peRatio) > 20 ? 'premium' : 'berpatutan'}.`}
+                  ? `${stock.name} (${stock.klseCode}) trades at ${stock.peRatio}x P/E with a ${stock.dividendYield} dividend yield.`
+                  : `${stock.name} (${stock.klseCode}) didagangkan pada P/E ${stock.peRatio}x dengan hasil dividen ${stock.dividendYield}.`}
               </p>
             </div>
 
@@ -339,7 +359,6 @@ export function StockDetails({
                 </div>
               </div>
 
-              {/* High / Low / Average Callout Strip */}
               <div className="jomi-grid-3">
                 <div style={{ padding: '0.6rem 0.85rem', borderRadius: '0.85rem', backgroundColor: 'var(--jomi-emerald-soft)', border: '1.5px solid var(--jomi-emerald-border)' }}>
                   <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>{t.periodHigh}</p>
@@ -384,28 +403,21 @@ export function StockDetails({
                       minTickGap={24}
                     />
                     <YAxis
-                      domain={['dataMin - 0.12', 'dataMax + 0.12']}
+                      domain={['dataMin - 0.08', 'dataMax + 0.08']}
                       tickFormatter={(v) => v.toFixed(2)}
                       tick={{ fontSize: 11, fill: '#527972', fontWeight: 700 }}
                       axisLine={false}
                       tickLine={false}
                       width={48}
                     />
-                    <ReferenceLine
-                      y={chartStats.avg}
-                      stroke="#94a3b8"
-                      strokeDasharray="4 4"
-                      strokeWidth={1.5}
-                    />
+                    <ReferenceLine y={chartStats.avg} stroke="#94a3b8" strokeDasharray="4 4" strokeWidth={1.5} />
                     <RechartsTooltip
                       content={({ active, payload, label }) => {
                         if (!active || !payload || !payload.length) return null;
                         const val = Number(payload[0].value);
                         return (
                           <div className="jomi-chart-tooltip jomi-nums">
-                            <div style={{ fontSize: '0.7rem', color: '#a7f3d0', marginBottom: '2px' }}>
-                              {new Date(label).toLocaleDateString()}
-                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#a7f3d0', marginBottom: '2px' }}>{label}</div>
                             <div style={{ fontSize: '1rem', fontWeight: 800 }}>RM {val.toFixed(2)}</div>
                           </div>
                         );
@@ -441,16 +453,65 @@ export function StockDetails({
             </div>
           </div>
 
-          {/* Right Sticky Trade Ticket */}
+          {/* Right Trade Ticket (Buy & Partial/Full Sell + Cash Balance) */}
           <div className="jomi-card jomi-card-pad jomi-stack-md">
-            <h3 className="jomi-display jomi-title-md">
-              {language === 'ENG' ? 'Practice Trade Ticket' : 'Tiket Dagangan Simulasi'}
-            </h3>
+            <div className="jomi-between">
+              <h3 className="jomi-display jomi-title-md">
+                {language === 'ENG' ? 'Practice Trade Ticket' : 'Tiket Dagangan Simulasi'}
+              </h3>
+              <span className="jomi-pill-sector">{t.lotHint}</span>
+            </div>
 
-            <div>
-              <label className="jomi-label">{t.units}</label>
+            {/* Buy / Sell Toggle */}
+            <div className="jomi-tabs-bar" style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+              <button
+                type="button"
+                onClick={() => setTradeSide('BUY')}
+                className={`jomi-tab-btn ${tradeSide === 'BUY' ? 'jomi-tab-btn-active' : ''}`}
+                style={{ justifyContent: 'center' }}
+              >
+                {language === 'ENG' ? 'BUY' : 'BELI'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTradeSide('SELL');
+                  if (heldQuantity > 0 && quantity > heldQuantity) setQuantity(heldQuantity);
+                }}
+                className={`jomi-tab-btn ${tradeSide === 'SELL' ? 'jomi-tab-btn-active' : ''}`}
+                style={{ justifyContent: 'center' }}
+              >
+                {language === 'ENG' ? `SELL (${heldQuantity})` : `JUAL (${heldQuantity})`}
+              </button>
+            </div>
+
+            {/* Wallet & Position Status */}
+            <div className="jomi-card-soft jomi-stack-xs" style={{ padding: '0.8rem 0.95rem' }}>
+              <div className="jomi-between jomi-text-xs">
+                <span className="jomi-muted" style={{ fontWeight: 800 }}>
+                  <Coins size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                  {t.availCash}
+                </span>
+                <span className="jomi-nums" style={{ fontWeight: 800, color: '#047857' }}>
+                  RM {formatRMFromSen(cashSen)}
+                </span>
+              </div>
+              <div className="jomi-between jomi-text-xs">
+                <span className="jomi-muted" style={{ fontWeight: 800 }}>{t.heldShares}</span>
+                <span className="jomi-nums" style={{ fontWeight: 800 }}>{heldQuantity} units</span>
+              </div>
+            </div>
+
+            {/* Quantity Input + Quick Presets */}
+            <div className="jomi-stack-xs">
+              <label className="jomi-label" style={{ marginBottom: 0 }}>{t.units}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button type="button" className="jomi-btn jomi-btn-outline jomi-btn-icon" onClick={decrement} aria-label="Decrease">
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-outline jomi-btn-icon"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 10))}
+                  aria-label="Decrease"
+                >
                   <Minus size={16} />
                 </button>
                 <input
@@ -461,9 +522,59 @@ export function StockDetails({
                   className="jomi-input jomi-nums"
                   style={{ textAlign: 'center', fontWeight: 800, fontSize: '1.1rem' }}
                 />
-                <button type="button" className="jomi-btn jomi-btn-outline jomi-btn-icon" onClick={increment} aria-label="Increase">
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-outline jomi-btn-icon"
+                  onClick={() => setQuantity((q) => q + 10)}
+                  aria-label="Increase"
+                >
                   <Plus size={16} />
                 </button>
+              </div>
+
+              <div className="jomi-cluster" style={{ gap: '0.4rem', paddingTop: '0.25rem' }}>
+                {tradeSide === 'BUY' ? (
+                  <>
+                    {[10, 50, 100].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                        onClick={() => setQuantity(preset)}
+                      >
+                        {preset}u
+                      </button>
+                    ))}
+                    {maxBuyable > 0 && (
+                      <button
+                        type="button"
+                        className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                        onClick={() => setQuantity(maxBuyable)}
+                      >
+                        Max ({maxBuyable})
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  heldQuantity > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                        onClick={() => setQuantity(Math.max(1, Math.floor(heldQuantity / 2)))}
+                      >
+                        50% ({Math.max(1, Math.floor(heldQuantity / 2))})
+                      </button>
+                      <button
+                        type="button"
+                        className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                        onClick={() => setQuantity(heldQuantity)}
+                      >
+                        All ({heldQuantity})
+                      </button>
+                    </>
+                  )
+                )}
               </div>
             </div>
 
@@ -477,25 +588,43 @@ export function StockDetails({
               className="jomi-between"
             >
               <span className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>{t.estCost}</span>
-              <span className="jomi-display jomi-nums" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                RM {totalCost}
+              <span className="jomi-display jomi-nums" style={{ fontSize: '1.45rem', fontWeight: 700 }}>
+                RM {formatRMFromSen(orderTotalSen)}
               </span>
             </div>
 
+            {tradeSide === 'BUY' && !canBuy && (
+              <p className="jomi-text-xs" style={{ color: '#b91c1c', fontWeight: 800 }}>
+                {t.insufficientCash} (Max: {maxBuyable} units)
+              </p>
+            )}
+
             <div className="jomi-stack-sm">
-              <button
-                type="button"
-                className="jomi-btn jomi-btn-primary jomi-btn-lg jomi-btn-full"
-                onClick={() => addToPortfolio(stock, quantity)}
-              >
-                {t.buy}
-              </button>
+              {tradeSide === 'BUY' ? (
+                <button
+                  type="button"
+                  disabled={!canBuy}
+                  className="jomi-btn jomi-btn-primary jomi-btn-lg jomi-btn-full"
+                  onClick={() => buyStock(stock, quantity)}
+                >
+                  {t.buy}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!canSell}
+                  className="jomi-btn jomi-btn-danger jomi-btn-lg jomi-btn-full"
+                  onClick={() => sellStock(stock, quantity)}
+                >
+                  {t.sell}
+                </button>
+              )}
               <button
                 type="button"
                 className="jomi-btn jomi-btn-outline jomi-btn-full"
                 onClick={() => navigateTo('portfolio')}
               >
-                {t.sell}
+                {language === 'ENG' ? 'Open Portfolio & Ledger' : 'Buka Portfolio & Lejar'}
               </button>
             </div>
           </div>
@@ -528,9 +657,9 @@ export function StockDetails({
       {activeTab === 'news' && (
         <div className="jomi-stack-sm">
           {[
-            { time: '2h ago · The Edge Markets', title: `${stock.name} reports resilient quarterly earnings amid ASEAN growth` },
-            { time: '5h ago · StarBiz', title: `Analysts maintain positive outlook on ${stock.ticker} dividend sustainability` },
-            { time: '1d ago · Bursa Filing', title: `${stock.name} highlights digital & sustainability capex roadmap` },
+            { time: '2h ago · The Edge Markets', title: `${stock.name} (${stock.klseCode}) sees active institutional flows on Bursa Malaysia` },
+            { time: '5h ago · StarBiz', title: `Analysts review ${stock.ticker} dividend outlook and FY earnings guidance` },
+            { time: '1d ago · Bursa Filing', title: `${stock.name} updates capital allocation & sustainability roadmap` },
           ].map((item, idx) => (
             <div key={idx} className="jomi-card jomi-card-interactive jomi-card-pad">
               <div className="jomi-cluster" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: '1rem' }}>

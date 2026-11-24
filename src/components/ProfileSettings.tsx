@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Switch } from './ui/switch';
-import { Edit, Trophy, Lock, CheckCircle2, Save, RotateCcw, LogOut } from 'lucide-react';
+import { Edit, Trophy, Lock, CheckCircle2, Save, RotateCcw, LogOut, Trash2 } from 'lucide-react';
 import type { Screen } from '../App';
 
 interface ProfileSettingsProps {
@@ -11,6 +11,8 @@ interface ProfileSettingsProps {
   userXP: number;
   userLevel: number;
   learnedCount?: number;
+  completedLessonsCount?: number;
+  onResetAccount?: () => void;
 }
 
 export function ProfileSettings({
@@ -21,16 +23,19 @@ export function ProfileSettings({
   userXP,
   userLevel,
   learnedCount = 0,
+  completedLessonsCount = 0,
+  onResetAccount,
 }: ProfileSettingsProps) {
   const [notifications, setNotifications] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [name, setName] = useState('Tan Hao Yang');
   const [email, setEmail] = useState('tan@email.com');
 
   const texts = {
     ENG: {
       title: 'Profile & Journey',
-      subtitle: 'Track your XP milestones, badges, and account preferences',
+      subtitle: 'Track your XP milestones, badges, and sandbox account settings',
       profileCard: 'Student Profile',
       edit: 'Edit Profile',
       save: 'Save Changes',
@@ -38,16 +43,19 @@ export function ProfileSettings({
       learningJourney: 'XP & Level Progress',
       level: 'Level',
       achievements: 'Milestone Badges',
-      settings: 'Preferences',
+      settings: 'Preferences & Sandbox',
       notifications: 'Price & Streak Alerts',
       language: 'App Language',
       signOut: 'Back to Login',
+      resetSandbox: 'Reset Virtual RM 10,000 Account',
+      confirmResetBtn: 'Confirm Reset to RM 10,000',
+      cancel: 'Cancel',
       unlocked: 'Unlocked',
       locked: 'Locked',
     },
     BM: {
       title: 'Profil & Perjalanan',
-      subtitle: 'Jejaki XP, lencana pencapaian, dan tetapan akaun anda',
+      subtitle: 'Jejaki XP, lencana pencapaian, dan tetapan kotak pasir anda',
       profileCard: 'Profil Pelajar',
       edit: 'Edit Profil',
       save: 'Simpan',
@@ -55,10 +63,13 @@ export function ProfileSettings({
       learningJourney: 'Kemajuan XP & Tahap',
       level: 'Tahap',
       achievements: 'Lencana Pencapaian',
-      settings: 'Tetapan',
-      notifications: ' makluman Harga & Rentetan',
+      settings: 'Tetapan & Kotak Pasir',
+      notifications: 'Makluman Harga & Rentetan',
       language: 'Bahasa Aplikasi',
       signOut: 'Kembali ke Log Masuk',
+      resetSandbox: 'Tetapkan Semula Akaun RM 10,000',
+      confirmResetBtn: 'Sahkan Tetapan Semula',
+      cancel: 'Batal',
       unlocked: 'Dibuka',
       locked: 'Terkunci',
     },
@@ -82,12 +93,12 @@ export function ProfileSettings({
       unlocked: safeXP >= 50,
     },
     {
-      id: 'xp-centurion',
-      titleEng: 'Level 2 Explorer',
-      titleBm: 'Peneroka Tahap 2',
-      descEng: 'Earned 100+ total XP across trades & lessons',
-      descBm: 'Mengumpul 100+ jumlah XP',
-      unlocked: safeXP >= 100,
+      id: 'quiz-scholar',
+      titleEng: 'Learn Hub Scholar',
+      titleBm: 'Sarjana Hab Ilmu',
+      descEng: 'Passed at least 1 lesson quiz in Learn Hub',
+      descBm: 'Lulus sekurang-kurangnya 1 kuiz pelajaran',
+      unlocked: completedLessonsCount >= 1,
     },
     {
       id: 'learned-3',
@@ -219,8 +230,8 @@ export function ProfileSettings({
             </div>
             <p className="jomi-text-xs" style={{ color: 'var(--jomi-gold-ink)', fontWeight: 700, marginTop: '0.25rem' }}>
               {language === 'ENG'
-                ? 'Tip: Simulate trades (+50 XP) or tap metrics in Stock Details (+10 XP) to level up!'
-                : 'Tip: Buat simulasi belian (+50 XP) atau ketik metrik dalam Butiran Saham (+10 XP)!'}
+                ? 'Tip: Buy stocks (+50 XP), pass Learn Hub quizzes (+25 XP), or tap metrics (+10 XP)!'
+                : 'Tip: Beli saham (+50 XP), lulus kuiz Hab Ilmu (+25 XP), atau ketik metrik (+10 XP)!'}
             </p>
           </div>
         </div>
@@ -262,7 +273,7 @@ export function ProfileSettings({
         </div>
       </div>
 
-      {/* 4. Preferences */}
+      {/* 4. Preferences & Sandbox Reset */}
       <div className="jomi-card jomi-card-pad jomi-stack-md">
         <h3 className="jomi-display jomi-title-md">{t.settings}</h3>
 
@@ -280,7 +291,39 @@ export function ProfileSettings({
           </div>
         </div>
 
-        <div style={{ paddingTop: '0.5rem' }}>
+        <div className="jomi-cluster" style={{ paddingTop: '0.5rem' }}>
+          {onResetAccount && !confirmReset && (
+            <button
+              type="button"
+              className="jomi-btn jomi-btn-outline jomi-btn-sm"
+              onClick={() => setConfirmReset(true)}
+            >
+              <Trash2 size={14} color="#b91c1c" />
+              <span>{t.resetSandbox}</span>
+            </button>
+          )}
+          {onResetAccount && confirmReset && (
+            <>
+              <button
+                type="button"
+                className="jomi-btn jomi-btn-danger jomi-btn-sm"
+                onClick={() => {
+                  onResetAccount();
+                  setConfirmReset(false);
+                }}
+              >
+                <span>{t.confirmResetBtn}</span>
+              </button>
+              <button
+                type="button"
+                className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                onClick={() => setConfirmReset(false)}
+              >
+                <span>{t.cancel}</span>
+              </button>
+            </>
+          )}
+
           <button
             type="button"
             className="jomi-btn jomi-btn-outline jomi-btn-sm"

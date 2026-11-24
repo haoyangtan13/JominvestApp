@@ -8,9 +8,11 @@ import {
   BookOpen,
   User,
   Star,
+  Coins,
 } from 'lucide-react';
 import { ChatbotModal } from './ChatbotModal';
 import type { Screen } from '../App';
+import type { StockData } from '../data/stocks';
 
 interface AppShellProps {
   currentScreen: Screen;
@@ -19,6 +21,11 @@ interface AppShellProps {
   toggleLanguage: () => void;
   userXP: number;
   userLevel: number;
+  cashRM: string;
+  portfolioSummary: string;
+  userProfile: string;
+  stocks: StockData[];
+  marketSource: 'live' | 'cached';
   children: ReactNode;
 }
 
@@ -29,6 +36,11 @@ export function AppShell({
   toggleLanguage,
   userXP,
   userLevel,
+  cashRM,
+  portfolioSummary,
+  userProfile,
+  stocks,
+  marketSource,
   children,
 }: AppShellProps) {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
@@ -50,6 +62,9 @@ export function AppShell({
       nextLevel: 'to next level',
       aiCoach: 'JomAI Coach',
       tagline: 'Student Investing',
+      cash: 'Cash:',
+      liveFeed: 'KLSE Live',
+      cachedFeed: 'KLSE Snapshot',
     },
     BM: {
       dashboard: 'Papan Pemuka',
@@ -63,6 +78,9 @@ export function AppShell({
       nextLevel: 'ke tahap seterusnya',
       aiCoach: 'Jurulatih JomAI',
       tagline: 'Pelaburan Pelajar',
+      cash: 'Tunai:',
+      liveFeed: 'KLSE Langsung',
+      cachedFeed: 'Data KLSE',
     },
   };
 
@@ -150,35 +168,53 @@ export function AppShell({
           </nav>
         </div>
 
-        {/* Bottom Gamification Progress Card */}
-        <div
-          className="jomi-sidebar-xp"
-          onClick={() => navigateTo('profile')}
-          role="button"
-          tabIndex={0}
-          style={{ cursor: 'pointer' }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              navigateTo('profile');
-            }
-          }}
-        >
-          <div className="jomi-between" style={{ marginBottom: '0.45rem' }}>
-            <span className="jomi-cluster" style={{ gap: '0.35rem', fontWeight: 800, fontSize: '0.82rem', color: 'var(--jomi-gold-ink)' }}>
-              <Star size={15} fill="#f59e0b" color="#b45309" />
-              {t.level} {safeLevel}
-            </span>
-            <span className="jomi-nums jomi-text-xs" style={{ fontWeight: 800, color: 'var(--jomi-ink)' }}>
-              {safeXP} XP
-            </span>
+        {/* Bottom Wallet + XP Card */}
+        <div className="jomi-stack-sm">
+          <div
+            className="jomi-card-soft"
+            style={{ padding: '0.8rem 0.95rem', cursor: 'pointer' }}
+            onClick={() => navigateTo('portfolio')}
+          >
+            <div className="jomi-between">
+              <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 800, textTransform: 'uppercase' }}>
+                {language === 'ENG' ? 'Virtual Cash' : 'Tunai Maya'}
+              </span>
+              <Coins size={14} color="#047857" />
+            </div>
+            <div className="jomi-display jomi-nums" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#047857', marginTop: '2px' }}>
+              RM {cashRM}
+            </div>
           </div>
-          <div className="jomi-progress-track" style={{ height: '0.65rem', backgroundColor: '#ffffff', borderColor: 'var(--jomi-gold-border)' }}>
-            <div className="jomi-progress-fill-gold" style={{ width: `${levelProgress}%` }} />
+
+          <div
+            className="jomi-sidebar-xp"
+            onClick={() => navigateTo('profile')}
+            role="button"
+            tabIndex={0}
+            style={{ cursor: 'pointer' }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigateTo('profile');
+              }
+            }}
+          >
+            <div className="jomi-between" style={{ marginBottom: '0.45rem' }}>
+              <span className="jomi-cluster" style={{ gap: '0.35rem', fontWeight: 800, fontSize: '0.82rem', color: 'var(--jomi-gold-ink)' }}>
+                <Star size={15} fill="#f59e0b" color="#b45309" />
+                {t.level} {safeLevel}
+              </span>
+              <span className="jomi-nums jomi-text-xs" style={{ fontWeight: 800, color: 'var(--jomi-ink)' }}>
+                {safeXP} XP
+              </span>
+            </div>
+            <div className="jomi-progress-track" style={{ height: '0.65rem', backgroundColor: '#ffffff', borderColor: 'var(--jomi-gold-border)' }}>
+              <div className="jomi-progress-fill-gold" style={{ width: `${levelProgress}%` }} />
+            </div>
+            <p className="jomi-nums" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--jomi-gold-ink)', marginTop: '0.4rem' }}>
+              {100 - levelProgress} XP {t.nextLevel}
+            </p>
           </div>
-          <p className="jomi-nums" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--jomi-gold-ink)', marginTop: '0.4rem' }}>
-            {100 - levelProgress} XP {t.nextLevel}
-          </p>
         </div>
       </aside>
 
@@ -195,9 +231,33 @@ export function AppShell({
             </span>
           </div>
 
-          <h1 className="jomi-display jomi-topbar-title">{screenTitles[currentScreen]}</h1>
+          <div className="jomi-cluster">
+            <h1 className="jomi-display jomi-topbar-title">{screenTitles[currentScreen]}</h1>
+            <span className="jomi-pill-sector">
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '999px',
+                  backgroundColor: marketSource === 'live' ? '#10b981' : '#0d9488',
+                  display: 'inline-block',
+                }}
+              />
+              {marketSource === 'live' ? t.liveFeed : t.cachedFeed}
+            </span>
+          </div>
 
           <div className="jomi-cluster">
+            <button
+              type="button"
+              onClick={() => navigateTo('portfolio')}
+              className="jomi-pill-gain jomi-nums"
+              style={{ cursor: 'pointer', padding: '0.32rem 0.7rem' }}
+            >
+              <Coins size={13} />
+              <span>{t.cash} RM {cashRM}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => navigateTo('profile')}
@@ -267,6 +327,10 @@ export function AppShell({
         isOpen={isChatbotOpen}
         onClose={() => setIsChatbotOpen(false)}
         language={language}
+        cashRM={cashRM}
+        portfolioSummary={portfolioSummary}
+        userProfile={userProfile}
+        stocks={stocks}
       />
     </div>
   );

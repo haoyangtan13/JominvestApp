@@ -1,10 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Send, Sparkles } from 'lucide-react';
+import { askJomAI } from '../services/aiService';
+import type { StockData } from '../data/stocks';
 
 interface ChatbotModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: 'ENG' | 'BM';
+  cashRM?: string;
+  portfolioSummary?: string;
+  userProfile?: string;
+  stocks?: StockData[];
 }
 
 interface Message {
@@ -15,19 +21,19 @@ interface Message {
 const initialMessages: Message[] = [
   {
     role: 'ai',
-    content: 'Hi Tan! How can I help you today?'
+    content: 'Hi Tan! Ask me about any of our 20 Bursa Malaysia stocks (e.g. MAYBANK, TENAGA, GAMUDA), Shariah counters, dividends, or your virtual cash!',
   },
-  {
-    role: 'user',
-    content: "What is Tenaga Nasional's P/E ratio?"
-  },
-  {
-    role: 'ai',
-    content: "Tenaga Nasional (TENAGA) has a P/E ratio of 14.2. This is a common metric to value a company. Would you like to learn more about P/E Ratios?"
-  }
 ];
 
-export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
+export function ChatbotModal({
+  isOpen,
+  onClose,
+  language,
+  cashRM = '10,000.00',
+  portfolioSummary = '0 positions',
+  userProfile = 'Jom-Explorer',
+  stocks,
+}: ChatbotModalProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -35,20 +41,20 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
   const texts = {
     ENG: {
       title: 'JomAI Coach',
-      subtitle: 'Ask anything about Bursa stocks',
-      placeholder: 'Ask JomAI...',
-      quickLabel: 'Quick Replies:',
-      typing: 'JomAI is thinking...',
-      quickReplies: ['Analyze a stock', 'What is a dividend?', 'Contact Support'],
+      subtitle: 'Grounded in real Bursa Malaysia stock data',
+      placeholder: 'Ask about MAYBANK, Shariah stocks, dividends...',
+      quickLabel: 'Quick Prompts:',
+      typing: 'JomAI is analyzing...',
+      quickReplies: ['Analyze TENAGA', 'Shariah stocks', 'Top dividends', 'My portfolio'],
     },
     BM: {
       title: 'Jurulatih JomAI',
-      subtitle: 'Tanya apa sahaja tentang saham Bursa',
-      placeholder: 'Tanya JomAI...',
-      quickLabel: 'Balasan Pantas:',
-      typing: 'JomAI sedang menaip...',
-      quickReplies: ['Analisis saham', 'Apakah dividen?', 'Hubungi Sokongan'],
-    }
+      subtitle: 'Berdasarkan data sebenar saham Bursa Malaysia',
+      placeholder: 'Tanya tentang MAYBANK, saham Syariah, dividen...',
+      quickLabel: 'Soalan Pantas:',
+      typing: 'JomAI sedang menganalisis...',
+      quickReplies: ['Analisis TENAGA', 'Saham Syariah', 'Dividen tertinggi', 'Portfolio saya'],
+    },
   };
 
   const t = texts[language];
@@ -58,48 +64,31 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSendMessage = (text: string) => {
-    if (!text.trim()) return;
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim() || isTyping) return;
 
-    const newUserMsg: Message = { role: 'user', content: text };
-    setMessages(prev => [...prev, newUserMsg]);
+    const clean = text.trim();
+    setMessages((prev) => [...prev, { role: 'user', content: clean }]);
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let aiResponse = '';
-      const lowerText = text.toLowerCase();
+    const { reply } = await askJomAI(clean, {
+      language,
+      cashRM,
+      portfolioSummary,
+      userProfile,
+      stocks,
+    });
 
-      if (lowerText.includes('analyze') || lowerText.includes('analisis')) {
-        aiResponse = language === 'ENG'
-          ? "To analyze a stock, try 'JomRingkas' in the Educational Hub or click any stock card for deep insights and +10 XP learning tips."
-          : "Untuk menganalisis saham, cuba alat 'JomRingkas' di Hab Pendidikan atau klik mana-mana kad saham untuk maklumat terperinci.";
-      } else if (lowerText.includes('dividend') || lowerText.includes('dividen')) {
-        aiResponse = language === 'ENG'
-          ? "A dividend is a portion of a company's profit paid to shareholders. High-yield blue chips like MAYBANK (~6.2%) are popular for steady income!"
-          : "Dividen adalah sebahagian daripada keuntungan syarikat yang dibayar kepada pemegang saham. Saham dividen tinggi sesuai untuk pendapatan pasif!";
-      } else if (lowerText.includes('support') || lowerText.includes('sokongan')) {
-        aiResponse = language === 'ENG'
-          ? "You can reach our support team at support@jominvest.com or call 1-800-JOM-INVEST. We are here to help!"
-          : "Anda boleh menghubungi pasukan sokongan kami di support@jominvest.com atau hubungi 1-800-JOM-INVEST. Kami sedia membantu!";
-      } else {
-        const responses = [
-          "Great question! Diversification across sectors helps protect your portfolio from single-stock dips.",
-          "Try running 'JomRingkas' in the Learn tab for an instant executive summary of annual reports.",
-          "Check a stock's P/E Ratio and Dividend Yield before buying — tapping them in Stock Details gives you +10 XP!",
-          "Tenaga Nasional and Maybank are showing steady fundamentals in our Bursa tracker.",
-          "Could you tell me which Bursa stock or investing concept you'd like to explore?"
-        ];
-        aiResponse = responses[Math.floor(Math.random() * responses.length)];
-      }
-
-      setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
-      setIsTyping(false);
-    }, 1200);
+    setMessages((prev) => [...prev, { role: 'ai', content: reply }]);
+    setIsTyping(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSendMessage(inputValue);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void handleSendMessage(inputValue);
+    }
   };
 
   if (!isOpen) return null;
@@ -182,7 +171,7 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
                 key={index}
                 type="button"
                 className="jomi-btn jomi-btn-outline jomi-btn-sm"
-                onClick={() => handleSendMessage(reply)}
+                onClick={() => void handleSendMessage(reply)}
               >
                 {reply}
               </button>
@@ -205,7 +194,7 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
             type="button"
             className="jomi-btn jomi-btn-primary jomi-btn-icon"
             style={{ height: '2.85rem', width: '2.85rem' }}
-            onClick={() => handleSendMessage(inputValue)}
+            onClick={() => void handleSendMessage(inputValue)}
             disabled={isTyping || !inputValue.trim()}
             aria-label="Send"
           >

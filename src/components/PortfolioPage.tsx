@@ -1,15 +1,29 @@
-import { useMemo } from 'react';
-import { PieChart as PieChartIcon, TrendingUp, TrendingDown, DollarSign, Wallet, Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  PieChart as PieChartIcon,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Wallet,
+  Plus,
+  Coins,
+  ReceiptText,
+  Sparkles,
+} from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { Screen, PortfolioItem } from '../App';
 import type { StockData } from '../data/stocks';
 import { StockBadge } from './StockVisuals';
+import { formatRMFromSen, priceToSen, type TransactionRecord } from '../lib/simulator';
 
 interface PortfolioPageProps {
   navigateTo: (screen: Screen) => void;
   language: 'ENG' | 'BM';
   portfolio: PortfolioItem[];
-  removeFromPortfolio: (stock: StockData) => void;
+  cashSen: number;
+  transactions: TransactionRecord[];
+  sellStock: (stock: StockData, quantity: number) => void;
+  onSimulateDividends: () => void;
   setSelectedStock?: (stock: StockData) => void;
 }
 
@@ -17,51 +31,65 @@ export function PortfolioPage({
   navigateTo,
   language,
   portfolio,
-  removeFromPortfolio,
+  cashSen,
+  transactions,
+  sellStock,
+  onSimulateDividends,
   setSelectedStock,
 }: PortfolioPageProps) {
+  const [viewTab, setViewTab] = useState<'holdings' | 'ledger'>('holdings');
+  const [sellUnitsMap, setSellUnitsMap] = useState<Record<string, number>>({});
+
   const texts = {
     ENG: {
-      myPortfolio: 'My Simulated Portfolio',
-      totalValue: 'Total Market Value',
-      totalHoldings: 'Active Positions',
+      totalEquity: 'Total Account Equity',
+      cashBalance: 'Virtual Cash',
+      holdingsValue: 'Stock Value',
       sectorAllocation: 'Sector Allocation',
-      holdings: 'Your Holdings',
+      holdingsTab: 'Holdings',
+      ledgerTab: 'Trade Ledger',
       noHoldings: 'Your simulated portfolio is empty.',
-      noHoldingsSub: 'Explore Bursa Malaysia stocks and make your first practice trade to earn +50 XP!',
+      noHoldingsSub: 'Use your RM 10,000.00 virtual cash to buy Bursa Malaysia stocks and earn +50 XP!',
       findStocks: 'Explore Bursa Stocks',
-      sell: 'Sell All (+30 XP)',
+      sellPartial: 'Sell Units',
+      sellAll: 'Sell All',
       currentPrice: 'Current',
       avgPrice: 'Avg Cost',
-      quantity: 'Units',
+      quantity: 'Held',
       marketValue: 'Market Value',
       noData: 'Buy stocks to see interactive sector ring',
+      simDividend: 'Simulate Annual Dividends',
+      noTx: 'No transactions recorded yet.',
     },
     BM: {
-      myPortfolio: 'Portfolio Simulasi Saya',
-      totalValue: 'Jumlah Nilai Pasaran',
-      totalHoldings: 'Pegangan Aktif',
+      totalEquity: 'Jumlah Ekuiti Akaun',
+      cashBalance: 'Tunai Maya',
+      holdingsValue: 'Nilai Saham',
       sectorAllocation: 'Peruntukan Sektor',
-      holdings: 'Pegangan Anda',
+      holdingsTab: 'Pegangan',
+      ledgerTab: 'Lejar Dagangan',
       noHoldings: 'Portfolio simulasi anda masih kosong.',
-      noHoldingsSub: 'Terokai saham Bursa Malaysia dan buat dagangan latihan pertama untuk +50 XP!',
+      noHoldingsSub: 'Gunakan tunai maya RM 10,000.00 anda untuk membeli saham Bursa Malaysia (+50 XP)!',
       findStocks: 'Terokai Saham Bursa',
-      sell: 'Jual Semua (+30 XP)',
+      sellPartial: 'Jual Unit',
+      sellAll: 'Jual Semua',
       currentPrice: 'Semasa',
       avgPrice: 'Kos Purata',
       quantity: 'Unit',
       marketValue: 'Nilai Pasaran',
       noData: 'Beli saham untuk lihat cincin sektor interaktif',
+      simDividend: 'Simulasi Dividen Tahunan',
+      noTx: 'Tiada rekod transaksi lagi.',
     },
   };
 
   const t = texts[language];
 
-  const totalValueNum = portfolio.reduce(
-    (acc, item) => acc + parseFloat(item.stock.price) * item.quantity,
+  const holdingsValueSen = portfolio.reduce(
+    (acc, item) => acc + priceToSen(item.stock.price) * item.quantity,
     0
   );
-  const totalValue = totalValueNum.toFixed(2);
+  const totalEquitySen = cashSen + holdingsValueSen;
 
   const sectorData = useMemo(() => {
     const sectors: Record<string, number> = {};
@@ -69,7 +97,7 @@ export function PortfolioPage({
 
     portfolio.forEach((item) => {
       const sector = item.stock.sector || 'Other';
-      sectors[sector] = (sectors[sector] || 0) + parseFloat(item.stock.price) * item.quantity;
+      sectors[sector] = (sectors[sector] || 0) + (priceToSen(item.stock.price) * item.quantity) / 100;
     });
 
     const total = Object.values(sectors).reduce((a, b) => a + b, 0) || 1;
@@ -93,29 +121,48 @@ export function PortfolioPage({
     <div className="jomi-stack-lg">
       {/* Summary Top Grid */}
       <div className="jomi-grid-2">
-        {/* Wealth Hero */}
-        <div className="jomi-hero jomi-stack-sm" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div className="jomi-cluster">
-            <Wallet size={20} color="#ccfbf1" />
-            <span className="jomi-hero-label">{t.totalValue}</span>
+        {/* Account Equity + Cash Split Hero */}
+        <div className="jomi-hero jomi-stack-md" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div className="jomi-cluster">
+              <Wallet size={19} color="#ccfbf1" />
+              <span className="jomi-hero-label">{t.totalEquity}</span>
+            </div>
+            <div className="jomi-display jomi-nums" style={{ fontSize: '2.45rem', fontWeight: 700, lineHeight: 1.15, marginTop: '0.25rem' }}>
+              RM {formatRMFromSen(totalEquitySen)}
+            </div>
           </div>
-          <div className="jomi-display jomi-nums" style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.15 }}>
-            RM {totalValue}
-          </div>
-          <div className="jomi-between" style={{ marginTop: '0.5rem' }}>
-            <span
+
+          <div className="jomi-cluster" style={{ gap: '0.6rem' }}>
+            <div
               className="jomi-nums"
               style={{
-                padding: '0.3rem 0.8rem',
-                borderRadius: '9999px',
+                padding: '0.35rem 0.8rem',
+                borderRadius: '0.75rem',
                 backgroundColor: 'rgba(15, 41, 38, 0.28)',
                 border: '1px solid rgba(255,255,255,0.2)',
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 fontWeight: 800,
               }}
             >
-              {portfolio.length} {t.totalHoldings}
-            </span>
+              {t.cashBalance}: RM {formatRMFromSen(cashSen)}
+            </div>
+            <div
+              className="jomi-nums"
+              style={{
+                padding: '0.35rem 0.8rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                fontSize: '0.76rem',
+                fontWeight: 800,
+              }}
+            >
+              {t.holdingsValue}: RM {formatRMFromSen(holdingsValueSen)}
+            </div>
+          </div>
+
+          <div className="jomi-cluster">
             <button
               type="button"
               className="jomi-btn jomi-btn-gold jomi-btn-sm"
@@ -124,6 +171,16 @@ export function PortfolioPage({
               <Plus size={15} />
               <span>{t.findStocks}</span>
             </button>
+            {portfolio.length > 0 && (
+              <button
+                type="button"
+                className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                onClick={onSimulateDividends}
+              >
+                <Coins size={14} color="#047857" />
+                <span>{t.simDividend}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -197,69 +254,134 @@ export function PortfolioPage({
         </div>
       </div>
 
-      {/* Holdings List */}
-      <section className="jomi-stack-md">
-        <h2 className="jomi-display jomi-title-lg jomi-cluster">
-          <TrendingUp size={20} color="#0d9488" />
-          <span>{t.holdings}</span>
-        </h2>
+      {/* Tabs: Holdings vs Trade Ledger */}
+      <div className="jomi-between">
+        <div className="jomi-tabs-bar">
+          <button
+            type="button"
+            onClick={() => setViewTab('holdings')}
+            className={`jomi-tab-btn ${viewTab === 'holdings' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <TrendingUp size={15} />
+            <span>{t.holdingsTab} ({portfolio.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewTab('ledger')}
+            className={`jomi-tab-btn ${viewTab === 'ledger' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <ReceiptText size={15} />
+            <span>{t.ledgerTab} ({transactions.length})</span>
+          </button>
+        </div>
+      </div>
 
-        {portfolio.length > 0 ? (
+      {viewTab === 'holdings' ? (
+        portfolio.length > 0 ? (
           <div className="jomi-stack-sm">
             {portfolio.map((item, index) => {
               const stock = item.stock;
               const returnPercent = calculateReturn(parseFloat(stock.price), item.averagePrice);
               const isPositive = parseFloat(returnPercent) >= 0;
-              const marketValue = (parseFloat(stock.price) * item.quantity).toFixed(2);
+              const marketValueSen = priceToSen(stock.price) * item.quantity;
+              const sellQty = Math.min(item.quantity, Math.max(1, sellUnitsMap[stock.id] ?? item.quantity));
 
               return (
                 <div
                   key={`${stock.id}-${index}`}
-                  className="jomi-card jomi-card-interactive jomi-card-pad jomi-between"
-                  onClick={() => {
-                    if (setSelectedStock) {
-                      setSelectedStock(stock);
-                      navigateTo('stock-details');
-                    }
-                  }}
+                  className="jomi-card jomi-card-pad jomi-stack-md"
                 >
-                  <div className="jomi-cluster" style={{ gap: '0.9rem' }}>
-                    <StockBadge ticker={stock.ticker} sector={stock.sector} size="lg" />
-                    <div className="jomi-stack-xs">
-                      <div className="jomi-cluster">
-                        <h4 className="jomi-display jomi-title-md">{stock.name}</h4>
-                        <span className="jomi-pill-sector">{stock.ticker}</span>
-                      </div>
-                      <div className="jomi-cluster">
-                        <span className="jomi-pill-sector jomi-nums">{t.quantity}: {item.quantity}</span>
-                        <span className="jomi-pill-sector jomi-nums">{t.avgPrice}: RM {item.averagePrice.toFixed(2)}</span>
-                        <span className="jomi-pill-sector jomi-nums">{t.currentPrice}: RM {stock.price}</span>
+                  <div className="jomi-between">
+                    <div
+                      className="jomi-cluster"
+                      style={{ gap: '0.9rem', cursor: 'pointer' }}
+                      onClick={() => {
+                        if (setSelectedStock) {
+                          setSelectedStock(stock);
+                          navigateTo('stock-details');
+                        }
+                      }}
+                    >
+                      <StockBadge ticker={stock.ticker} sector={stock.sector} size="lg" />
+                      <div className="jomi-stack-xs">
+                        <div className="jomi-cluster">
+                          <h4 className="jomi-display jomi-title-md">{stock.name}</h4>
+                          <span className="jomi-pill-sector">{stock.ticker}</span>
+                        </div>
+                        <div className="jomi-cluster">
+                          <span className="jomi-pill-sector jomi-nums">{t.quantity}: {item.quantity}</span>
+                          <span className="jomi-pill-sector jomi-nums">{t.avgPrice}: RM {item.averagePrice.toFixed(2)}</span>
+                          <span className="jomi-pill-sector jomi-nums">{t.currentPrice}: RM {stock.price}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="jomi-cluster" style={{ gap: '1.25rem' }}>
                     <div style={{ textAlign: 'right' }} className="jomi-stack-xs">
                       <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{t.marketValue}</p>
-                      <p className="jomi-display jomi-nums" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                        RM {marketValue}
+                      <p className="jomi-display jomi-nums" style={{ fontSize: '1.35rem', fontWeight: 700 }}>
+                        RM {formatRMFromSen(marketValueSen)}
                       </p>
                       <span className={`jomi-nums ${isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
                         {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                         {isPositive ? '+' : ''}{returnPercent}%
                       </span>
                     </div>
+                  </div>
 
-                    <button
-                      type="button"
-                      className="jomi-btn jomi-btn-danger jomi-btn-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFromPortfolio(stock);
-                      }}
-                    >
-                      {t.sell}
-                    </button>
+                  {/* Partial / Full Sell Controls */}
+                  <div
+                    className="jomi-between"
+                    style={{
+                      paddingTop: '0.75rem',
+                      borderTop: '1.5px solid var(--jomi-canvas)',
+                    }}
+                  >
+                    <div className="jomi-cluster">
+                      <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>
+                        {t.sellPartial}:
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.quantity}
+                        value={sellQty}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value, 10);
+                          if (!isNaN(v)) {
+                            setSellUnitsMap((prev) => ({
+                              ...prev,
+                              [stock.id]: Math.min(item.quantity, Math.max(1, v)),
+                            }));
+                          }
+                        }}
+                        className="jomi-input jomi-nums"
+                        style={{ width: '92px', height: '2.2rem', textAlign: 'center', padding: '0 0.5rem' }}
+                      />
+                      {item.quantity > 1 && (
+                        <button
+                          type="button"
+                          className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                          onClick={() =>
+                            setSellUnitsMap((prev) => ({
+                              ...prev,
+                              [stock.id]: Math.max(1, Math.floor(item.quantity / 2)),
+                            }))
+                          }
+                        >
+                          50%
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="jomi-cluster">
+                      <button
+                        type="button"
+                        className="jomi-btn jomi-btn-danger jomi-btn-sm"
+                        onClick={() => sellStock(stock, sellQty)}
+                      >
+                        {sellQty === item.quantity ? t.sellAll : `Sell ${sellQty}u`} (+30 XP)
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -280,8 +402,61 @@ export function PortfolioPage({
               </button>
             </div>
           </div>
-        )}
-      </section>
+        )
+      ) : (
+        /* Trade History Ledger Tab */
+        <div className="jomi-card jomi-card-pad jomi-stack-sm">
+          {transactions.length > 0 ? (
+            transactions.map((tx) => {
+              const badgeCls =
+                tx.type === 'BUY'
+                  ? 'jomi-pill-gain'
+                  : tx.type === 'DIVIDEND'
+                    ? 'jomi-pill-neutral'
+                    : 'jomi-pill-loss';
+              return (
+                <div key={tx.id} className="jomi-row" style={{ cursor: 'default' }}>
+                  <div className="jomi-cluster">
+                    <span className={badgeCls}>
+                      {tx.type === 'DIVIDEND' && <Sparkles size={11} />}
+                      {tx.type}
+                    </span>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: '0.9rem' }}>
+                        {tx.ticker} · {tx.quantity} units @ RM {formatRMFromSen(tx.unitPriceSen)}
+                      </p>
+                      <p className="jomi-text-xs jomi-muted jomi-nums" style={{ fontWeight: 600 }}>
+                        {tx.timestampIso.slice(0, 16).replace('T', ' ')} MYT
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <p className="jomi-display jomi-nums" style={{ fontWeight: 700, fontSize: '1rem' }}>
+                      {tx.type === 'BUY' ? '-' : '+'}RM {formatRMFromSen(tx.totalSen)}
+                    </p>
+                    {typeof tx.realizedPnlSen === 'number' && tx.type === 'SELL' && (
+                      <p
+                        className="jomi-text-xs jomi-nums"
+                        style={{
+                          fontWeight: 800,
+                          color: tx.realizedPnlSen >= 0 ? '#047857' : '#b91c1c',
+                        }}
+                      >
+                        P&amp;L: {tx.realizedPnlSen >= 0 ? '+' : ''}RM {formatRMFromSen(tx.realizedPnlSen)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="jomi-text-sm jomi-muted" style={{ textAlign: 'center', padding: '2rem', fontWeight: 700 }}>
+              {t.noTx}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
