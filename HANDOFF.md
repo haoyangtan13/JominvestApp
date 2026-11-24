@@ -1,37 +1,45 @@
 # JomINVEST — Project Handoff
 
-**Last Updated:** 2026-11-23  
-**Current Branch:** `feat/playful-ui-redesign` (`main` untouched)
+**Last Updated:** 2026-11-24  
+**Current Branch:** `feat/simulator-and-ai` (contains both Phase 1 UI Redesign + Phase 2 Simulator, Real KLSE Data & AI Proxy; `main` untouched)
 
 ## 1. What Is Live / Built
-- **Full Tactile Playful Fintech UI Redesign (Duolingo × Wise direction)** built across all 9 screens using `ui-ux-pro-max` design intelligence:
-  - **Shared App Shell (`src/components/AppShell.tsx`):** Persistent desktop left sidebar, sticky top header (`ENG / BM` switcher, Level/XP pill, `JomAI Coach` trigger), mobile bottom tab bar, live XP progress card, and global `ChatbotModal`.
-  - **Visual & Chart Primitives (`src/components/StockVisuals.tsx`, `src/styles/theme.css`):** Sector-coded SVG `StockBadge` icons (Financials, Utilities, Healthcare, Telecom, Industrial, Plantation, Consumer, Tech, Property), gradient `MiniSparkline` charts, textured grid/glow hero cards, uniform single-line status pills, and resilient `auto-fit` responsive grids. Zero emojis anywhere in the codebase.
-  - **Onboarding (`LoginScreen.tsx`, `RiskQuestionnaire.tsx`):** Split value-pitch login/register screen + 5-step tactile Investor Persona quiz preserving exact risk scoring.
-  - **Investing (`Dashboard.tsx`, `StockDetails.tsx`, `PortfolioPage.tsx`, `WatchlistPage.tsx`):**
-    - `Dashboard`: Textured multi-stat Portfolio Hero, Bursa search, uniform 2-row Top AI Picks cards, Market Movers (Gainers/Losers), Watchlist preview, and Bursa directory.
-    - `StockDetails`: `7D / 15D / 1M` timeframe `AreaChart` with High/Avg/Low stats, dashed `ReferenceLine`, dark custom hover tooltip, +/- Trade Ticket (`+50 XP`), Financials/News tabs, and `+10 XP` Tap-to-Learn metrics.
-    - `PortfolioPage`: Interactive Recharts `PieChart` sector allocation ring + holdings list with return `%` and `Sell All (+30 XP)`.
-    - `WatchlistPage`: Quick-add search + 2-row watched stock cards with sparklines and click-through to `StockDetails` (fixed `stockId: string` typing).
-  - **AI, Learn & Profile (`AIRecommendation.tsx`, `EducationalHub.tsx`, `ProfileSettings.tsx`, `ChatbotModal.tsx`):** Featured AI spotlight, `JomRingkas` PDF analyzer, `JomSentimen` SVG radar + live news, 10-year `AI Wealth Projector`, editable profile, dynamic milestone badges, and `JomAI Coach` drawer.
 
-## 2. Key Decisions & Rationale
-- **Self-contained CSS (`src/styles/theme.css`):** `src/index.css` is a precompiled bundle without a Tailwind build step in `package.json`. Putting all `.jomi-*` tokens, grids, and tactile components in `theme.css` avoids silent missing-utility bugs.
-- **Resilient Card Layouts:** Stock cards separate `Price + Sparkline` onto their own row above a full-width action button, and compact list badges use icon-only `size="sm"` so company names, tickers (`MAYBANK`, `TENAGA`), and buttons never wrap or clip awkwardly across narrow/split viewports.
-- **Strictly Zero Emojis:** All icons use `lucide-react` SVGs.
+### Phase 1: Full Tactile Playful Fintech UI Redesign
+- Shared `AppShell` (`src/components/AppShell.tsx`) + self-contained design system (`src/styles/theme.css`) + sector-coded SVG `StockBadge` and gradient `MiniSparkline` (`src/components/StockVisuals.tsx`).
+- All 9 screens (`LoginScreen`, `RiskQuestionnaire`, `Dashboard`, `StockDetails`, `PortfolioPage`, `WatchlistPage`, `AIRecommendation`, `EducationalHub`, `ProfileSettings`) + `ChatbotModal` redesigned with resilient responsive grids and strictly zero emojis.
 
-## 3. Phase Status
-- [x] Install `ui-ux-pro-max` skill & define Tactile Playful Fintech spec/plan (`docs/superpowers/`)
-- [x] Build `AppShell` + `theme.css` design system
-- [x] Redesign all 9 screens + `ChatbotModal`
-- [x] Rich Visual & Chart Upgrade (`StockVisuals`, Recharts timeframes/tooltips/ring)
-- [x] Layout resilience fix pass + production build verification (`vite build`)
-- [ ] Push `feat/playful-ui-redesign` / merge to `main` (awaiting user sign-off)
+### Phase 2: Real Simulator Engine, KLSE Market Data, Interactive Lessons & Cloudflare Worker
+- **Integer-Sen Simulator Engine (`src/lib/simulator.ts`):**
+  - Starting **RM 10,000.00** virtual cash (`1_000_000` sen), cash validation on Buy, partial & full unit Sell with realized P&L, **Trade History Ledger**, **Simulate Annual Dividends** payout, `localStorage` persistence (`jominvest_state_v1`), and 2-step **Reset Virtual Account** in Profile.
+- **Real Bursa Malaysia `.KL` Data (`src/data/stocks.ts` + `src/services/marketData.ts` + `scripts/fetch-klse-snapshot.mjs`):**
+  - Populated with real fetched KLSE daily closing prices & 1-month history (`Asia/Kuala_Lumpur`) across all 20 Bursa Malaysia stocks (`1155.KL` MAYBANK through `5211.KL` SUNWAY), plus SC Malaysia **Shariah-Compliant** flags and Dashboard filter.
+  - Auto-syncs live 15-min cached quotes from `${VITE_API_BASE_URL}/api/stocks` when deployed, falling back cleanly to the bundled KLSE snapshot.
+- **Smart AI (`src/services/aiService.ts` + `worker/`):**
+  - `JomRingkas` supports **all 20 Bursa Malaysia companies**.
+  - `JomAI Coach` is grounded in live stock metrics + your virtual cash & holdings.
+  - Calls `POST /api/ai` on the Cloudflare Worker when configured, with automatic data-grounded local analyst fallback when offline or before deploying.
+- **Interactive Learn Hub (`src/data/lessons.ts`, `src/components/EducationalHub.tsx`):**
+  - Clicking any Article or Video Guide opens an ENG/BM study modal + 2-question comprehension quiz awarding **`+25 XP`**.
 
-## 4. How to Resume / Run Locally (Windows PowerShell)
+## 2. Commands
+| Action | Command (PowerShell) |
+| --- | --- |
+| Install app deps | `npm install` |
+| Run unit tests (single fork, low RAM) | `npm test` |
+| Start local dev server | `npm run dev` |
+| Production build | `npm run build` |
+| Refresh static KLSE snapshot | `node scripts/fetch-klse-snapshot.mjs` |
+
+## 3. Optional Cloudflare Worker Deployment (User Step)
+When you want live 15-minute edge-cached Yahoo `.KL` quotes + real LLM answers in production:
 ```powershell
-git fetch origin
-git checkout feat/playful-ui-redesign
+# If Norton TLS intercepts wrangler on Windows:
+# $env:NODE_EXTRA_CA_CERTS = "C:\ProgramData\Norton\Antivirus\wscert.pem"
+
+cd worker
 npm install
-npm run dev
+npx wrangler secret put GEMINI_API_KEY
+npx wrangler deploy
 ```
+Then set `VITE_API_BASE_URL=https://jominvest-api.<your-subdomain>.workers.dev` in a local `.env` (git-ignored) and run `npm run dev` / `npm run build`.
