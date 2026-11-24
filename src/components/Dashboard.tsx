@@ -327,23 +327,24 @@ export function Dashboard({
                     <div
                       key={stock.id}
                       className="jomi-card jomi-card-interactive jomi-card-pad"
-                      style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.1rem' }}
+                      style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.15rem' }}
                       onClick={() => handleStockClick(stock)}
                     >
-                      <div className="jomi-between" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
-                        <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
-                          <StockBadge ticker={stock.ticker} sector={stock.sector} />
+                      {/* Row 1: Badge + Ticker/Name/Sector + Delta Pill */}
+                      <div className="jomi-between" style={{ alignItems: 'flex-start', flexWrap: 'nowrap', gap: '0.75rem' }}>
+                        <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0, alignItems: 'flex-start' }}>
+                          <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
                           <div style={{ minWidth: 0 }}>
-                            <div className="jomi-display" style={{ fontSize: '1.05rem', fontWeight: 700 }}>
+                            <div className="jomi-display" style={{ fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
                               {stock.ticker}
                             </div>
                             <p
                               className="jomi-text-xs jomi-muted"
-                              style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                              style={{ fontWeight: 600, marginTop: '2px', lineHeight: 1.3 }}
                             >
                               {stock.name}
                             </p>
-                            <div style={{ marginTop: '0.35rem' }}>
+                            <div style={{ marginTop: '0.4rem' }}>
                               <span className="jomi-pill-sector">{stock.sector}</span>
                             </div>
                           </div>
@@ -355,20 +356,23 @@ export function Dashboard({
                         </span>
                       </div>
 
-                      <div className="jomi-between" style={{ alignItems: 'flex-end', paddingTop: '0.25rem', borderTop: '1.5px solid var(--jomi-canvas)' }}>
-                        <div className="jomi-cluster" style={{ gap: '0.75rem' }}>
-                          <span className="jomi-display jomi-nums" style={{ fontSize: '1.45rem', fontWeight: 700 }}>
+                      {/* Row 2: Price + Sparkline cleanly separated above full-width CTA */}
+                      <div className="jomi-stack-sm" style={{ paddingTop: '0.65rem', borderTop: '1.5px solid var(--jomi-canvas)' }}>
+                        <div className="jomi-between" style={{ flexWrap: 'nowrap' }}>
+                          <span className="jomi-display jomi-nums" style={{ fontSize: '1.5rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
                             RM {stock.price}
                           </span>
                           <MiniSparkline
                             data={stock.sparkline}
                             isPositive={stock.isPositive}
+                            width={88}
+                            height={30}
                             idSuffix={`pick-${stock.id}`}
                           />
                         </div>
                         <button
                           type="button"
-                          className="jomi-btn jomi-btn-primary jomi-btn-sm"
+                          className="jomi-btn jomi-btn-primary jomi-btn-sm jomi-btn-full"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleStockClick(stock);
@@ -411,29 +415,21 @@ export function Dashboard({
                       style={{ padding: '0.95rem 1.1rem' }}
                       onClick={() => handleStockClick(stock)}
                     >
-                      <div className="jomi-between" style={{ flexWrap: 'nowrap' }}>
+                      <div className="jomi-between" style={{ flexWrap: 'nowrap', gap: '0.75rem' }}>
                         <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
                           <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
                           <div style={{ minWidth: 0 }}>
-                            <h4
-                              style={{
-                                fontSize: '0.9rem',
-                                fontWeight: 700,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
+                            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.25 }}>
                               {stock.name}
                             </h4>
-                            <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                            <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700, marginTop: '2px' }}>
                               {stock.ticker}
                             </p>
                           </div>
                         </div>
 
                         <div style={{ textAlign: 'right', flexShrink: 0 }} className="jomi-stack-xs">
-                          <p className="jomi-nums" style={{ fontSize: '0.92rem', fontWeight: 800 }}>
+                          <p className="jomi-nums" style={{ fontSize: '0.92rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
                             RM {stock.price}
                           </p>
                           <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
@@ -465,7 +461,7 @@ export function Dashboard({
               }
             }}
           >
-            <div className="jomi-between" style={{ flexWrap: 'nowrap' }}>
+            <div className="jomi-between">
               <div className="jomi-cluster" style={{ flexWrap: 'nowrap' }}>
                 <div
                   style={{
@@ -536,16 +532,17 @@ export function Dashboard({
                 <div
                   key={stock.id}
                   className="jomi-row"
+                  style={{ flexWrap: 'nowrap' }}
                   onClick={() => handleStockClick(stock)}
                 >
                   <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
                     <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: '0.86rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {stock.name}
-                      </p>
-                      <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                      <p className="jomi-display" style={{ fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.2 }}>
                         {stock.ticker}
+                      </p>
+                      <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600, lineHeight: 1.25 }}>
+                        {stock.name}
                       </p>
                     </div>
                   </div>
@@ -567,30 +564,43 @@ export function Dashboard({
                 <div
                   key={stock.id}
                   className="jomi-row"
+                  style={{ flexWrap: 'nowrap' }}
                   onClick={() => handleStockClick(stock)}
                 >
                   <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
                     <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {stock.name}
-                      </p>
-                      <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                      <p className="jomi-display" style={{ fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.2 }}>
                         {stock.ticker}
+                      </p>
+                      <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600, lineHeight: 1.25 }}>
+                        {stock.sector}
                       </p>
                     </div>
                   </div>
-                  <div className="jomi-cluster" style={{ flexWrap: 'nowrap', flexShrink: 0 }}>
+                  <div className="jomi-cluster" style={{ flexWrap: 'nowrap', flexShrink: 0, gap: '0.6rem' }}>
                     <MiniSparkline
                       data={stock.sparkline}
                       isPositive={stock.isPositive}
-                      width={64}
-                      height={24}
+                      width={56}
+                      height={22}
                       idSuffix={`wl-${stock.id}`}
                     />
-                    <span className="jomi-nums" style={{ fontSize: '0.85rem', fontWeight: 800 }}>
-                      RM {stock.price}
-                    </span>
+                    <div style={{ textAlign: 'right' }}>
+                      <p className="jomi-nums" style={{ fontSize: '0.86rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                        RM {stock.price}
+                      </p>
+                      <p
+                        className="jomi-nums"
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          color: stock.isPositive ? '#047857' : '#b91c1c',
+                        }}
+                      >
+                        {stock.changePercent}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -129,7 +129,8 @@ export function WatchlistPage({
           {watchlist.map((stock) => (
             <div
               key={stock.id}
-              className="jomi-card jomi-card-interactive jomi-card-pad jomi-between"
+              className="jomi-card jomi-card-interactive jomi-card-pad"
+              style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}
               onClick={() => {
                 if (setSelectedStock) {
                   setSelectedStock(stock);
@@ -137,52 +138,62 @@ export function WatchlistPage({
                 }
               }}
             >
-              <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
-                <StockBadge ticker={stock.ticker} sector={stock.sector} />
-                <div style={{ minWidth: 0 }} className="jomi-stack-xs">
-                  <div className="jomi-cluster">
-                    <span className="jomi-display" style={{ fontWeight: 700, fontSize: '1.05rem' }}>
-                      {stock.ticker}
-                    </span>
-                    <span className="jomi-pill-sector">{stock.sector}</span>
+              <div className="jomi-between" style={{ alignItems: 'flex-start', flexWrap: 'nowrap', gap: '0.75rem' }}>
+                <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0, alignItems: 'flex-start' }}>
+                  <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
+                  <div style={{ minWidth: 0 }}>
+                    <div className="jomi-cluster" style={{ gap: '0.45rem' }}>
+                      <span className="jomi-display" style={{ fontWeight: 700, fontSize: '1.05rem' }}>
+                        {stock.ticker}
+                      </span>
+                      <span className="jomi-pill-sector">{stock.sector}</span>
+                    </div>
+                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600, marginTop: '2px', lineHeight: 1.3 }}>
+                      {stock.name}
+                    </p>
                   </div>
-                  <p
-                    className="jomi-text-xs jomi-muted"
-                    style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                  >
-                    {stock.name}
-                  </p>
                 </div>
-              </div>
 
-              <div className="jomi-cluster" style={{ flexWrap: 'nowrap', gap: '0.85rem' }}>
-                <MiniSparkline
-                  data={stock.sparkline}
-                  isPositive={stock.isPositive}
-                  idSuffix={`watchpage-${stock.id}`}
-                />
-                <div style={{ textAlign: 'right' }} className="jomi-stack-xs">
-                  <p className="jomi-display jomi-nums" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-                    RM {stock.price}
-                  </p>
-                  <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
-                    {stock.isPositive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                    {stock.changePercent}
-                  </span>
-                </div>
                 <button
                   type="button"
                   aria-label={t.remove}
                   title={t.remove}
                   className="jomi-btn jomi-btn-outline jomi-btn-icon"
-                  style={{ color: 'var(--jomi-coral-dark)' }}
+                  style={{ width: '2.2rem', height: '2.2rem', color: 'var(--jomi-coral-dark)' }}
                   onClick={(e) => {
                     e.stopPropagation();
                     removeFromWatchlist(stock.id);
                   }}
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={15} />
                 </button>
+              </div>
+
+              <div
+                className="jomi-between"
+                style={{
+                  flexWrap: 'nowrap',
+                  paddingTop: '0.65rem',
+                  borderTop: '1.5px solid var(--jomi-canvas)',
+                }}
+              >
+                <div>
+                  <p className="jomi-display jomi-nums" style={{ fontSize: '1.35rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    RM {stock.price}
+                  </p>
+                  <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`} style={{ marginTop: '4px' }}>
+                    {stock.isPositive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                    {stock.changePercent}
+                  </span>
+                </div>
+
+                <MiniSparkline
+                  data={stock.sparkline}
+                  isPositive={stock.isPositive}
+                  width={96}
+                  height={32}
+                  idSuffix={`watchpage-${stock.id}`}
+                />
               </div>
             </div>
           ))}

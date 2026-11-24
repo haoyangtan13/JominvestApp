@@ -125,10 +125,10 @@ export function StockBadge({ ticker, sector = '', size = 'md' }: StockBadgeProps
 
   const dims =
     size === 'sm'
-      ? { box: '2.45rem', radius: '0.75rem', icon: 15, sub: '0.54rem' }
+      ? { box: '2.5rem', radius: '0.8rem', icon: 18, showText: false, sub: '0.5rem' }
       : size === 'lg'
-        ? { box: '3.65rem', radius: '1.05rem', icon: 22, sub: '0.64rem' }
-        : { box: '2.9rem', radius: '0.9rem', icon: 17, sub: '0.58rem' };
+        ? { box: '3.75rem', radius: '1.1rem', icon: 21, showText: true, sub: ticker.length > 5 ? '0.52rem' : '0.62rem' }
+        : { box: '3rem', radius: '0.92rem', icon: 17, showText: true, sub: ticker.length > 5 ? '0.47rem' : '0.56rem' };
 
   return (
     <div
@@ -145,22 +145,26 @@ export function StockBadge({ ticker, sector = '', size = 'md' }: StockBadgeProps
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '1px',
+        gap: '2px',
+        padding: '2px',
         flexShrink: 0,
       }}
     >
       <Icon size={dims.icon} strokeWidth={2.4} />
-      <span
-        className="jomi-display"
-        style={{
-          fontSize: dims.sub,
-          fontWeight: 700,
-          lineHeight: 1,
-          letterSpacing: '0.02em',
-        }}
-      >
-        {ticker.slice(0, 4)}
-      </span>
+      {dims.showText && (
+        <span
+          className="jomi-display"
+          style={{
+            fontSize: dims.sub,
+            fontWeight: 700,
+            lineHeight: 1,
+            letterSpacing: '-0.01em',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {ticker}
+        </span>
+      )}
     </div>
   );
 }

@@ -168,20 +168,20 @@ p {
 .jomi-main {
   flex: 1;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 6rem;
+  padding: 1.5rem 1rem 6.5rem;
 }
 
 @media (min-width: 768px) {
   .jomi-main {
-    padding: 2rem 1.75rem 6rem;
+    padding: 1.75rem 1.5rem 6.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .jomi-main {
-    padding: 2rem 2.25rem 3.5rem;
+    padding: 2rem 2rem 5.5rem;
   }
 }
 
@@ -297,13 +297,13 @@ p {
 
 .jomi-grid-2 {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 275px), 1fr));
   gap: 1rem;
 }
 
 .jomi-grid-3 {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1rem;
 }
 
@@ -320,14 +320,12 @@ p {
 }
 
 @media (min-width: 768px) {
-  .jomi-grid-2 { grid-template-columns: repeat(2, 1fr); }
-  .jomi-grid-3 { grid-template-columns: repeat(3, 1fr); }
   .jomi-grid-4 { grid-template-columns: repeat(4, 1fr); }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1120px) {
   .jomi-bento-main {
-    grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
     align-items: start;
   }
 }

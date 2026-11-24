@@ -134,8 +134,8 @@ export function PortfolioPage({
             <span>{t.sectorAllocation}</span>
           </h3>
 
-          <div className="jomi-cluster" style={{ gap: '1.25rem', flexWrap: 'nowrap' }}>
-            <div style={{ width: '132px', height: '132px', flexShrink: 0 }}>
+          <div className="jomi-cluster" style={{ gap: '1.25rem', alignItems: 'center' }}>
+            <div style={{ width: '128px', height: '128px', flexShrink: 0, margin: '0 auto' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
