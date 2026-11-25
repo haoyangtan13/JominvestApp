@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   ArrowLeft,
   HelpCircle,
@@ -14,6 +14,9 @@ import {
   Sparkles,
   ShieldCheck,
   Coins,
+  Loader2,
+  RefreshCw,
+  ExternalLink,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -29,11 +32,20 @@ import type { Screen } from '../App';
 import type { StockData } from '../data/stocks';
 import { StockBadge } from './StockVisuals';
 import { formatRMFromSen, priceToSen } from '../lib/simulator';
+import {
+  analyzeStockReport,
+  computeStockTechnicals,
+  fetchLiveStockNews,
+  safeExternalHref,
+  type NewsHeadline,
+  type StockReportSummary,
+} from '../services/aiService';
 
 interface StockDetailsProps {
   navigateTo: (screen: Screen) => void;
   language: 'ENG' | 'BM';
   stock: StockData | null;
+  allStocks?: StockData[];
   cashSen: number;
   heldQuantity: number;
   buyStock: (stock: StockData, quantity: number) => void;
@@ -47,6 +59,7 @@ export function StockDetails({
   navigateTo,
   language,
   stock,
+  allStocks,
   cashSen,
   heldQuantity,
   buyStock,
@@ -60,6 +73,11 @@ export function StockDetails({
   const [learningTerm, setLearningTerm] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'news'>('overview');
   const [timeframe, setTimeframe] = useState<'7D' | '15D' | '1M'>('1M');
+  const [liveReport, setLiveReport] = useState<StockReportSummary | null>(null);
+  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  const [liveNews, setLiveNews] = useState<NewsHeadline[]>([]);
+  const [newsSource, setNewsSource] = useState<'live' | 'offline' | null>(null);
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
 
   const definitions: Record<string, { ENG: { simple: string; detail: string }; BM: { simple: string; detail: string } }> = {
     'P/E Ratio': {
@@ -160,6 +178,36 @@ export function StockDetails({
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
     return { high, low, avg };
   }, [chartSlice]);
+
+  const technicals = useMemo(() => (stock ? computeStockTechnicals(stock) : null), [stock]);
+
+  const loadLiveNews = useCallback(async (target: StockData) => {
+    setIsLoadingNews(true);
+    const res = await fetchLiveStockNews(target);
+    setLiveNews(res.headlines);
+    setNewsSource(res.source);
+    setIsLoadingNews(false);
+  }, []);
+
+  const handleRunLiveInsight = async () => {
+    if (!stock || isLoadingInsight) return;
+    setIsLoadingInsight(true);
+    const res = await analyzeStockReport(stock, language, undefined, fetch, allStocks);
+    setLiveReport(res);
+    setIsLoadingInsight(false);
+  };
+
+  useEffect(() => {
+    setLiveReport(null);
+    setLiveNews([]);
+    setNewsSource(null);
+  }, [stock?.id]);
+
+  useEffect(() => {
+    if (stock && activeTab === 'news' && newsSource === null && !isLoadingNews) {
+      void loadLiveNews(stock);
+    }
+  }, [stock, activeTab, newsSource, isLoadingNews, loadLiveNews]);
 
   if (!stock) {
     return (
@@ -322,22 +370,72 @@ export function StockDetails({
         <div className="jomi-bento-main">
           {/* Left: Rich Price Chart + Description + Tap-to-Learn Metrics */}
           <div className="jomi-stack-lg">
-            {/* AI Insight Banner */}
-            <div className="jomi-card-soft jomi-stack-xs">
-              <div className="jomi-cluster" style={{ color: '#065f46', fontWeight: 800, fontSize: '0.9rem' }}>
-                <Sparkles size={17} color="#0d9488" />
-                <span>{t.aiInsight}</span>
+            {/* Live AI & News Insight Banner */}
+            <div className="jomi-card-soft jomi-stack-sm">
+              <div className="jomi-between">
+                <div className="jomi-cluster" style={{ color: '#065f46', fontWeight: 800, fontSize: '0.9rem' }}>
+                  <Sparkles size={17} color="#0d9488" />
+                  <span>{t.aiInsight}</span>
+                  {technicals && (
+                    <span className="jomi-pill-neutral jomi-nums">30D: {technicals.return30dPct}</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-primary jomi-btn-sm"
+                  onClick={() => void handleRunLiveInsight()}
+                  disabled={isLoadingInsight}
+                >
+                  {isLoadingInsight ? <Loader2 size={14} /> : <Sparkles size={14} />}
+                  <span>
+                    {isLoadingInsight
+                      ? (language === 'ENG' ? 'Analyzing...' : 'Menganalisis...')
+                      : liveReport
+                        ? (language === 'ENG' ? 'Refresh AI Brief' : 'Segar Semula AI')
+                        : (language === 'ENG' ? 'Run Live AI & News Insight' : 'Jana Analisis AI & Berita')}
+                  </span>
+                </button>
               </div>
-              <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>
-                {stock.isPositive
-                  ? (language === 'ENG' ? 'Bullish Momentum Detected' : 'Momentum Naik Dikesan')
-                  : (language === 'ENG' ? 'Consolidation / Pullback Zone' : 'Zon Penyusutan / Diskaun')}
-              </p>
-              <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
-                {language === 'ENG'
-                  ? `${stock.name} (${stock.klseCode}) trades at ${stock.peRatio}x P/E with a ${stock.dividendYield} dividend yield.`
-                  : `${stock.name} (${stock.klseCode}) didagangkan pada P/E ${stock.peRatio}x dengan hasil dividen ${stock.dividendYield}.`}
-              </p>
+
+              {!liveReport ? (
+                <>
+                  <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>
+                    {technicals ? technicals.trend : (stock.isPositive ? 'Positive Momentum' : 'Consolidation Zone')}
+                  </p>
+                  <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                    {language === 'ENG'
+                      ? `${stock.name} (${stock.klseCode}) trades at ${stock.peRatio}x P/E (${stock.dividendYield} yield), 30D range RM ${technicals?.low30d ?? stock.price}–RM ${technicals?.high30d ?? stock.price}. Click "Run Live AI & News Insight" for live catalysts & peer comparison.`
+                      : `${stock.name} (${stock.klseCode}) didagangkan pada P/E ${stock.peRatio}x (hasil ${stock.dividendYield}). Tekan "Jana Analisis AI & Berita" untuk pemangkin berita & perbandingan rakan sektor.`}
+                  </p>
+                </>
+              ) : (
+                <div className="jomi-stack-xs">
+                  <div className="jomi-cluster">
+                    <span className="jomi-pill-gain">
+                      {liveReport.source === 'live-ai' ? 'Live AI + News' : 'Local Brief'}
+                    </span>
+                    <span className="jomi-pill-neutral jomi-nums">Score: {liveReport.score}/100</span>
+                  </div>
+                  <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{liveReport.growth}</p>
+                  {liveReport.newsCatalysts && (
+                    <p className="jomi-text-sm" style={{ fontWeight: 600 }}>
+                      <strong>{language === 'ENG' ? 'News Catalyst: ' : 'Pemangkin Berita: '}</strong>
+                      {liveReport.newsCatalysts}
+                    </p>
+                  )}
+                  {liveReport.peerComparison && (
+                    <p className="jomi-text-sm" style={{ fontWeight: 600 }}>
+                      <strong>{language === 'ENG' ? 'Peer Context: ' : 'Perbandingan Sektor: '}</strong>
+                      {liveReport.peerComparison}
+                    </p>
+                  )}
+                  {liveReport.studentTakeaway && (
+                    <p className="jomi-text-xs" style={{ fontWeight: 800, color: '#065f46' }}>
+                      {liveReport.studentTakeaway}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Interactive Timeframe Price Chart Card */}
@@ -655,24 +753,71 @@ export function StockDetails({
       )}
 
       {activeTab === 'news' && (
-        <div className="jomi-stack-sm">
-          {[
-            { time: '2h ago · The Edge Markets', title: `${stock.name} (${stock.klseCode}) sees active institutional flows on Bursa Malaysia` },
-            { time: '5h ago · StarBiz', title: `Analysts review ${stock.ticker} dividend outlook and FY earnings guidance` },
-            { time: '1d ago · Bursa Filing', title: `${stock.name} updates capital allocation & sustainability roadmap` },
-          ].map((item, idx) => (
-            <div key={idx} className="jomi-card jomi-card-interactive jomi-card-pad">
-              <div className="jomi-cluster" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: '1rem' }}>
-                <div className="jomi-ticker-badge">
-                  <Newspaper size={18} />
-                </div>
-                <div className="jomi-stack-xs">
-                  <h4 style={{ fontSize: '0.98rem', fontWeight: 700 }}>{item.title}</h4>
-                  <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{item.time}</p>
-                </div>
-              </div>
+        <div className="jomi-stack-md">
+          <div className="jomi-between">
+            <div className="jomi-cluster">
+              <span className="jomi-pill-gain">
+                {newsSource === 'live' ? 'Live Malaysian RSS' : 'News Feed'}
+              </span>
+              <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                {stock.name} ({stock.klseCode})
+              </span>
             </div>
-          ))}
+            <button
+              type="button"
+              className="jomi-btn jomi-btn-outline jomi-btn-sm"
+              onClick={() => void loadLiveNews(stock)}
+              disabled={isLoadingNews}
+            >
+              {isLoadingNews ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+              <span>{language === 'ENG' ? 'Refresh News' : 'Segar Berita'}</span>
+            </button>
+          </div>
+
+          {isLoadingNews ? (
+            <div className="jomi-card jomi-card-pad jomi-cluster" style={{ justifyContent: 'center', padding: '2rem' }}>
+              <Loader2 size={18} />
+              <span className="jomi-text-sm" style={{ fontWeight: 700 }}>
+                {language === 'ENG' ? `Fetching live headlines for ${stock.ticker}...` : `Memuat turun berita terkini ${stock.ticker}...`}
+              </span>
+            </div>
+          ) : liveNews.length > 0 ? (
+            <div className="jomi-stack-sm">
+              {liveNews.map((item, idx) => (
+                <a
+                  key={idx}
+                  href={safeExternalHref(item.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="jomi-card jomi-card-interactive jomi-card-pad"
+                  style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div className="jomi-between" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div className="jomi-cluster" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: '1rem' }}>
+                      <div className="jomi-ticker-badge">
+                        <Newspaper size={18} />
+                      </div>
+                      <div className="jomi-stack-xs">
+                        <h4 style={{ fontSize: '0.98rem', fontWeight: 700 }}>{item.title}</h4>
+                        <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                          {item.timeAgo} · {item.source}
+                        </p>
+                      </div>
+                    </div>
+                    <ExternalLink size={15} color="#0d9488" style={{ flexShrink: 0, marginTop: '3px' }} />
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="jomi-card jomi-card-pad jomi-stack-xs" style={{ textAlign: 'center', padding: '2rem' }}>
+              <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>
+                {language === 'ENG'
+                  ? `No recent RSS headlines returned for ${stock.name} right now. Check the Overview tab for live AI & peer analysis.`
+                  : `Tiada berita RSS terkini ditemui untuk ${stock.name} buat masa ini.`}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

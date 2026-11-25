@@ -37,23 +37,24 @@ export function ChatbotModal({
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [lastSource, setLastSource] = useState<'live-ai' | 'local-analyst' | null>(null);
 
   const texts = {
     ENG: {
       title: 'JomAI Coach',
-      subtitle: 'Grounded in real Bursa Malaysia stock data',
-      placeholder: 'Ask about MAYBANK, Shariah stocks, dividends...',
+      subtitle: 'Live Bursa data, Malaysian news & multi-turn AI',
+      placeholder: 'Ask about Bursa news, MAYBANK vs PBBANK, or your cash...',
       quickLabel: 'Quick Prompts:',
-      typing: 'JomAI is analyzing...',
-      quickReplies: ['Analyze TENAGA', 'Shariah stocks', 'Top dividends', 'My portfolio'],
+      typing: 'JomAI is checking live market & news...',
+      quickReplies: ["Today's Bursa news", 'Analyze TENAGA', 'Compare MAYBANK vs PBBANK', 'Shariah stocks', 'My portfolio'],
     },
     BM: {
       title: 'Jurulatih JomAI',
-      subtitle: 'Berdasarkan data sebenar saham Bursa Malaysia',
-      placeholder: 'Tanya tentang MAYBANK, saham Syariah, dividen...',
+      subtitle: 'Data Bursa langsung, berita Malaysia & AI berbilang pusingan',
+      placeholder: 'Tanya berita Bursa, MAYBANK vs PBBANK, atau baki anda...',
       quickLabel: 'Soalan Pantas:',
-      typing: 'JomAI sedang menganalisis...',
-      quickReplies: ['Analisis TENAGA', 'Saham Syariah', 'Dividen tertinggi', 'Portfolio saya'],
+      typing: 'JomAI sedang menyemak pasaran & berita...',
+      quickReplies: ['Berita Bursa hari ini', 'Analisis TENAGA', 'Banding MAYBANK vs PBBANK', 'Saham Syariah', 'Portfolio saya'],
     },
   };
 
@@ -68,18 +69,21 @@ export function ChatbotModal({
     if (!text.trim() || isTyping) return;
 
     const clean = text.trim();
+    const recentHistory = messages.slice(-6);
     setMessages((prev) => [...prev, { role: 'user', content: clean }]);
     setInputValue('');
     setIsTyping(true);
 
-    const { reply } = await askJomAI(clean, {
+    const { reply, source } = await askJomAI(clean, {
       language,
       cashRM,
       portfolioSummary,
       userProfile,
       stocks,
+      history: recentHistory,
     });
 
+    setLastSource(source);
     setMessages((prev) => [...prev, { role: 'ai', content: reply }]);
     setIsTyping(false);
   };
@@ -118,9 +122,25 @@ export function ChatbotModal({
               <Sparkles size={18} />
             </div>
             <div>
-              <h3 className="jomi-display" style={{ color: '#ffffff', fontSize: '1.05rem', fontWeight: 700 }}>
-                {t.title}
-              </h3>
+              <div className="jomi-cluster" style={{ gap: '0.45rem' }}>
+                <h3 className="jomi-display" style={{ color: '#ffffff', fontSize: '1.05rem', fontWeight: 700 }}>
+                  {t.title}
+                </h3>
+                {lastSource && (
+                  <span
+                    style={{
+                      fontSize: '0.64rem',
+                      fontWeight: 800,
+                      padding: '0.15rem 0.45rem',
+                      borderRadius: '9999px',
+                      backgroundColor: lastSource === 'live-ai' ? 'rgba(255,255,255,0.22)' : 'rgba(15,41,38,0.35)',
+                      color: '#ffffff',
+                    }}
+                  >
+                    {lastSource === 'live-ai' ? 'Live AI' : 'Offline'}
+                  </span>
+                )}
+              </div>
               <p style={{ color: '#ccfbf1', fontSize: '0.72rem', fontWeight: 600 }}>{t.subtitle}</p>
             </div>
           </div>

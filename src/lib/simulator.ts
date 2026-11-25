@@ -283,16 +283,80 @@ export function loadPersistedState(defaultWatchlistIds: string[]): PersistedSimu
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<PersistedSimulatorState>;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return fallback;
+
+    const cashSen =
+      typeof parsed.cashSen === 'number' && Number.isSafeInteger(parsed.cashSen) && parsed.cashSen >= 0
+        ? parsed.cashSen
+        : fallback.cashSen;
+    const userXP =
+      typeof parsed.userXP === 'number' && Number.isFinite(parsed.userXP) && parsed.userXP >= 0
+        ? Math.floor(parsed.userXP)
+        : 0;
+    const userLevel =
+      typeof parsed.userLevel === 'number' && Number.isFinite(parsed.userLevel) && parsed.userLevel >= 1
+        ? Math.floor(parsed.userLevel)
+        : 1;
+
+    const holdings: HoldingPosition[] = Array.isArray(parsed.holdings)
+      ? parsed.holdings.filter(
+          (h): h is HoldingPosition =>
+            Boolean(h) &&
+            typeof h === 'object' &&
+            typeof h.stockId === 'string' &&
+            h.stockId.length > 0 &&
+            typeof h.quantity === 'number' &&
+            Number.isFinite(h.quantity) &&
+            h.quantity > 0 &&
+            typeof h.avgPriceSen === 'number' &&
+            Number.isFinite(h.avgPriceSen) &&
+            h.avgPriceSen >= 0
+        )
+      : fallback.holdings;
+
+    const watchlistIds = Array.isArray(parsed.watchlistIds)
+      ? parsed.watchlistIds.filter((id): id is string => typeof id === 'string' && id.length > 0)
+      : fallback.watchlistIds;
+
+    const transactions: TransactionRecord[] = Array.isArray(parsed.transactions)
+      ? parsed.transactions
+          .filter(
+            (tx): tx is TransactionRecord =>
+              Boolean(tx) &&
+              typeof tx === 'object' &&
+              typeof tx.id === 'string' &&
+              (tx.type === 'BUY' || tx.type === 'SELL' || tx.type === 'DIVIDEND') &&
+              typeof tx.stockId === 'string' &&
+              typeof tx.ticker === 'string' &&
+              typeof tx.name === 'string' &&
+              typeof tx.quantity === 'number' &&
+              Number.isFinite(tx.quantity) &&
+              typeof tx.unitPriceSen === 'number' &&
+              Number.isFinite(tx.unitPriceSen) &&
+              typeof tx.totalSen === 'number' &&
+              Number.isFinite(tx.totalSen) &&
+              typeof tx.timestampIso === 'string'
+          )
+          .slice(0, 100)
+      : fallback.transactions;
+
+    const hasLearnedTerm = Array.isArray(parsed.hasLearnedTerm)
+      ? parsed.hasLearnedTerm.filter((t): t is string => typeof t === 'string' && t.length > 0)
+      : [];
+    const completedLessons = Array.isArray(parsed.completedLessons)
+      ? parsed.completedLessons.filter((l): l is string => typeof l === 'string' && l.length > 0)
+      : [];
+
     return {
-      cashSen: typeof parsed.cashSen === 'number' ? parsed.cashSen : fallback.cashSen,
-      holdings: Array.isArray(parsed.holdings) ? parsed.holdings : fallback.holdings,
-      watchlistIds: Array.isArray(parsed.watchlistIds) ? parsed.watchlistIds : fallback.watchlistIds,
-      transactions: Array.isArray(parsed.transactions) ? parsed.transactions : fallback.transactions,
-      userXP: typeof parsed.userXP === 'number' ? parsed.userXP : 0,
-      userLevel: typeof parsed.userLevel === 'number' ? parsed.userLevel : 1,
-      userProfile: typeof parsed.userProfile === 'string' ? parsed.userProfile : '',
-      hasLearnedTerm: Array.isArray(parsed.hasLearnedTerm) ? parsed.hasLearnedTerm : [],
-      completedLessons: Array.isArray(parsed.completedLessons) ? parsed.completedLessons : [],
+      cashSen,
+      holdings,
+      watchlistIds,
+      transactions,
+      userXP,
+      userLevel,
+      userProfile: typeof parsed.userProfile === 'string' ? parsed.userProfile.slice(0, 80) : '',
+      hasLearnedTerm,
+      completedLessons,
       language: parsed.language === 'BM' ? 'BM' : 'ENG',
     };
   } catch {

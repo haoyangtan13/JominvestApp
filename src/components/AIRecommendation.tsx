@@ -1,63 +1,148 @@
-import { TrendingUp, TrendingDown, CheckCircle2, Sparkles, ArrowUpRight } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  TrendingUp,
+  TrendingDown,
+  CheckCircle2,
+  Sparkles,
+  ArrowUpRight,
+  RefreshCw,
+  Loader2,
+  ExternalLink,
+  AlertTriangle,
+  Newspaper,
+} from 'lucide-react';
 import type { Screen } from '../App';
-import { StockData, stocks } from '../data/stocks';
+import { StockData, stocks as baselineStocks } from '../data/stocks';
 import { StockBadge } from './StockVisuals';
+import {
+  computeStockTechnicals,
+  fetchSpotlightAnalysis,
+  safeExternalHref,
+  type SpotlightAnalysisResult,
+} from '../services/aiService';
 
 interface AIRecommendationProps {
   navigateTo: (screen: Screen) => void;
   userProfile: string;
   language: 'ENG' | 'BM';
+  stocks?: StockData[];
+  cashRM?: string;
+  portfolioSummary?: string;
   setSelectedStock?: (stock: StockData) => void;
   addToPortfolio?: (stock: StockData, quantity: number) => void;
+}
+
+function rankStocksForPersona(catalog: StockData[], userProfile: string): StockData[] {
+  const lower = (userProfile || '').toLowerCase();
+  const isConservative = lower.includes('conservative') || lower.includes('guardian') || lower.includes('dividend');
+  const isBalanced = lower.includes('balanced') || lower.includes('builder');
+
+  const scored = catalog.map((s) => {
+    const div = parseFloat(String(s.dividendYield).replace('%', '')) || 0;
+    const pe = parseFloat(s.peRatio) || 20;
+    const chg = parseFloat(String(s.changePercent).replace('%', '')) || 0;
+    const ret30 = parseFloat(String(computeStockTechnicals(s).return30dPct).replace('%', '')) || 0;
+
+    let score = 0;
+    if (isConservative) {
+      score = div * 4 + (pe > 0 && pe <= 16 ? 12 : 0) + (s.shariahCompliant ? 3 : 0);
+    } else if (isBalanced) {
+      score = div * 2.5 + ret30 * 1.2 + (pe > 0 && pe <= 22 ? 8 : 0) + (s.shariahCompliant ? 4 : 0);
+    } else {
+      // Aggressive / Jom-Explorer: 30D momentum + daily strength + reasonable scale
+      score = ret30 * 2.2 + chg * 2 + div * 0.8 + (s.isPositive ? 4 : 0);
+    }
+    return { stock: s, score };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((item) => item.stock);
 }
 
 export function AIRecommendation({
   navigateTo,
   userProfile,
   language,
+  stocks = baselineStocks,
+  cashRM = '10,000.00',
+  portfolioSummary = '0 positions',
   setSelectedStock,
   addToPortfolio,
 }: AIRecommendationProps) {
-  const featuredStock = stocks.find((s) => s.ticker === 'TENAGA') || stocks[0];
+  const topCandidates = useMemo(
+    () => rankStocksForPersona(stocks.length ? stocks : baselineStocks, userProfile),
+    [stocks, userProfile]
+  );
+
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const featuredStock = topCandidates[selectedIdx] || topCandidates[0] || baselineStocks[0];
+
+  const [spotlight, setSpotlight] = useState<SpotlightAnalysisResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadSpotlight = useCallback(
+    async (target: StockData) => {
+      if (!target) return;
+      setIsLoading(true);
+      const res = await fetchSpotlightAnalysis({
+        stock: target,
+        userProfile,
+        cashRM,
+        portfolioSummary,
+        language,
+      });
+      setSpotlight(res);
+      setIsLoading(false);
+    },
+    [userProfile, cashRM, portfolioSummary, language]
+  );
+
+  useEffect(() => {
+    void loadSpotlight(featuredStock);
+  }, [featuredStock, loadSpotlight]);
+
+  const technicals = useMemo(() => computeStockTechnicals(featuredStock), [featuredStock]);
 
   const texts = {
     ENG: {
       title: 'JomINVEST AI Spotlight',
-      subtitle: 'Personalized Bursa Malaysia stock idea matched to your investor persona',
+      subtitle: 'Live persona-matched Bursa Malaysia case studies powered by JomAI & real news',
       currentPrice: 'Current Price',
       change24h: '24h Change',
-      aiAnalysis: 'Why JomINVEST AI Picked This Stock',
-      reason1: 'Strong Fundamentals',
-      reason1desc: 'Consistent revenue generation, national grid moat, and resilient operating margins.',
-      reason2: 'Energy Transition Catalyst',
-      reason2desc: 'Grid modernization & renewable capex driving multi-year institutional interest.',
-      reason3: 'Fits Your Persona',
-      reason3desc: `Aligned with your ${userProfile || 'Jom-Explorer (Aggressive)'} risk-reward profile.`,
+      ret30d: '30D Return',
+      aiAnalysis: 'Live AI Thesis & Catalysts',
+      refresh: 'Refresh AI Thesis',
+      catalystTitle: 'News & Sector Catalyst',
+      watchpointTitle: 'Key Risk Watchpoint',
+      recentNews: 'Related Bursa Headlines',
       addToPortfolio: 'Quick Buy 1 Unit (+50 XP)',
       viewDetails: 'Open Full Stock Analysis',
       keyMetrics: 'Snapshot Metrics',
       pe: 'P/E Ratio',
       dividend: 'Dividend Yield',
       marketCap: 'Market Cap',
+      disclaimer: 'Educational case study matched to your sandbox persona — not licensed financial advice.',
     },
     BM: {
       title: 'Sorotan AI JomINVEST',
-      subtitle: 'Idea saham Bursa Malaysia yang dipadankan dengan persona pelabur anda',
+      subtitle: 'Kajian kes Bursa Malaysia mengikut persona anda dikuasakan oleh JomAI & berita langsung',
       currentPrice: 'Harga Semasa',
       change24h: 'Perubahan 24j',
-      aiAnalysis: 'Mengapa AI JomINVEST Memilih Saham Ini',
-      reason1: 'Asas Kewangan Kukuh',
-      reason1desc: 'Pendapatan konsisten dan margin keuntungan yang mampan.',
-      reason2: 'Pemangkin Tenaga Boleh Diperbaharui',
-      reason2desc: 'Pelaburan grid hijau menarik minat pelabur institusi.',
-      reason3: 'Sepadan Dengan Persona Anda',
-      reason3desc: `Sesuai dengan gaya pelaburan ${userProfile || 'Jom-Explorer (Agresif)'} anda.`,
+      ret30d: 'Pulangan 30H',
+      aiAnalysis: 'Tesis & Pemangkin AI Langsung',
+      refresh: 'Segar Tesis AI',
+      catalystTitle: 'Pemangkin Berita & Sektor',
+      watchpointTitle: 'Risiko Utama Untuk Dipantau',
+      recentNews: 'Tajuk Berita Bursa Berkaitan',
       addToPortfolio: 'Beli Pantas 1 Unit (+50 XP)',
       viewDetails: 'Buka Analisis Saham Penuh',
       keyMetrics: 'Metrik Ringkas',
       pe: 'Nisbah P/E',
       dividend: 'Hasil Dividen',
       marketCap: 'Modal Pasaran',
+      disclaimer: 'Kajian kes pendidikan mengikut persona simulasi anda — bukan nasihat kewangan berlesen.',
     },
   };
 
@@ -70,10 +155,25 @@ export function AIRecommendation({
 
   return (
     <div className="jomi-stack-lg">
-      {/* Page Title */}
-      <div className="jomi-stack-xs">
-        <h2 className="jomi-display jomi-title-xl">{t.title}</h2>
-        <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{t.subtitle}</p>
+      {/* Page Title + Top 3 Persona Match Switcher */}
+      <div className="jomi-between">
+        <div className="jomi-stack-xs">
+          <h2 className="jomi-display jomi-title-xl">{t.title}</h2>
+          <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{t.subtitle}</p>
+        </div>
+
+        <div className="jomi-tabs-bar">
+          {topCandidates.map((cand, idx) => (
+            <button
+              key={cand.id}
+              type="button"
+              onClick={() => setSelectedIdx(idx)}
+              className={`jomi-tab-btn ${selectedIdx === idx ? 'jomi-tab-btn-active' : ''}`}
+            >
+              #{idx + 1} {cand.ticker}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Featured Stock Spotlight Card */}
@@ -86,21 +186,27 @@ export function AIRecommendation({
                 {featuredStock.name}
               </h3>
               <p style={{ color: '#ccfbf1', fontSize: '0.85rem', fontWeight: 700 }}>
-                {featuredStock.ticker} · Bursa Malaysia · {featuredStock.sector}
+                {featuredStock.ticker} · {featuredStock.klseCode} · {featuredStock.sector}
               </p>
             </div>
           </div>
 
           <span className="jomi-pill-neutral">
             <Sparkles size={13} />
-            AI Top Pick
+            {spotlight?.source === 'live-ai' ? 'Live AI Match' : 'Persona Match'}
           </span>
         </div>
 
-        <div className="jomi-grid-2" style={{ paddingTop: '0.5rem' }}>
+        {spotlight?.headline && (
+          <p style={{ color: '#ecfdf5', fontSize: '0.92rem', fontWeight: 700 }}>
+            {spotlight.headline}
+          </p>
+        )}
+
+        <div className="jomi-grid-3" style={{ paddingTop: '0.35rem' }}>
           <div>
             <p className="jomi-hero-label">{t.currentPrice}</p>
-            <p className="jomi-display jomi-nums" style={{ fontSize: '2.25rem', fontWeight: 700, marginTop: '0.2rem' }}>
+            <p className="jomi-display jomi-nums" style={{ fontSize: '2.1rem', fontWeight: 700, marginTop: '0.2rem' }}>
               RM {featuredStock.price}
             </p>
           </div>
@@ -113,31 +219,98 @@ export function AIRecommendation({
               </span>
             </div>
           </div>
+          <div>
+            <p className="jomi-hero-label">{t.ret30d}</p>
+            <div style={{ marginTop: '0.45rem' }}>
+              <span className="jomi-pill-neutral jomi-nums">{technicals.return30dPct}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 3 AI Reasons */}
+      {/* Live AI Thesis & 3 Reasons */}
       <div className="jomi-card jomi-card-pad jomi-stack-md">
-        <h3 className="jomi-display jomi-title-lg jomi-cluster">
-          <Sparkles size={20} color="#0d9488" />
-          <span>{t.aiAnalysis}</span>
-        </h3>
-
-        <div className="jomi-grid-3">
-          {[
-            { title: t.reason1, desc: t.reason1desc },
-            { title: t.reason2, desc: t.reason2desc },
-            { title: t.reason3, desc: t.reason3desc },
-          ].map((r, idx) => (
-            <div key={idx} className="jomi-card-soft jomi-stack-xs">
-              <div className="jomi-cluster" style={{ color: '#047857', fontWeight: 800 }}>
-                <CheckCircle2 size={18} />
-                <h4 className="jomi-display" style={{ fontSize: '1rem', fontWeight: 700 }}>{r.title}</h4>
-              </div>
-              <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{r.desc}</p>
-            </div>
-          ))}
+        <div className="jomi-between">
+          <h3 className="jomi-display jomi-title-lg jomi-cluster">
+            <Sparkles size={20} color="#0d9488" />
+            <span>{t.aiAnalysis}</span>
+          </h3>
+          <button
+            type="button"
+            className="jomi-btn jomi-btn-outline jomi-btn-sm"
+            onClick={() => void loadSpotlight(featuredStock)}
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+            <span>{t.refresh}</span>
+          </button>
         </div>
+
+        {isLoading && !spotlight ? (
+          <div className="jomi-card-soft jomi-cluster" style={{ justifyContent: 'center', padding: '1.5rem' }}>
+            <Loader2 size={18} />
+            <span className="jomi-text-sm" style={{ fontWeight: 700 }}>
+              {language === 'ENG' ? 'Analyzing live headlines & persona fit...' : 'Menganalisis berita langsung & kesesuaian persona...'}
+            </span>
+          </div>
+        ) : spotlight ? (
+          <div className="jomi-stack-md">
+            <div className="jomi-grid-3">
+              {spotlight.reasons.map((r, idx) => (
+                <div key={idx} className="jomi-card-soft jomi-stack-xs">
+                  <div className="jomi-cluster" style={{ color: '#047857', fontWeight: 800 }}>
+                    <CheckCircle2 size={18} />
+                    <h4 className="jomi-display" style={{ fontSize: '1rem', fontWeight: 700 }}>{r.title}</h4>
+                  </div>
+                  <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{r.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="jomi-grid-2">
+              <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', flexDirection: 'column', gap: '0.35rem' }}>
+                <span className="jomi-cluster jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>
+                  <Newspaper size={14} />
+                  {t.catalystTitle}
+                </span>
+                <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{spotlight.catalystNote}</p>
+              </div>
+              <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', flexDirection: 'column', gap: '0.35rem', backgroundColor: 'var(--jomi-coral-soft)', borderColor: 'var(--jomi-coral-border)' }}>
+                <span className="jomi-cluster jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#b91c1c' }}>
+                  <AlertTriangle size={14} />
+                  {t.watchpointTitle}
+                </span>
+                <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{spotlight.watchpoint}</p>
+              </div>
+            </div>
+
+            {spotlight.headlines.length > 0 && (
+              <div className="jomi-stack-xs">
+                <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800, textTransform: 'uppercase' }}>{t.recentNews}</p>
+                <div className="jomi-grid-2">
+                  {spotlight.headlines.map((h, i) => (
+                    <a
+                      key={i}
+                      href={safeExternalHref(h.link)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="jomi-row"
+                      style={{ textDecoration: 'none', color: 'inherit', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}
+                    >
+                      <div className="jomi-stack-xs">
+                        <p className="jomi-text-xs" style={{ fontWeight: 700 }}>{h.title}</p>
+                        <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{h.source} · {h.timeAgo}</span>
+                      </div>
+                      <ExternalLink size={14} color="#0d9488" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{t.disclaimer}</p>
       </div>
 
       {/* Snapshot Metrics */}

@@ -18,7 +18,7 @@ export interface MarketFeedResult {
 }
 
 export function getApiBaseUrl(): string {
-  const envUrl = (import.meta as unknown as { env?: Record<string, string> })?.env?.VITE_API_BASE_URL;
+  const envUrl = (import.meta.env as Record<string, string | undefined>).VITE_API_BASE_URL;
   return envUrl ? envUrl.replace(/\/+$/, '') : '';
 }
 

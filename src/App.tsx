@@ -288,6 +288,25 @@ export default function App() {
     });
   };
 
+  const handleLearnGlossaryTerm = (termKey: string, xpReward: number, label: string) => {
+    setSimState((prev) => {
+      if (prev.hasLearnedTerm.includes(termKey)) return prev;
+      const newXP = prev.userXP + xpReward;
+      const newLevel = Math.floor(newXP / 100) + 1;
+      if (newLevel > prev.userLevel) {
+        toast.success(`Level Up! You reached Level ${newLevel}!`);
+      } else {
+        toast.success(`+${xpReward} XP: Mastered "${label}"!`);
+      }
+      return {
+        ...prev,
+        hasLearnedTerm: [...prev.hasLearnedTerm, termKey],
+        userXP: newXP,
+        userLevel: newLevel,
+      };
+    });
+  };
+
   const handleResetAccount = () => {
     const fresh = createDefaultState(DEFAULT_WATCHLIST_IDS);
     setSimState({ ...fresh, language: simState.language, userProfile: simState.userProfile });
@@ -295,6 +314,13 @@ export default function App() {
   };
 
   const cashRM = formatRMFromSen(simState.cashSen);
+  const totalEquityRM = useMemo(() => {
+    const holdingsVal = portfolio.reduce(
+      (sum, item) => sum + parseFloat(item.stock.price) * item.quantity,
+      0
+    );
+    return Math.round(simState.cashSen / 100 + holdingsVal);
+  }, [simState.cashSen, portfolio]);
   const portfolioSummary =
     portfolio.length > 0
       ? portfolio.map((p) => `${p.quantity}u ${p.stock.ticker}`).join(', ')
@@ -372,6 +398,9 @@ export default function App() {
               navigateTo={navigateTo}
               userProfile={simState.userProfile}
               language={simState.language}
+              stocks={marketStocks}
+              cashRM={cashRM}
+              portfolioSummary={portfolioSummary}
               setSelectedStock={setSelectedStock}
               addToPortfolio={buyStock}
             />
@@ -382,6 +411,7 @@ export default function App() {
               navigateTo={navigateTo}
               language={simState.language}
               stock={selectedStock}
+              allStocks={marketStocks}
               cashSen={simState.cashSen}
               heldQuantity={heldSelectedQty}
               buyStock={buyStock}
@@ -399,6 +429,10 @@ export default function App() {
               stocks={marketStocks}
               completedLessons={simState.completedLessons}
               onCompleteLesson={handleCompleteLesson}
+              portfolioEquityRM={totalEquityRM}
+              setSelectedStock={setSelectedStock}
+              learnedTerms={simState.hasLearnedTerm}
+              onLearnTerm={handleLearnGlossaryTerm}
             />
           )}
 
