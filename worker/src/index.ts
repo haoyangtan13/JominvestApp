@@ -16,6 +16,11 @@ export interface ChatHistoryTurn {
   content: string;
 }
 
+interface EdgeCache {
+  match(req: Request): Promise<Response | undefined>;
+  put(req: Request, res: Response): Promise<void>;
+}
+
 const KLSE_CODES = [
   '1155.KL', '1295.KL', '5347.KL', '1023.KL', '5183.KL',
   '5225.KL', '6947.KL', '8869.KL', '5819.KL', '5285.KL',
@@ -81,6 +86,7 @@ function checkPublicRateLimit(ip: string, now = Date.now()): { allowed: boolean;
 function getClientIp(request: Request): string {
   return (
     request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('x-real-ip') ||
     request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
     'local-client'
   );
@@ -509,8 +515,9 @@ export async function handleWorkerRequest(
   }
 
   const url = new URL(request.url);
+  const pathname = url.pathname.replace(/\/+$/, '') || '/';
 
-  if (url.pathname === '/api/health' && request.method === 'GET') {
+  if (pathname === '/api/health' && request.method === 'GET') {
     return jsonResponse(
       { ok: true, aiConfigured: Boolean(env.GEMINI_API_KEY) },
       200,
@@ -518,7 +525,7 @@ export async function handleWorkerRequest(
     );
   }
 
-  if (url.pathname === '/api/stocks' && request.method === 'GET') {
+  if (pathname === '/api/stocks' && request.method === 'GET') {
     const rate = checkPublicRateLimit(getClientIp(request));
     if (!rate.allowed) {
       return jsonResponse(
@@ -528,7 +535,7 @@ export async function handleWorkerRequest(
       );
     }
 
-    const cacheStorage = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
+    const cacheStorage = (globalThis as unknown as { caches?: { default?: EdgeCache } }).caches?.default;
     const cacheKey = new Request(url.origin + '/api/stocks', { method: 'GET' });
 
     if (cacheStorage) {
@@ -566,7 +573,7 @@ export async function handleWorkerRequest(
     return response;
   }
 
-  if (url.pathname === '/api/news' && request.method === 'GET') {
+  if (pathname === '/api/news' && request.method === 'GET') {
     const rate = checkPublicRateLimit(getClientIp(request));
     if (!rate.allowed) {
       return jsonResponse(
@@ -579,7 +586,7 @@ export async function handleWorkerRequest(
     const q = (url.searchParams.get('q') || 'Bursa Malaysia FBM KLCI').trim().slice(0, 120);
     const klseCode = (url.searchParams.get('klseCode') || '').trim().slice(0, 16) || undefined;
 
-    const cacheStorage = (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
+    const cacheStorage = (globalThis as unknown as { caches?: { default?: EdgeCache } }).caches?.default;
     const canonicalParams = new URLSearchParams({ q });
     if (klseCode) canonicalParams.set('klseCode', klseCode);
     const cacheKey = new Request(`${url.origin}/api/news?${canonicalParams.toString()}`, { method: 'GET' });
@@ -614,7 +621,7 @@ export async function handleWorkerRequest(
     return response;
   }
 
-  if (url.pathname === '/api/sentiment' && request.method === 'POST') {
+  if (pathname === '/api/sentiment' && request.method === 'POST') {
     const rate = checkAiRateLimit(getClientIp(request));
     if (!rate.allowed) {
       return jsonResponse(
@@ -801,7 +808,7 @@ ${formatHeadlinesForPrompt(headlines)}`;
     }
   }
 
-  if (url.pathname === '/api/ai' && request.method === 'POST') {
+  if (pathname === '/api/ai' && request.method === 'POST') {
     if (!env.GEMINI_API_KEY) {
       return jsonResponse({ error: 'AI service is not configured' }, 503, cors);
     }

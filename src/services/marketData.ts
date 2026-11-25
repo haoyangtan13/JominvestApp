@@ -19,7 +19,17 @@ export interface MarketFeedResult {
 
 export function getApiBaseUrl(): string {
   const envUrl = (import.meta.env as Record<string, string | undefined>).VITE_API_BASE_URL;
-  return envUrl ? envUrl.replace(/\/+$/, '') : '';
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '');
+  }
+  if (
+    typeof window !== 'undefined' &&
+    window.location?.origin &&
+    !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin)
+  ) {
+    return window.location.origin.replace(/\/+$/, '');
+  }
+  return '';
 }
 
 export function mergeLiveQuotes(base: StockData[], patches: LiveQuotePatch[]): StockData[] {

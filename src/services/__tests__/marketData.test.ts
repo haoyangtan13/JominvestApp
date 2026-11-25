@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mergeLiveQuotes, fetchBursaQuotes } from '../marketData';
+import { getApiBaseUrl, mergeLiveQuotes, fetchBursaQuotes } from '../marketData';
 import { stocks } from '../../data/stocks';
 
 describe('marketData service', () => {
@@ -34,5 +34,31 @@ describe('marketData service', () => {
     const res = await fetchBursaQuotes('', vi.fn().mockRejectedValue(new Error('offline')));
     expect(res.source).toBe('cached');
     expect(res.stocks).toHaveLength(20);
+  });
+
+  it('defaults getApiBaseUrl to window.location.origin on non-localhost domains and empty string on localhost', () => {
+    const originalWindow = globalThis.window;
+    try {
+      vi.stubEnv('VITE_API_BASE_URL', '');
+      (globalThis as unknown as { window: { location: { origin: string } } }).window = {
+        location: { origin: 'https://jominvestapp1.vercel.app' },
+      };
+      expect(getApiBaseUrl()).toBe('https://jominvestapp1.vercel.app');
+
+      (globalThis as unknown as { window: { location: { origin: string } } }).window = {
+        location: { origin: 'http://localhost:3000' },
+      };
+      expect(getApiBaseUrl()).toBe('');
+
+      vi.stubEnv('VITE_API_BASE_URL', 'https://custom-worker.example.com/');
+      expect(getApiBaseUrl()).toBe('https://custom-worker.example.com');
+    } finally {
+      vi.unstubAllEnvs();
+      if (originalWindow === undefined) {
+        delete (globalThis as unknown as { window?: unknown }).window;
+      } else {
+        (globalThis as unknown as { window: typeof originalWindow }).window = originalWindow;
+      }
+    }
   });
 });
