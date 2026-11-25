@@ -15,10 +15,12 @@
 - **Real Bursa Malaysia `.KL` Data (`src/data/stocks.ts` + `src/services/marketData.ts` + `scripts/fetch-klse-snapshot.mjs`):**
   - Populated with real fetched KLSE daily closing prices & 1-month history (`Asia/Kuala_Lumpur`) across all 20 Bursa Malaysia stocks (`1155.KL` MAYBANK through `5211.KL` SUNWAY), plus SC Malaysia **Shariah-Compliant** flags and Dashboard filter.
   - Auto-syncs live 15-min cached quotes from `${VITE_API_BASE_URL}/api/stocks` when deployed, falling back cleanly to the bundled KLSE snapshot.
-- **Smart AI (`src/services/aiService.ts` + `worker/`):**
+- **Smart AI + 5 Production Guardrails (`src/services/aiService.ts` + `worker/src/index.ts`):**
   - `JomRingkas` supports **all 20 Bursa Malaysia companies**.
   - `JomAI Coach` is grounded in live stock metrics + your virtual cash & holdings.
+  - Guardrails active: per-IP rate limiting (`15 req/min`, `429`), strict CORS origin check (`403`, allows `localhost`), pre-LLM prompt-injection shield, dedicated Gemini `systemInstruction` (SC Malaysia educational non-advice compliance + visible UI disclaimers), and Gemini `safetySettings` (`BLOCK_LOW_AND_ABOVE`) + `8s` timeout.
   - Calls `POST /api/ai` on the Cloudflare Worker when configured, with automatic data-grounded local analyst fallback when offline or before deploying.
+- **Verification:** `npm test` (`18/18` passing across 4 test files), `npm run build` (`0` errors), zero emojis verified across `src/` and `worker/`.
 - **Interactive Learn Hub (`src/data/lessons.ts`, `src/components/EducationalHub.tsx`):**
   - Clicking any Article or Video Guide opens an ENG/BM study modal + 2-question comprehension quiz awarding **`+25 XP`**.
 
