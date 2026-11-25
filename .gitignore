@@ -1,1 +1,10 @@
 node_modules
+worker/node_modules
+.wrangler
+.dev.vars
+.env
+.env.*
+!.env.example
+.superpowers
+build/
+.agents/

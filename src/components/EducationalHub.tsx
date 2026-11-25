@@ -1,636 +1,1582 @@
-import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Badge } from './ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Switch } from './ui/switch';
-import { Label } from './ui/label';
-import { ArrowLeft, BookOpen, Play, Clock, TrendingUp, Sparkles, FileText, Zap, BarChart, Activity, Gauge, Loader2, Link, Bot, Newspaper, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  BookOpen,
+  Play,
+  Clock,
+  TrendingUp,
+  Sparkles,
+  FileText,
+  Zap,
+  Activity,
+  Gauge,
+  Loader2,
+  Bot,
+  Newspaper,
+  CheckCircle2,
+  X,
+  ShieldCheck,
+  Award,
+  RefreshCw,
+  ExternalLink,
+  GitCompare,
+  Compass,
+  GraduationCap,
+  Layers,
+  ChevronLeft,
+  ChevronRight,
+  RotateCw,
+  Lightbulb,
+  ArrowRight,
+  Check,
+} from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Screen } from '../App';
+import type { StockData } from '../data/stocks';
+import { lessons, type LessonItem } from '../data/lessons';
+import { glossaryFlashcards, type GlossaryCategory } from '../data/glossary';
+import { WealthProjector } from './WealthProjector';
+import {
+  analyzeStockReport,
+  compareStocksAI,
+  fetchSentimentAnalysis,
+  safeExternalHref,
+  type StockReportSummary,
+  type StockComparisonResult,
+  type SentimentAnalysisResult,
+} from '../services/aiService';
 
 interface EducationalHubProps {
   navigateTo: (screen: Screen) => void;
   language: 'ENG' | 'BM';
+  stocks: StockData[];
+  completedLessons: string[];
+  onCompleteLesson: (lessonId: string, xpReward: number, title: string) => void;
+  portfolioEquityRM?: number;
+  setSelectedStock?: (stock: StockData) => void;
+  learnedTerms?: string[];
+  onLearnTerm?: (termKey: string, xpReward: number, label: string) => void;
 }
 
-const articles = [
-  {
-    titleEng: 'What is a Dividend?',
-    titleBm: 'Apakah Dividen?',
-    descEng: 'Learn how companies share profits with shareholders',
-    descBm: 'Pelajari bagaimana syarikat berkongsi keuntungan dengan pemegang saham',
-    readTime: '5 min',
-    category: 'Basics',
-  },
-  {
-    titleEng: 'Understanding Bursa Malaysia',
-    titleBm: 'Memahami Bursa Malaysia',
-    descEng: 'A complete guide to Malaysia\'s stock exchange',
-    descBm: 'Panduan lengkap tentang bursa saham Malaysia',
-    readTime: '8 min',
-    category: 'Market',
-  },
-  {
-    titleEng: 'Risk vs. Return',
-    titleBm: 'Risiko vs. Pulangan',
-    descEng: 'Balance risk and reward in your investment strategy',
-    descBm: 'Seimbangkan risiko dan ganjaran dalam strategi pelaburan anda',
-    readTime: '6 min',
-    category: 'Strategy',
-  },
-];
+export function EducationalHub({
+  navigateTo,
+  language,
+  stocks,
+  completedLessons,
+  onCompleteLesson,
+  portfolioEquityRM,
+  setSelectedStock,
+  learnedTerms = [],
+  onLearnTerm,
+}: EducationalHubProps) {
+  const [activeTab, setActiveTab] = useState<'ai-tools' | 'articles' | 'tutorials' | 'glossary'>('ai-tools');
 
-const tutorials = [
-  {
-    titleEng: 'How to Read a Stock Chart',
-    titleBm: 'Cara Membaca Carta Saham',
-    descEng: 'Master the basics of technical analysis',
-    descBm: 'Kuasai asas analisis teknikal',
-    duration: '12 min',
-    level: 'Beginner',
-  },
-  {
-    titleEng: 'What is Risk Management?',
-    titleBm: 'Apakah Pengurusan Risiko?',
-    descEng: 'Protect your investments with smart strategies',
-    descBm: 'Lindungi pelaburan anda dengan strategi pintar',
-    duration: '15 min',
-    level: 'Beginner',
-  },
-];
-
-export function EducationalHub({ navigateTo, language }: EducationalHubProps) {
-  // Wealth Projector State
-  const [monthlyInvest, setMonthlyInvest] = useState(500);
-  const [riskLevel, setRiskLevel] = useState(5);
-  const [inflationAdjusted, setInflationAdjusted] = useState(false);
-
-  // JomRingkas State
-  const [selectedReport, setSelectedReport] = useState("tenaga");
+  // JomRingkas State (supports ALL 20 Bursa Malaysia stocks + 2-Stock Compare)
+  const [ringkasMode, setRingkasMode] = useState<'brief' | 'compare'>('brief');
+  const [selectedTicker, setSelectedTicker] = useState<string>('TENAGA');
+  const [compareA, setCompareA] = useState<string>('TENAGA');
+  const [compareB, setCompareB] = useState<string>('MAYBANK');
   const [isScanning, setIsScanning] = useState(false);
-  const [scanComplete, setScanComplete] = useState(false);
+  const [reportSummary, setReportSummary] = useState<StockReportSummary | null>(null);
+  const [comparisonResult, setComparisonResult] = useState<StockComparisonResult | null>(null);
+  const [loadingText, setLoadingText] = useState('Analyzing...');
 
-  // Animation State for Scanning
-  const [loadingText, setLoadingText] = useState("Analyzing...");
+  // JomSentimen State (Live Malaysian RSS + AI)
+  const [sentimentScope, setSentimentScope] = useState<string>('KLCI');
+  const [sentimentData, setSentimentData] = useState<SentimentAnalysisResult | null>(null);
+  const [isLoadingSentiment, setIsLoadingSentiment] = useState(false);
+
+  // Interactive Lesson + Quiz Modal & Academy Filter State
+  const [lessonCategory, setLessonCategory] = useState<string>('All');
+  const [incompleteOnly, setIncompleteOnly] = useState(false);
+  const [activeLesson, setActiveLesson] = useState<LessonItem | null>(null);
+  const [activeChapterIdx, setActiveChapterIdx] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+  // Interactive Glossary Flashcard State
+  const [glossaryCategory, setGlossaryCategory] = useState<'All' | GlossaryCategory>('All');
+  const [activeGlossaryIdx, setActiveGlossaryIdx] = useState(0);
+  const [isGlossaryFlipped, setIsGlossaryFlipped] = useState(false);
 
   useEffect(() => {
     if (isScanning) {
-      const texts = ["Reading PDF...", "Extracting Data...", "Summarizing Risks...", "Finalizing..."];
+      const steps = ['Fetching Bursa News...', 'Reading Filings & Peers...', 'Synthesizing Thesis...', 'Finalizing...'];
       let i = 0;
       const interval = setInterval(() => {
-        setLoadingText(texts[i % texts.length]);
+        setLoadingText(steps[i % steps.length]);
         i++;
-      }, 500);
+      }, 450);
       return () => clearInterval(interval);
     }
   }, [isScanning]);
 
+  const loadSentiment = useCallback(
+    async (scopeTicker: string) => {
+      setIsLoadingSentiment(true);
+      const focusStock = scopeTicker === 'KLCI' ? null : stocks.find((s) => s.ticker === scopeTicker) || null;
+      const res = await fetchSentimentAnalysis({
+        language,
+        stocks,
+        focusStock,
+      });
+      setSentimentData(res);
+      setIsLoadingSentiment(false);
+    },
+    [language, stocks]
+  );
+
+  useEffect(() => {
+    if (activeTab === 'ai-tools') {
+      void loadSentiment(sentimentScope);
+    }
+  }, [activeTab, sentimentScope, loadSentiment]);
 
   const texts = {
     ENG: {
-      back: 'Back to Dashboard',
-      title: 'Educational Hub',
-      subtitle: 'Learn to invest with confidence',
-      articles: 'Articles',
-      tutorials: 'Video Tutorials',
-      aiTools: 'AI Tools',
-      readMore: 'Read More',
-      watchNow: 'Watch Now',
+      title: 'Learn & AI Lab',
+      subtitle: 'Interactive AI tools for all 20 Bursa counters, 12 Bursa lessons, and 15 flashcards',
+      articles: 'Articles & Quizzes',
+      tutorials: 'Video Guides',
+      glossary: 'Glossary',
+      aiTools: 'AI Lab Tools',
+      readMore: 'Read & Take Quiz',
+      watchNow: 'Start Guided Walkthrough',
+      completed: 'Completed',
     },
     BM: {
-      back: 'Kembali ke Dashboard',
-      title: 'Hab Pendidikan',
-      subtitle: 'Belajar melabur dengan yakin',
-      articles: 'Artikel',
-      tutorials: 'Tutorial Video',
-      aiTools: 'Alat AI',
-      readMore: 'Baca Lagi',
-      watchNow: 'Tonton Sekarang',
-    }
+      title: 'Makmal Ilmu & AI',
+      subtitle: 'Alat AI untuk semua 20 kaunter Bursa, 12 pelajaran Bursa, dan 15 kad imbas',
+      articles: 'Artikel & Kuiz',
+      tutorials: 'Panduan Video',
+      glossary: 'Glosari',
+      aiTools: 'Alat Makmal AI',
+      readMore: 'Baca & Jawab Kuiz',
+      watchNow: 'Mula Panduan Interaktif',
+      completed: 'Selesai',
+    },
   };
 
   const t = texts[language];
+  const isEng = language === 'ENG';
 
-  // Logic 1: Wealth Calculation
-  const generateWealthData = () => {
-    const data = [];
-    let currentWealth = 0;
-    let totalInvested = 0;
-    const years = 10;
-    let annualReturn = 0.04 + (riskLevel * 0.008);
-    if (inflationAdjusted) annualReturn -= 0.03;
+  const selectedStock = stocks.find((s) => s.ticker === selectedTicker) || stocks[0];
+  const stockA = stocks.find((s) => s.ticker === compareA) || stocks[0];
+  const stockB = stocks.find((s) => s.ticker === compareB) || stocks[1] || stocks[0];
 
-    for (let year = 0; year <= years; year++) {
-      data.push({
-        year: `Year ${year}`,
-        wealth: Math.round(currentWealth),
-        invested: Math.round(totalInvested),
-      });
-      // Compound
-      currentWealth = (currentWealth + (monthlyInvest * 12)) * (1 + annualReturn);
-      totalInvested += (monthlyInvest * 12);
-    }
-    return data;
-  };
-
-  const wealthData = generateWealthData();
-  const finalWealth = wealthData[wealthData.length - 1].wealth;
-  const finalInvested = wealthData[wealthData.length - 1].invested;
-
-  // Logic 2: JomRingkas Scan
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (!selectedStock) return;
     setIsScanning(true);
-    setScanComplete(false);
-    setTimeout(() => {
-      setIsScanning(false);
-      setScanComplete(true);
-    }, 2500);
+    setReportSummary(null);
+    const [result] = await Promise.all([
+      analyzeStockReport(selectedStock, language, undefined, fetch, stocks),
+      new Promise((resolve) => setTimeout(resolve, 650)),
+    ]);
+    setReportSummary(result);
+    setIsScanning(false);
   };
 
-  const reportData: any = {
-    tenaga: {
-      title: "Tenaga Nasional Annual Report 2025",
-      growth: "CEO promises RM 2B investment in Renewable Energy Grid. Expected to boost long-term revenue by 15%. (pg. 12)",
-      risk: "High coal prices may impact profit margins in Q3 2026 if fuel costs are not passed through to consumers. (pg. 45)",
-      dividend: "Consistent Payout. Declared 30 sen/share total for FY25. Yield is attractive at 4.5%. (pg. 8)",
-      score: 85
-    },
-    maybank: {
-      title: "Maybank Integrated Report 2024",
-      growth: "Digital Banking adoption grew 40% YoY. New 'MAE' app features driving dominance in SME sector. (pg. 4)",
-      risk: "Exposure to global interest rate volatility could compress Net Interest Margin (NIM) by 5bps. (pg. 67)",
-      dividend: "Solid Dividend Aristocrat. Payout ratio maintained at 75% of profits. Yield ~6.2%. (pg. 102)",
-      score: 92
+  const handleCompare = async () => {
+    if (!stockA || !stockB) return;
+    setIsScanning(true);
+    setComparisonResult(null);
+    const [result] = await Promise.all([
+      compareStocksAI(stockA, stockB, language),
+      new Promise((resolve) => setTimeout(resolve, 650)),
+    ]);
+    setComparisonResult(result);
+    setIsScanning(false);
+  };
+
+  const openLessonModal = (lesson: LessonItem) => {
+    setActiveLesson(lesson);
+    setActiveChapterIdx(0);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+  };
+
+  const handleQuizSubmit = () => {
+    if (!activeLesson) return;
+    setQuizSubmitted(true);
+    const allCorrect = activeLesson.quiz.every((q, idx) => quizAnswers[idx] === q.correctIndex);
+    if (allCorrect && !completedLessons.includes(activeLesson.id)) {
+      onCompleteLesson(
+        activeLesson.id,
+        activeLesson.xpReward,
+        language === 'ENG' ? activeLesson.titleEng : activeLesson.titleBm
+      );
     }
   };
+
+  const articleLessons = lessons.filter((l) => l.type === 'article');
+  const videoLessons = lessons.filter((l) => l.type === 'video');
+
+  const completedLessonsInCurriculum = lessons.filter((l) => completedLessons.includes(l.id));
+  const completedCount = completedLessonsInCurriculum.length;
+  const totalLessonXP = lessons.reduce((sum, l) => sum + l.xpReward, 0);
+  const earnedLessonXP = completedLessonsInCurriculum.reduce((sum, l) => sum + l.xpReward, 0);
+  const masteryPct = Math.round((completedCount / Math.max(1, lessons.length)) * 100);
+  const masteredTermsCount = glossaryFlashcards.filter((c) => learnedTerms.includes(c.termEng)).length;
+
+  const academyRank =
+    completedCount >= 10
+      ? isEng
+        ? 'Jom Master'
+        : 'Master Jom'
+      : completedCount >= 6
+        ? isEng
+          ? 'Market Analyst'
+          : 'Penganalisis Pasaran'
+        : completedCount >= 3
+          ? isEng
+            ? 'Bursa Explorer'
+            : 'Penjelajah Bursa'
+          : isEng
+            ? 'Freshman'
+            : 'Pelajar Baru';
+
+  const currentTabLessons = activeTab === 'tutorials' ? videoLessons : articleLessons;
+  const availableCategories = useMemo(() => {
+    const cats = Array.from(new Set(currentTabLessons.map((l) => l.category)));
+    return ['All', ...cats];
+  }, [currentTabLessons]);
+
+  const filteredLessons = useMemo(() => {
+    return currentTabLessons.filter((lesson) => {
+      if (lessonCategory !== 'All' && lesson.category !== lessonCategory) return false;
+      if (incompleteOnly && completedLessons.includes(lesson.id)) return false;
+      return true;
+    });
+  }, [currentTabLessons, lessonCategory, incompleteOnly, completedLessons]);
+
+  const filteredGlossary = useMemo(() => {
+    if (glossaryCategory === 'All') return glossaryFlashcards;
+    return glossaryFlashcards.filter((card) => card.category === glossaryCategory);
+  }, [glossaryCategory]);
+
+  const safeGlossaryIdx =
+    filteredGlossary.length > 0 ? Math.min(activeGlossaryIdx, filteredGlossary.length - 1) : 0;
+  const activeCard = filteredGlossary[safeGlossaryIdx] || glossaryFlashcards[0];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10 backdrop-blur-md bg-white/80 supports-[backdrop-filter]:bg-white/60">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={() => navigateTo('dashboard')} className="hover:bg-gray-100/50">
-            <ArrowLeft className="mr-2" size={16} />
-            {t.back}
-          </Button>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Animated Hero Section */}
-        <div className="mb-10 text-center md:text-left">
-          <div className="inline-flex items-center justify-center p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-purple-200 mb-4 animate-in fade-in zoom-in duration-500">
-            <BookOpen size={32} className="text-white" />
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-purple-800 to-gray-900">
-            {t.title}
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl">{t.subtitle}</p>
+    <div className="jomi-stack-lg">
+      {/* Header Banner */}
+      <div className="jomi-between">
+        <div className="jomi-stack-xs">
+          <h2 className="jomi-display jomi-title-xl">{t.title}</h2>
+          <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{t.subtitle}</p>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="ai-tools" className="space-y-8">
-          <div className="flex justify-center md:justify-start">
-            <TabsList className="grid grid-cols-3 w-full max-w-md bg-white border shadow-sm p-1 h-auto rounded-xl">
-              <TabsTrigger value="ai-tools" className="rounded-lg py-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 font-medium transition-all">
-                <Sparkles size={16} className="mr-2 text-purple-600" /> {t.aiTools}
-              </TabsTrigger>
-              <TabsTrigger value="articles" className="rounded-lg py-2 data-[state=active]:bg-gray-100">{t.articles}</TabsTrigger>
-              <TabsTrigger value="tutorials" className="rounded-lg py-2 data-[state=active]:bg-gray-100">{t.tutorials}</TabsTrigger>
-            </TabsList>
-          </div>
+        <div className="jomi-tabs-bar">
+          <button
+            type="button"
+            onClick={() => setActiveTab('ai-tools')}
+            className={`jomi-tab-btn ${activeTab === 'ai-tools' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <Sparkles size={15} color="#0d9488" />
+            <span>{t.aiTools}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('articles');
+              setLessonCategory('All');
+            }}
+            className={`jomi-tab-btn ${activeTab === 'articles' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <span>{t.articles} ({articleLessons.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('tutorials');
+              setLessonCategory('All');
+            }}
+            className={`jomi-tab-btn ${activeTab === 'tutorials' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <span>{t.tutorials} ({videoLessons.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('glossary')}
+            className={`jomi-tab-btn ${activeTab === 'glossary' ? 'jomi-tab-btn-active' : ''}`}
+          >
+            <Layers size={14} />
+            <span>{t.glossary} ({glossaryFlashcards.length})</span>
+          </button>
+        </div>
+      </div>
 
-          {/* === DETAILED AI TOOLS TAB === */}
-          <TabsContent value="ai-tools" className="space-y-12 animate-in slide-in-from-bottom-5 fade-in duration-500">
+      {/* TAB 1: AI LAB TOOLS */}
+      {activeTab === 'ai-tools' && (
+        <div className="jomi-stack-lg">
+          {/* 1. JomRingkas — Deep-Dive Brief + 2-Stock Comparator */}
+          <section className="jomi-card jomi-card-pad jomi-stack-md">
+            <div className="jomi-between">
+              <div className="jomi-cluster">
+                <span className="jomi-pill-gain">
+                  <FileText size={13} />
+                  {language === 'ENG' ? 'AI Fundamental & News Decoder' : 'Penyahkod Asas & Berita AI'}
+                </span>
+                <h3 className="jomi-display jomi-title-lg">JomRingkas</h3>
+              </div>
 
-            {/* 1. JomRingkas */}
-            <section className="relative group">
-              {/* Background Glow - ALWAYS VISIBLE (opacity-30) */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-30 transition duration-1000"></div>
+              <div className="jomi-tabs-bar">
+                <button
+                  type="button"
+                  onClick={() => setRingkasMode('brief')}
+                  className={`jomi-tab-btn ${ringkasMode === 'brief' ? 'jomi-tab-btn-active' : ''}`}
+                >
+                  <FileText size={14} />
+                  <span>{language === 'ENG' ? 'Deep-Dive Brief' : 'Ringkasan Mendalam'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRingkasMode('compare')}
+                  className={`jomi-tab-btn ${ringkasMode === 'compare' ? 'jomi-tab-btn-active' : ''}`}
+                >
+                  <GitCompare size={14} />
+                  <span>{language === 'ENG' ? 'Compare 2 Stocks' : 'Banding 2 Saham'}</span>
+                </button>
+              </div>
+            </div>
 
-              <Card className="relative border-none shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500"></div>
+            {ringkasMode === 'brief' ? (
+              <div className="jomi-stack-md">
+                {/* Compact Top Selector Bar */}
+                <div className="jomi-card-soft jomi-stack-sm">
+                  <div className="jomi-stack-xs">
+                    <h4 className="jomi-display jomi-title-md">
+                      {language === 'ENG' ? 'News-Grounded Equity Brief' : 'Ringkasan Ekuiti Berasaskan Berita'}
+                    </h4>
+                    <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                      {language === 'ENG'
+                        ? 'Synthesizes 30-day technicals, Bursa sector peers, fundamentals, and live Malaysian headlines.'
+                        : 'Menggabungkan teknikal 30 hari, rakan sektor Bursa, asas kewangan, dan berita terkini Malaysia.'}
+                    </p>
+                  </div>
 
-                <CardContent className="p-0">
-                  <div className="grid md:grid-cols-12 min-h-[500px]">
-                    {/* Left Panel: Control */}
-                    <div className="md:col-span-5 bg-gray-50 p-8 flex flex-col justify-center border-b md:border-b-0 md:border-r border-gray-100">
-                      <div className="mb-8">
-                        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 mb-2 flex items-center gap-2">
-                          <FileText className="text-purple-600" /> JomRingkas
-                        </h2>
-                        <p className="text-sm text-gray-500">AI-Powered Annual Report Analyzer</p>
-                      </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'end' }}>
+                    <div style={{ flex: '1 1 260px', minWidth: 0 }}>
+                      <label htmlFor="report-select" className="jomi-label">
+                        {language === 'ENG' ? 'Select Bursa Malaysia Company' : 'Pilih Syarikat Bursa Malaysia'}
+                      </label>
+                      <select
+                        id="report-select"
+                        value={selectedTicker}
+                        onChange={(e) => {
+                          setSelectedTicker(e.target.value);
+                          setReportSummary(null);
+                        }}
+                        className="jomi-input"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {stocks.map((st) => (
+                          <option key={st.id} value={st.ticker}>
+                            {st.ticker} ({st.klseCode.replace('.KL', '')}) — {st.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                      <div className="space-y-6">
-                        <div className="bg-white p-4 rounded-xl border shadow-sm hover:border-purple-300 transition-colors">
-                          <Label className="text-xs text-gray-400 font-bold tracking-wider mb-2 block uppercase">Select Document</Label>
-                          <Select value={selectedReport} onValueChange={setSelectedReport}>
-                            <SelectTrigger className="border-none shadow-none p-0 h-auto font-medium text-lg focus:ring-0 w-full">
-                              <SelectValue placeholder="Select Report" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="tenaga">Tenaga Nasional '25</SelectItem>
-                              <SelectItem value="maybank">Maybank Integrated '24</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                    <button
+                      type="button"
+                      className="jomi-btn jomi-btn-primary jomi-btn-lg"
+                      style={{ flexShrink: 0 }}
+                      onClick={() => void handleAnalyze()}
+                      disabled={isScanning}
+                    >
+                      {isScanning ? (
+                        <>
+                          <Loader2 size={18} />
+                          <span>{loadingText}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={18} />
+                          <span>{language === 'ENG' ? `Analyze ${selectedTicker}` : `Analisis ${selectedTicker}`}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
 
-                        <Button
-                          className="w-full h-12 text-lg font-bold !bg-purple-600 hover:!bg-purple-700 !text-white shadow-md transition-colors"
-                          onClick={handleAnalyze}
-                          disabled={isScanning}
-                        >
-                          {isScanning ? (
-                            <><Loader2 className="mr-2 animate-spin" /> {loadingText}</>
-                          ) : (
-                            <><Sparkles className="mr-2" /> Analyze Document</>
+                {/* Full-Width Report Output */}
+                {!reportSummary && !isScanning && (
+                  <div className="jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', minHeight: '160px', padding: '1.5rem 1rem' }}>
+                    <div className="jomi-ticker-badge jomi-ticker-badge-lg">
+                      <Bot size={26} />
+                    </div>
+                    <h4 className="jomi-display jomi-title-md">
+                      {language === 'ENG' ? `Ready to Analyze ${selectedTicker}` : `Sedia Menganalisis ${selectedTicker}`}
+                    </h4>
+                    <p className="jomi-text-sm jomi-muted" style={{ maxWidth: '460px', fontWeight: 600 }}>
+                      {language === 'ENG'
+                        ? 'Run a live AI research brief covering 30D momentum, peer comparison, news catalysts, and Shariah status.'
+                        : 'Jalankan ringkasan penyelidikan AI merangkumi momentum 30H, perbandingan rakan sektor, pemangkin berita, dan status Syariah.'}
+                    </p>
+                  </div>
+                )}
+
+                {isScanning && (
+                  <div className="jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', minHeight: '160px', padding: '1.5rem 1rem' }}>
+                    <div className="jomi-pill-neutral" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                      <Loader2 size={16} />
+                      <span>{loadingText}</span>
+                    </div>
+                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                      Analyzing {selectedStock?.name} ({selectedStock?.klseCode})...
+                    </p>
+                  </div>
+                )}
+
+                {reportSummary && (
+                  <div className="jomi-stack-md">
+                    <div className="jomi-between" style={{ paddingBottom: '0.75rem', borderBottom: '1.5px solid var(--jomi-border)' }}>
+                      <div>
+                        <div className="jomi-cluster" style={{ gap: '0.4rem' }}>
+                          <span className="jomi-pill-gain">
+                            {reportSummary.source === 'live-ai' ? 'Live AI + News' : 'Local Brief'}
+                          </span>
+                          {selectedStock?.shariahCompliant && (
+                            <span className="jomi-pill-shariah">
+                              <ShieldCheck size={11} />
+                              Shariah
+                            </span>
                           )}
-                        </Button>
+                          {reportSummary.technicals && (
+                            <span className="jomi-pill-neutral jomi-nums">
+                              30D: {reportSummary.technicals.return30dPct}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="jomi-display jomi-title-md" style={{ marginTop: '0.35rem' }}>
+                          {reportSummary.title}
+                        </h4>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800, textTransform: 'uppercase' }}>Quality Score</p>
+                        <p className="jomi-display jomi-nums" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#047857' }}>
+                          {reportSummary.score} / 100
+                        </p>
                       </div>
                     </div>
 
-                    {/* Right Panel: Visualization */}
-                    <div className="md:col-span-7 p-8 bg-white relative">
-                      {/* Empty State */}
-                      {!scanComplete && !isScanning && (
-                        <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12 text-gray-400">
-                          <div className="p-6 bg-gray-50 rounded-full">
-                            <Bot size={48} className="text-gray-300" />
-                          </div>
+                    <div
+                      className="jomi-grid-2"
+                      style={{
+                        alignItems: 'stretch',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+                      }}
+                    >
+                      <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start' }}>
+                        <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                          <TrendingUp size={18} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
                           <div>
-                            <h3 className="text-xl font-medium text-gray-600">No Report Analyzed</h3>
-                            <p className="text-sm max-w-xs mx-auto mt-2">Pick a report from the menu to extract insights automatically.</p>
+                            <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>Growth &amp; 30D Momentum</p>
+                            <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{reportSummary.growth}</p>
                           </div>
                         </div>
-                      )}
+                      </div>
 
-                      {/* Scanning Animation */}
-                      {isScanning && (
-                        <div className="h-full flex flex-col items-center justify-center">
-                          <div className="relative w-32 h-40 border-2 border-gray-100 rounded-lg bg-white shadow-sm flex items-center justify-center overflow-hidden mb-6">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)] animate-[scan_2s_ease-in-out_infinite] z-10"></div>
-                            <div className="space-y-2 p-4 w-full opacity-30">
-                              <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                              <div className="h-2 bg-gray-200 rounded w-full"></div>
-                              <div className="h-2 bg-gray-200 rounded w-5/6"></div>
-                              <div className="h-2 bg-gray-200 rounded w-full"></div>
-                            </div>
-                          </div>
-                          <p className="font-mono text-purple-600 animate-pulse text-sm font-bold">{loadingText}</p>
-                        </div>
-                      )}
-
-                      {/* Results */}
-                      {scanComplete && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                          <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+                      {reportSummary.newsCatalysts && (
+                        <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', flexDirection: 'column', gap: '0.45rem' }}>
+                          <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                            <Newspaper size={18} color="#0d9488" style={{ flexShrink: 0, marginTop: '2px' }} />
                             <div>
-                              <Badge variant="secondary" className="mb-2 bg-green-50 text-green-700 hover:bg-green-100">Complete</Badge>
-                              <h3 className="text-xl font-bold text-gray-900">Executive Summary</h3>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Confidence</p>
-                              <p className="text-2xl font-black text-green-600">{reportData[selectedReport].score}%</p>
+                              <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#0f766e' }}>Live News &amp; Catalysts</p>
+                              <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{reportSummary.newsCatalysts}</p>
                             </div>
                           </div>
+                          {reportSummary.headlines && reportSummary.headlines.length > 0 && (
+                            <div className="jomi-stack-xs" style={{ width: '100%', paddingLeft: '1.75rem' }}>
+                              {reportSummary.headlines.slice(0, 3).map((h, i) => (
+                                <a
+                                  key={i}
+                                  href={safeExternalHref(h.link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="jomi-cluster jomi-text-xs"
+                                  style={{ color: '#0f766e', fontWeight: 700, textDecoration: 'none', justifyContent: 'space-between' }}
+                                >
+                                  <span>{h.title} ({h.source} · {h.timeAgo})</span>
+                                  <ExternalLink size={12} style={{ flexShrink: 0 }} />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                          <div className="space-y-4">
-                            {[
-                              { icon: TrendingUp, color: "text-green-600", bg: "bg-green-50", border: "border-green-100", title: "Growth Driver", text: reportData[selectedReport].growth },
-                              { icon: Activity, color: "text-red-500", bg: "bg-red-50", border: "border-red-100", title: "Key Risk", text: reportData[selectedReport].risk },
-                              { icon: Zap, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", title: "Dividend Verdict", text: reportData[selectedReport].dividend }
-                            ].map((item, idx) => (
-                              <div key={idx} className={`p-4 ${item.bg} border ${item.border} rounded-xl group hover:shadow-md transition-all`}>
-                                <div className="flex items-center gap-3">
-                                  <div className={`p-1.5 bg-white rounded-lg shadow-sm h-fit ${item.color}`}>
-                                    <item.icon size={18} />
-                                  </div>
-                                  <div>
-                                    <h4 className={`font-bold ${item.color} text-sm mb-1 uppercase tracking-wide`}>{item.title}</h4>
-                                    <p className="text-gray-800 text-sm leading-relaxed">{item.text}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="flex gap-3 justify-end pt-2">
-                            <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:text-purple-600">
-                              <Link size={12} className="mr-1" /> Open PDF
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-xs">Export</Button>
+                      {reportSummary.peerComparison && (
+                        <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start' }}>
+                          <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                            <Compass size={18} color="#0d9488" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                              <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#0f766e' }}>Sector Peer Comparison</p>
+                              <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{reportSummary.peerComparison}</p>
+                            </div>
                           </div>
                         </div>
                       )}
+
+                      <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', backgroundColor: 'var(--jomi-coral-soft)', borderColor: 'var(--jomi-coral-border)' }}>
+                        <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                          <Activity size={18} color="#b91c1c" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#b91c1c' }}>Valuation &amp; Key Risk</p>
+                            <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{reportSummary.risk}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', backgroundColor: 'var(--jomi-gold-soft)', borderColor: 'var(--jomi-gold-border)' }}>
+                      <div className="jomi-cluster" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                        <Zap size={18} color="#b45309" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#92400e' }}>Dividend &amp; Student Takeaway</p>
+                          <p className="jomi-text-sm" style={{ fontWeight: 600 }}>
+                            {reportSummary.dividend} {reportSummary.shariahNote}
+                          </p>
+                          {reportSummary.studentTakeaway && (
+                            <p className="jomi-text-xs" style={{ fontWeight: 700, color: '#92400e', marginTop: '0.35rem' }}>
+                              Next Watch: {reportSummary.studentTakeaway}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                      {language === 'ENG'
+                        ? 'Educational summary grounded in live metrics & RSS news — not a buy/sell recommendation.'
+                        : 'Ringkasan pendidikan berdasarkan metrik & berita langsung — bukan cadangan beli/jual.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="jomi-stack-md">
+                {/* Compact Top Comparison Controls */}
+                <div className="jomi-card-soft jomi-stack-sm">
+                  <div className="jomi-stack-xs">
+                    <h4 className="jomi-display jomi-title-md">
+                      {language === 'ENG' ? 'Head-to-Head Stock Comparator' : 'Perbandingan Saham Berdepan'}
+                    </h4>
+                    <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                      {language === 'ENG'
+                        ? 'Compare any two Bursa Malaysia counters side by side across valuation, dividends, 30D trend, and live news.'
+                        : 'Bandingkan dua kaunter Bursa Malaysia dari segi penilaian, dividen, trend 30H, dan berita langsung.'}
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', alignItems: 'end' }}>
+                    <div>
+                      <label htmlFor="compare-a" className="jomi-label">Stock A</label>
+                      <select
+                        id="compare-a"
+                        value={compareA}
+                        onChange={(e) => {
+                          setCompareA(e.target.value);
+                          setComparisonResult(null);
+                        }}
+                        className="jomi-input"
+                      >
+                        {stocks.map((st) => (
+                          <option key={st.id} value={st.ticker}>{st.ticker} — {st.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="compare-b" className="jomi-label">Stock B</label>
+                      <select
+                        id="compare-b"
+                        value={compareB}
+                        onChange={(e) => {
+                          setCompareB(e.target.value);
+                          setComparisonResult(null);
+                        }}
+                        className="jomi-input"
+                      >
+                        {stocks.map((st) => (
+                          <option key={st.id} value={st.ticker}>{st.ticker} — {st.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      className="jomi-btn jomi-btn-primary jomi-btn-lg jomi-btn-full"
+                      onClick={() => void handleCompare()}
+                      disabled={isScanning || compareA === compareB}
+                    >
+                      {isScanning ? <Loader2 size={18} /> : <GitCompare size={18} />}
+                      <span>{compareA === compareB ? 'Pick 2 Different Stocks' : `Compare ${compareA} vs ${compareB}`}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Full-Width Comparison Output */}
+                {!comparisonResult && !isScanning && (
+                  <div className="jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', minHeight: '160px', padding: '1.5rem 1rem' }}>
+                    <div className="jomi-ticker-badge jomi-ticker-badge-lg">
+                      <GitCompare size={24} />
+                    </div>
+                    <h4 className="jomi-display jomi-title-md">Compare {compareA} vs {compareB}</h4>
+                    <p className="jomi-text-sm jomi-muted" style={{ maxWidth: '460px', fontWeight: 600 }}>
+                      {language === 'ENG'
+                        ? 'See which stock leads on P/E value, dividend yield, 30-day momentum, and news flow.'
+                        : 'Lihat saham mana lebih unggul dalam nilai P/E, hasil dividen, momentum 30 hari, dan berita.'}
+                    </p>
+                  </div>
+                )}
+
+                {isScanning && (
+                  <div className="jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', minHeight: '160px', padding: '1.5rem 1rem' }}>
+                    <div className="jomi-pill-neutral" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                      <Loader2 size={16} />
+                      <span>{loadingText}</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </section>
+                )}
 
-            {/* 2. JomSentimen */}
-            <section className="grid md:grid-cols-2 gap-8">
-              {/* Gauge Card */}
-              <Card className="border-none shadow-lg bg-gradient-to-b from-white to-gray-50 overflow-hidden relative min-h-[300px]">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full blur-[60px] opacity-40 pointer-events-none"></div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <span className="p-2 bg-orange-100 rounded-lg text-orange-600"><Gauge size={18} /></span>
-                    JomSentimen
-                  </CardTitle>
-                  <CardDescription>Market Emotion Radar</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center pt-4">
-                  {/* Corrected Gauge Visual - SVG Implementation */}
-                  <div className="relative w-64 h-32 mb-8 mx-auto">
-                    {/* SVG Gauge */}
-                    <svg viewBox="0 0 200 100" className="w-full h-full overflow-visible">
-                      {/* Background Arc */}
-                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#f3f4f6" strokeWidth="20" strokeLinecap="round" />
+                {comparisonResult && (
+                  <div className="jomi-stack-md">
+                    <div className="jomi-between" style={{ paddingBottom: '0.65rem', borderBottom: '1.5px solid var(--jomi-border)' }}>
+                      <div>
+                        <span className="jomi-pill-gain">
+                          {comparisonResult.source === 'live-ai' ? 'Live AI Compare' : 'Local Compare'}
+                        </span>
+                        <h4 className="jomi-display jomi-title-md" style={{ marginTop: '0.35rem' }}>
+                          {comparisonResult.headline}
+                        </h4>
+                      </div>
+                      <div className="jomi-cluster jomi-nums">
+                        <span className="jomi-pill-neutral">{compareA}: {comparisonResult.scoreA}/100</span>
+                        <span className="jomi-pill-neutral">{compareB}: {comparisonResult.scoreB}/100</span>
+                      </div>
+                    </div>
 
-                      {/* Colored Segments */}
-                      {/* Fear (Red) */}
-                      <path d="M 20 100 A 80 80 0 0 1 65 35" fill="none" stroke="#ef4444" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
-                      {/* Neutral (Yellow) */}
-                      <path d="M 65 35 A 80 80 0 0 1 135 35" fill="none" stroke="#eab308" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
-                      {/* Greed (Green) */}
-                      <path d="M 135 35 A 80 80 0 0 1 180 100" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray="100 1000" strokeDashoffset="0" />
+                    <div
+                      className="jomi-grid-2"
+                      style={{
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+                      }}
+                    >
+                      <div className="jomi-row" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem' }}>
+                        <span className="jomi-text-xs" style={{ fontWeight: 800, color: '#047857', textTransform: 'uppercase' }}>Valuation Edge</span>
+                        <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{comparisonResult.valuationEdge}</p>
+                      </div>
+                      <div className="jomi-row" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem' }}>
+                        <span className="jomi-text-xs" style={{ fontWeight: 800, color: '#0f766e', textTransform: 'uppercase' }}>Dividend &amp; Income</span>
+                        <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{comparisonResult.incomeComparison}</p>
+                      </div>
+                      <div className="jomi-row" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem' }}>
+                        <span className="jomi-text-xs" style={{ fontWeight: 800, color: '#0f766e', textTransform: 'uppercase' }}>Momentum &amp; Live News</span>
+                        <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{comparisonResult.momentumAndNews}</p>
+                      </div>
+                      <div className="jomi-row" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem', backgroundColor: 'var(--jomi-coral-soft)', borderColor: 'var(--jomi-coral-border)' }}>
+                        <span className="jomi-text-xs" style={{ fontWeight: 800, color: '#b91c1c', textTransform: 'uppercase' }}>Risk &amp; Shariah</span>
+                        <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{comparisonResult.riskComparison}</p>
+                      </div>
+                    </div>
 
-                      {/* Needle */}
-                      {/* Score 78 -> 50.4 degrees */}
-                      {/* Explicit transformOrigin ensures it rotates around 100,100 */}
+                    <div className="jomi-card-gold" style={{ padding: '0.85rem 1rem' }}>
+                      <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: 'var(--jomi-gold-ink)' }}>
+                        Student Learning Takeaway
+                      </p>
+                      <p className="jomi-text-sm" style={{ fontWeight: 700, marginTop: '0.2rem' }}>{comparisonResult.studentVerdict}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* 2. JomSentimen AI News & Market Radar */}
+          <section className="jomi-grid-2" style={{ alignItems: 'start' }}>
+            {(() => {
+              const breadthScore = Math.round((stocks.filter((s) => s.isPositive).length / Math.max(1, stocks.length)) * 100);
+              const displayScore = sentimentData?.score ?? breadthScore;
+              const needleDeg = (Math.max(0, Math.min(100, displayScore)) / 100) * 180 - 90;
+              return (
+                <div className="jomi-card jomi-card-pad jomi-stack-md" style={{ alignItems: 'center', textAlign: 'center' }}>
+                  <div className="jomi-between" style={{ width: '100%', textAlign: 'left' }}>
+                    <div className="jomi-cluster">
+                      <div className="jomi-ticker-badge">
+                        <Gauge size={18} />
+                      </div>
+                      <div>
+                        <h3 className="jomi-display jomi-title-md">JomSentimen</h3>
+                        <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                          {language === 'ENG' ? 'Live Malaysian News & Breadth AI' : 'AI Berita Malaysia & Keluasan Pasaran'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="jomi-pill-gain">
+                      {sentimentData?.source === 'live-ai'
+                        ? 'Live AI + News'
+                        : sentimentData?.source === 'live-rss'
+                          ? 'Live RSS'
+                          : 'Snapshot'}
+                    </span>
+                  </div>
+
+                  {/* Scope Selector + Refresh */}
+                  <div style={{ width: '100%', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <select
+                      aria-label="Sentiment Scope"
+                      value={sentimentScope}
+                      onChange={(e) => setSentimentScope(e.target.value)}
+                      className="jomi-input"
+                      style={{ cursor: 'pointer', flex: 1 }}
+                    >
+                      <option value="KLCI">All Bursa Malaysia (FBM KLCI)</option>
+                      {stocks.map((st) => (
+                        <option key={st.id} value={st.ticker}>{st.ticker} — {st.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                      onClick={() => void loadSentiment(sentimentScope)}
+                      disabled={isLoadingSentiment}
+                      aria-label="Refresh Sentiment"
+                    >
+                      {isLoadingSentiment ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+                    </button>
+                  </div>
+
+                  <div style={{ width: '240px', height: '125px', marginTop: '0.25rem' }}>
+                    <svg viewBox="0 0 200 105" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e6f4ef" strokeWidth="18" strokeLinecap="round" />
+                      <path d="M 20 100 A 80 80 0 0 1 65 35" fill="none" stroke="#ef4444" strokeWidth="18" strokeLinecap="round" />
+                      <path d="M 65 35 A 80 80 0 0 1 135 35" fill="none" stroke="#f59e0b" strokeWidth="18" />
+                      <path d="M 135 35 A 80 80 0 0 1 180 100" fill="none" stroke="#10b981" strokeWidth="18" strokeLinecap="round" />
                       <g
-                        className="transition-all duration-1000 ease-out"
                         style={{
-                          transform: `rotate(${(78 / 100 * 180) - 90}deg)`,
-                          transformOrigin: '100px 100px'
+                          transform: `rotate(${needleDeg}deg)`,
+                          transformOrigin: '100px 100px',
+                          transition: 'transform 350ms ease',
                         }}
                       >
-                        <path d="M 100 100 L 100 20" stroke="#1e293b" strokeWidth="4" />
-                        <circle cx="100" cy="100" r="6" fill="#1e293b" stroke="white" strokeWidth="2" />
+                        <path d="M 100 100 L 100 24" stroke="#0f2926" strokeWidth="4" strokeLinecap="round" />
+                        <circle cx="100" cy="100" r="6" fill="#0f2926" stroke="#ffffff" strokeWidth="2" />
                       </g>
                     </svg>
                   </div>
 
-                  {/* Grid for labels below gauge */}
-                  <div className="flex justify-between w-64 text-[10px] font-bold uppercase tracking-widest text-gray-400 -mt-6 mb-4 px-2">
-                    <span className="text-red-500">Fear</span>
-                    <span className="text-yellow-500">Neutral</span>
-                    <span className="text-green-600">Greed</span>
+                  <div className="jomi-between" style={{ width: '240px', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                    <span style={{ color: '#b91c1c' }}>Fear</span>
+                    <span style={{ color: '#b45309' }}>Neutral</span>
+                    <span style={{ color: '#047857' }}>Bullish</span>
                   </div>
 
-                  <div className="text-center space-y-1 mt-2">
-                    <div className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 font-bold text-xs mb-2 shadow-sm border border-green-200">
-                      Updated 5m ago
+                  <div>
+                    <div className="jomi-display" style={{ fontSize: '1.85rem', fontWeight: 700, color: displayScore >= 56 ? '#047857' : displayScore >= 42 ? '#b45309' : '#b91c1c' }}>
+                      {(sentimentData?.label || (breadthScore >= 60 ? 'BULLISH' : 'BALANCED')).toUpperCase()}
                     </div>
-                    <h3 className="text-4xl font-black text-slate-800 tracking-tight">GREED</h3>
-                    <p className="text-gray-500 text-sm">Score: <span className="font-bold text-slate-800">78</span> / 100</p>
+                    <p className="jomi-text-sm jomi-muted jomi-nums" style={{ fontWeight: 700 }}>
+                      AI Sentiment Score: {displayScore} / 100 ({stocks.filter((s) => s.isPositive).length}/{stocks.length} Advancers)
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* News Feed - Fixed Alignment */}
-              <Card className="border-none shadow-lg bg-white h-full relative overflow-hidden flex flex-col">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-4">
-                  <CardTitle className="flex justify-between items-center text-base">
-                    <span>Live Analysis</span>
-                    <span className="flex items-center gap-1.5 text-[0.65rem] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-100">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> LIVE
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 flex-1">
-                  <div className="divide-y divide-gray-100">
-                    {[
-                      { source: "The Edge", time: "10m ago", text: "Tech sector rally continues as major data center confirmed in Johor.", sentiment: "Positive", color: "text-green-700", bg: "bg-green-100", border: "border-green-200", icon: Newspaper },
-                      { source: "X Trending", time: "32m ago", text: "Palm oil futures drop below RM 3800. Worrying for plantation stocks.", sentiment: "Negative", color: "text-red-700", bg: "bg-red-100", border: "border-red-200", icon: MessageSquare },
-                      { source: "StarBiz", time: "1h ago", text: "Bank Negara holds OPR at 3.00%. Stability expected.", sentiment: "Neutral", color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200", icon: Newspaper },
-                    ].map((news, i) => (
-                      <div key={i} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer block">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <news.icon size={12} className="text-gray-400" />
-                            <span className="text-xs font-bold text-gray-700">{news.source}</span>
-                            <span className="text-[10px] text-gray-400">• {news.time}</span>
-                          </div>
-                          <Badge variant="outline" className={`${news.bg} ${news.color} ${news.border} text-[10px] uppercase font-bold shrink-0 self-center`}>
-                            {news.sentiment}
-                          </Badge>
+                  {sentimentData?.summary && (
+                    <div className="jomi-card-soft jomi-stack-xs" style={{ width: '100%', textAlign: 'left' }}>
+                      <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#0f766e' }}>
+                        AI Market Pulse ({sentimentScope})
+                      </p>
+                      <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{sentimentData.summary}</p>
+                      {sentimentData.keyDrivers.length > 0 && (
+                        <div className="jomi-stack-xs" style={{ paddingTop: '0.25rem' }}>
+                          {sentimentData.keyDrivers.map((drv, i) => (
+                            <p key={i} className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                              - {drv}
+                            </p>
+                          ))}
                         </div>
-                        <p className="text-sm font-medium text-gray-800 leading-snug">"{news.text}"</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            <div className="jomi-card jomi-card-pad jomi-stack-md">
+              <div className="jomi-between">
+                <div>
+                  <h3 className="jomi-display jomi-title-md">Live Headline Sentiment</h3>
+                  <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                    {isEng
+                      ? `Real Malaysian headlines analyzed by JomAI (${sentimentScope})`
+                      : `Tajuk berita Malaysia dianalisis oleh JomAI (${sentimentScope})`}
+                  </p>
+                </div>
+                <span className="jomi-pill-neutral">{sentimentScope}</span>
+              </div>
+
+              {isLoadingSentiment ? (
+                <div className="jomi-card-soft jomi-cluster" style={{ justifyContent: 'center', padding: '2rem 1rem' }}>
+                  <Loader2 size={18} />
+                  <span className="jomi-text-sm" style={{ fontWeight: 700 }}>
+                    {language === 'ENG' ? 'Scanning live Malaysian headlines...' : 'Mengimbas berita langsung Malaysia...'}
+                  </span>
+                </div>
+              ) : sentimentData && sentimentData.headlines.length > 0 ? (
+                <div className="jomi-stack-sm">
+                  {sentimentData.headlines.map((news, idx) => {
+                    const pill =
+                      news.sentiment === 'Positive'
+                        ? 'jomi-pill-gain'
+                        : news.sentiment === 'Cautious'
+                          ? 'jomi-pill-loss'
+                          : 'jomi-pill-neutral';
+                    return (
+                      <a
+                        key={idx}
+                        href={safeExternalHref(news.link)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="jomi-row"
+                        style={{ flexDirection: 'column', alignItems: 'stretch', textDecoration: 'none', color: 'inherit', gap: '0.35rem' }}
+                      >
+                        <div className="jomi-between">
+                          <span className="jomi-cluster jomi-text-xs jomi-muted" style={{ fontWeight: 800 }}>
+                            <Newspaper size={13} />
+                            <span>{news.source} · {news.timeAgo}</span>
+                          </span>
+                          <div className="jomi-cluster" style={{ gap: '0.35rem' }}>
+                            <span className={pill}>{news.sentiment}</span>
+                            <ExternalLink size={12} color="#0d9488" />
+                          </div>
+                        </div>
+                        <p className="jomi-text-sm" style={{ fontWeight: 700 }}>{news.title}</p>
+                        {news.impact && (
+                          <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600 }}>{news.impact}</p>
+                        )}
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="jomi-card-soft jomi-stack-xs" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                  <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>
+                    {language === 'ENG'
+                      ? 'No live headlines retrieved for this selection right now. Try Refresh or switch scope to All Bursa Malaysia (KLCI).'
+                      : 'Tiada berita langsung ditemui buat masa ini. Cuba Segar semula atau tukar skop ke All Bursa Malaysia (KLCI).'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* 3. AI Wealth Projector */}
+          <WealthProjector language={language} portfolioEquityRM={portfolioEquityRM} />
+        </div>
+      )}
+
+      {/* ACADEMY MASTERY BANNER (Articles, Video Guides & Glossary) */}
+      {activeTab !== 'ai-tools' && (
+        <section className="jomi-card jomi-card-pad jomi-stack-sm">
+          <div className="jomi-between">
+            <div className="jomi-cluster">
+              <div className="jomi-ticker-badge">
+                <GraduationCap size={19} />
+              </div>
+              <div>
+                <div className="jomi-cluster" style={{ gap: '0.45rem' }}>
+                  <h3 className="jomi-display jomi-title-md">
+                    {isEng ? 'Bursa Academy Mastery' : 'Penguasaan Akademi Bursa'}
+                  </h3>
+                  <span className="jomi-pill-neutral">{academyRank}</span>
+                </div>
+                <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                  {isEng
+                    ? `${completedCount} of ${lessons.length} lessons completed · ${masteredTermsCount} of ${glossaryFlashcards.length} flashcards learned`
+                    : `${completedCount} daripada ${lessons.length} pelajaran selesai · ${masteredTermsCount} daripada ${glossaryFlashcards.length} kad imbas dikuasai`}
+                </p>
+              </div>
+            </div>
+
+            <div className="jomi-cluster jomi-nums">
+              <span className="jomi-pill-gain">
+                {earnedLessonXP} / {totalLessonXP} XP
+              </span>
+              <span className="jomi-pill-sector">{masteryPct}%</span>
+            </div>
+          </div>
+
+          <div className="jomi-progress-track">
+            <div className="jomi-progress-fill-emerald" style={{ width: `${masteryPct}%` }} />
+          </div>
+        </section>
+      )}
+
+      {/* FILTER BAR (Articles & Video Guides) */}
+      {(activeTab === 'articles' || activeTab === 'tutorials') && (
+        <div className="jomi-between">
+          <div className="jomi-cluster" style={{ gap: '0.45rem' }}>
+            {availableCategories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setLessonCategory(cat)}
+                className={`jomi-btn jomi-btn-sm ${lessonCategory === cat ? 'jomi-btn-primary' : 'jomi-btn-outline'}`}
+              >
+                {cat === 'All' ? (isEng ? 'All Topics' : 'Semua Topik') : cat}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIncompleteOnly((prev) => !prev)}
+            className={`jomi-btn jomi-btn-sm ${incompleteOnly ? 'jomi-btn-gold' : 'jomi-btn-outline'}`}
+          >
+            {incompleteOnly
+              ? isEng
+                ? 'Showing Incomplete Only'
+                : 'Tunjuk Belum Selesai Sahaja'
+              : isEng
+                ? 'Filter: Incomplete Only'
+                : 'Tapis: Belum Selesai'}
+          </button>
+        </div>
+      )}
+
+      {/* TAB 2: INTERACTIVE ARTICLES & QUIZZES */}
+      {activeTab === 'articles' && (
+        filteredLessons.length === 0 ? (
+          <div className="jomi-card jomi-card-pad jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center' }}>
+            <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>
+              {isEng
+                ? 'No articles match this filter right now. Reset filters to view all 8 guides.'
+                : 'Tiada artikel sepadan dengan penapis ini. Tetap semula penapis untuk melihat kesemua 8 panduan.'}
+            </p>
+            <button
+              type="button"
+              className="jomi-btn jomi-btn-outline jomi-btn-sm"
+              onClick={() => {
+                setLessonCategory('All');
+                setIncompleteOnly(false);
+              }}
+            >
+              {isEng ? 'Show All Articles' : 'Tunjuk Semua Artikel'}
+            </button>
+          </div>
+        ) : (
+          <div className="jomi-grid-3">
+            {filteredLessons.map((lesson) => {
+              const isDone = completedLessons.includes(lesson.id);
+              return (
+                <div
+                  key={lesson.id}
+                  className="jomi-card jomi-card-interactive jomi-card-pad"
+                  style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.25rem' }}
+                  onClick={() => openLessonModal(lesson)}
+                >
+                  <div className="jomi-stack-sm">
+                    <div className="jomi-between">
+                      <span className={isDone ? 'jomi-pill-gain' : 'jomi-pill-neutral'}>
+                        {isDone ? (
+                          <>
+                            <CheckCircle2 size={12} />
+                            {t.completed}
+                          </>
+                        ) : (
+                          `+${lesson.xpReward} XP`
+                        )}
+                      </span>
+                      <span className="jomi-cluster jomi-text-xs jomi-muted" style={{ gap: '0.35rem', fontWeight: 700 }}>
+                        <span className="jomi-pill-sector">{lesson.category}</span>
+                        <span className="jomi-cluster" style={{ gap: '0.2rem' }}>
+                          <Clock size={12} />
+                          {lesson.duration}
+                        </span>
+                      </span>
+                    </div>
+                    <h3 className="jomi-display jomi-title-md">
+                      {isEng ? lesson.titleEng : lesson.titleBm}
+                    </h3>
+                    <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                      {isEng ? lesson.descEng : lesson.descBm}
+                    </p>
+                    <div className="jomi-cluster" style={{ gap: '0.4rem' }}>
+                      <span className="jomi-pill-sector">{lesson.level}</span>
+                      {lesson.relatedTicker && (
+                        <span className="jomi-pill-sector">{lesson.relatedTicker}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button type="button" className="jomi-btn jomi-btn-primary jomi-btn-sm jomi-btn-full">
+                    <BookOpen size={15} />
+                    <span>{t.readMore} (+{lesson.xpReward} XP)</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      {/* TAB 3: INTERACTIVE VIDEO GUIDES & QUIZZES */}
+      {activeTab === 'tutorials' && (
+        filteredLessons.length === 0 ? (
+          <div className="jomi-card jomi-card-pad jomi-stack-sm" style={{ textAlign: 'center', alignItems: 'center' }}>
+            <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>
+              {isEng
+                ? 'No guided walkthroughs match this filter right now.'
+                : 'Tiada panduan video sepadan dengan penapis ini.'}
+            </p>
+            <button
+              type="button"
+              className="jomi-btn jomi-btn-outline jomi-btn-sm"
+              onClick={() => {
+                setLessonCategory('All');
+                setIncompleteOnly(false);
+              }}
+            >
+              {isEng ? 'Show All Guides' : 'Tunjuk Semua Panduan'}
+            </button>
+          </div>
+        ) : (
+          <div className="jomi-grid-2">
+            {filteredLessons.map((lesson) => {
+              const isDone = completedLessons.includes(lesson.id);
+              return (
+                <div
+                  key={lesson.id}
+                  className="jomi-card jomi-card-interactive"
+                  style={{ overflow: 'hidden' }}
+                  onClick={() => openLessonModal(lesson)}
+                >
+                  <div style={{ position: 'relative', height: '190px', backgroundColor: '#e6f4ef' }}>
+                    {lesson.thumbnail && (
+                      <ImageWithFallback
+                        src={lesson.thumbnail}
+                        alt="Lesson thumbnail"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    )}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundColor: 'rgba(15, 41, 38, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '3.5rem',
+                          height: '3.5rem',
+                          borderRadius: '9999px',
+                          backgroundColor: '#ffffff',
+                          color: '#047857',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 4px 0 0 #047857',
+                        }}
+                      >
+                        <Play size={22} fill="currentColor" />
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="jomi-card-pad jomi-stack-sm">
+                    <div className="jomi-between">
+                      <span className={isDone ? 'jomi-pill-gain' : 'jomi-pill-neutral'}>
+                        {isDone ? t.completed : `${lesson.level} · +${lesson.xpReward} XP`}
+                      </span>
+                      <span className="jomi-cluster jomi-text-xs jomi-muted" style={{ fontWeight: 700, gap: '0.35rem' }}>
+                        <span className="jomi-pill-sector">{lesson.chapters?.length || 3} {isEng ? 'Chapters' : 'Bab'}</span>
+                        <span>{lesson.duration}</span>
+                      </span>
+                    </div>
+                    <h3 className="jomi-display jomi-title-md">
+                      {isEng ? lesson.titleEng : lesson.titleBm}
+                    </h3>
+                    <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                      {isEng ? lesson.descEng : lesson.descBm}
+                    </p>
+                    <div style={{ paddingTop: '0.35rem' }}>
+                      <button type="button" className="jomi-btn jomi-btn-primary jomi-btn-full">
+                        <Play size={15} />
+                        <span>{t.watchNow} (+{lesson.xpReward} XP)</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      {/* TAB 4: INTERACTIVE BURSA GLOSSARY FLASHCARDS */}
+      {activeTab === 'glossary' && activeCard && (
+        <div className="jomi-stack-lg">
+          {/* Category Filter Pills */}
+          <div className="jomi-between">
+            <div className="jomi-cluster" style={{ gap: '0.45rem' }}>
+              {(['All', 'Basics', 'Valuation', 'Trading', 'Shariah & MY'] as const).map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setGlossaryCategory(cat);
+                    setActiveGlossaryIdx(0);
+                    setIsGlossaryFlipped(false);
+                  }}
+                  className={`jomi-btn jomi-btn-sm ${glossaryCategory === cat ? 'jomi-btn-primary' : 'jomi-btn-outline'}`}
+                >
+                  {cat === 'All' ? (isEng ? 'All 15 Terms' : 'Semua 15 Istilah') : cat}
+                </button>
+              ))}
+            </div>
+
+            <span className="jomi-pill-gain jomi-nums">
+              {masteredTermsCount} / {glossaryFlashcards.length} {isEng ? 'Mastered' : 'Dikuasai'}
+            </span>
+          </div>
+
+          {/* Interactive Flip Flashcard Deck */}
+          <section className="jomi-card jomi-card-pad jomi-stack-md">
+            <div className="jomi-between">
+              <div className="jomi-cluster">
+                <span className="jomi-pill-sector">{activeCard.category}</span>
+                <span className="jomi-pill-neutral jomi-nums">
+                  {isEng ? 'Card' : 'Kad'} {safeGlossaryIdx + 1} / {filteredGlossary.length}
+                </span>
+              </div>
+
+              {learnedTerms.includes(activeCard.termEng) ? (
+                <span className="jomi-pill-gain">
+                  <CheckCircle2 size={12} />
+                  {isEng ? 'Learned (+10 XP)' : 'Dipelajari (+10 XP)'}
+                </span>
+              ) : (
+                <span className="jomi-pill-neutral">+10 XP</span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsGlossaryFlipped((prev) => !prev)}
+              className={isGlossaryFlipped ? 'jomi-card-soft jomi-stack-sm' : 'jomi-card-gold jomi-stack-sm'}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                cursor: 'pointer',
+                minHeight: '190px',
+                justifyContent: 'center',
+                padding: '1.5rem',
+              }}
+            >
+              {!isGlossaryFlipped ? (
+                <div className="jomi-stack-sm" style={{ alignItems: 'center', textAlign: 'center', width: '100%' }}>
+                  <span className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: 'var(--jomi-gold-ink)' }}>
+                    {isEng ? 'Term — Click Card to Reveal Definition' : 'Istilah — Klik Kad untuk Lihat Maksud'}
+                  </span>
+                  <h3 className="jomi-display jomi-title-xl">
+                    {isEng ? activeCard.termEng : activeCard.termBm}
+                  </h3>
+                  <span className="jomi-cluster jomi-text-xs" style={{ fontWeight: 800, color: 'var(--jomi-gold-ink)' }}>
+                    <RotateCw size={13} />
+                    <span>{isEng ? 'Flip for Bursa example' : 'Pusing untuk contoh Bursa'}</span>
+                  </span>
+                </div>
+              ) : (
+                <div className="jomi-stack-sm" style={{ width: '100%' }}>
+                  <div className="jomi-between">
+                    <h4 className="jomi-display jomi-title-md">
+                      {isEng ? activeCard.termEng : activeCard.termBm}
+                    </h4>
+                    <span className="jomi-pill-gain">
+                      <RotateCw size={11} />
+                      {isEng ? 'Definition' : 'Definisi'}
+                    </span>
+                  </div>
+                  <p className="jomi-text-sm" style={{ fontWeight: 800 }}>
+                    {isEng ? activeCard.shortEng : activeCard.shortBm}
+                  </p>
+                  <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                    {isEng ? activeCard.detailEng : activeCard.detailBm}
+                  </p>
+                  <div className="jomi-row" style={{ cursor: 'default', backgroundColor: '#ffffff' }}>
+                    <div>
+                      <p className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#0f766e' }}>
+                        {isEng ? 'Bursa Example' : 'Contoh Bursa'}
+                      </p>
+                      <p className="jomi-text-xs" style={{ fontWeight: 700, marginTop: '0.15rem' }}>
+                        {isEng ? activeCard.exampleEng : activeCard.exampleBm}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </button>
+
+            <div className="jomi-between">
+              <div className="jomi-cluster" style={{ gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                  onClick={() => {
+                    setActiveGlossaryIdx((prev) =>
+                      prev <= 0 ? filteredGlossary.length - 1 : prev - 1
+                    );
+                    setIsGlossaryFlipped(false);
+                  }}
+                >
+                  <ChevronLeft size={15} />
+                  <span>{isEng ? 'Previous' : 'Sebelum'}</span>
+                </button>
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                  onClick={() => setIsGlossaryFlipped((prev) => !prev)}
+                >
+                  <RotateCw size={14} />
+                  <span>{isEng ? 'Flip Card' : 'Pusing Kad'}</span>
+                </button>
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                  onClick={() => {
+                    setActiveGlossaryIdx((prev) => (prev + 1) % filteredGlossary.length);
+                    setIsGlossaryFlipped(false);
+                  }}
+                >
+                  <span>{isEng ? 'Next' : 'Seterusnya'}</span>
+                  <ChevronRight size={15} />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className="jomi-btn jomi-btn-primary jomi-btn-sm"
+                disabled={learnedTerms.includes(activeCard.termEng)}
+                onClick={() =>
+                  onLearnTerm?.(
+                    activeCard.termEng,
+                    10,
+                    isEng ? activeCard.termEng : activeCard.termBm
+                  )
+                }
+              >
+                <Check size={14} />
+                <span>
+                  {learnedTerms.includes(activeCard.termEng)
+                    ? isEng
+                      ? 'Mastered'
+                      : 'Dikuasai'
+                    : isEng
+                      ? 'Mark Learned (+10 XP)'
+                      : 'Tanda Dipelajari (+10 XP)'}
+                </span>
+              </button>
+            </div>
+          </section>
+
+          {/* Quick-Reference Grid */}
+          <div className="jomi-grid-3">
+            {filteredGlossary.map((card, idx) => {
+              const isSelected = card.id === activeCard.id;
+              const isMastered = learnedTerms.includes(card.termEng);
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveGlossaryIdx(idx);
+                    setIsGlossaryFlipped(true);
+                  }}
+                  className={`jomi-card jomi-card-interactive jomi-card-pad jomi-stack-xs`}
+                  style={{
+                    textAlign: 'left',
+                    borderColor: isSelected ? 'var(--jomi-primary)' : undefined,
+                    backgroundColor: isSelected ? 'var(--jomi-surface-soft)' : undefined,
+                  }}
+                >
+                  <div className="jomi-between">
+                    <span className="jomi-pill-sector">{card.category}</span>
+                    {isMastered && (
+                      <span className="jomi-pill-gain">
+                        <CheckCircle2 size={11} />
+                        {isEng ? 'Done' : 'Selesai'}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="jomi-display jomi-title-md">
+                    {isEng ? card.termEng : card.termBm}
+                  </h4>
+                  <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600 }}>
+                    {isEng ? card.shortEng : card.shortBm}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* INTERACTIVE STUDY & QUIZ MODAL */}
+      {activeLesson && (
+        <div className="jomi-dialog-backdrop" onClick={() => setActiveLesson(null)}>
+          <div
+            className="jomi-dialog-panel jomi-stack-md"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label={isEng ? activeLesson.titleEng : activeLesson.titleBm}
+          >
+            <div className="jomi-between">
+              <div className="jomi-cluster">
+                <span className="jomi-pill-gain">{activeLesson.category}</span>
+                <span className="jomi-pill-sector">{activeLesson.level}</span>
+                <span className="jomi-pill-neutral">+{activeLesson.xpReward} XP Quiz</span>
+              </div>
+              <button
+                type="button"
+                className="jomi-btn jomi-btn-ghost jomi-btn-icon"
+                onClick={() => setActiveLesson(null)}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <h3 className="jomi-display jomi-title-lg">
+              {isEng ? activeLesson.titleEng : activeLesson.titleBm}
+            </h3>
+
+            {/* Interactive Chapter Walkthrough for Video Guides */}
+            {activeLesson.type === 'video' && activeLesson.chapters && activeLesson.chapters.length > 0 && (
+              <div className="jomi-card-soft jomi-stack-sm">
+                <div className="jomi-between">
+                  <span className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#0f766e' }}>
+                    {isEng ? 'Interactive Chapter Walkthrough' : 'Panduan Bab Interaktif'}
+                  </span>
+                  <div className="jomi-cluster" style={{ gap: '0.35rem' }}>
+                    {activeLesson.chapters.map((_, cIdx) => (
+                      <button
+                        key={cIdx}
+                        type="button"
+                        onClick={() => setActiveChapterIdx(cIdx)}
+                        className={`jomi-btn jomi-btn-sm jomi-nums ${activeChapterIdx === cIdx ? 'jomi-btn-primary' : 'jomi-btn-outline'}`}
+                      >
+                        {isEng ? `Ch ${cIdx + 1}` : `Bab ${cIdx + 1}`}
+                      </button>
                     ))}
                   </div>
-                </CardContent>
-                <div className="p-3 bg-gray-50/80 text-center border-t border-gray-100 mt-auto">
-                  <Button variant="link" size="sm" className="text-gray-500 h-auto py-0 text-xs">View All Sources</Button>
                 </div>
-              </Card>
-            </section>
 
-            {/* 3. Wealth Projector - Fixed Chart Height */}
-            <section className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-3xl opacity-5 transform rotate-1 scale-[1.01]"></div>
-
-              <Card className="border-none shadow-xl bg-white relative z-10 overflow-hidden">
-                <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
-
-                <CardHeader className="md:flex md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-6">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-xl mb-1">
-                      <span className="p-2 bg-blue-100 rounded-lg text-blue-600"><BarChart size={20} /></span>
-                      AI Wealth Projector
-                    </CardTitle>
-                    <CardDescription>Simulate the power of compound interest over 10 years.</CardDescription>
-                  </div>
-                  <div className="hidden md:block text-right">
-                    <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Projected Total</p>
-                    <p className="text-3xl font-black text-blue-600">RM {finalWealth.toLocaleString()}</p>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-0">
-                  <div className="grid lg:grid-cols-12 min-h-[400px]">
-                    {/* Chart - FORCED HEIGHT */}
-                    <div className="lg:col-span-8 p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col justify-between h-[450px]">
-                      <div className="h-full w-full relative">
-                        {/* ResponsiveContainer needs a parent with definite height */}
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={wealthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                            <defs>
-                              <linearGradient id="colorWealth" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
-                                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} dy={10} />
-                            <YAxis tickFormatter={(value) => `RM${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={50} />
-                            <Tooltip
-                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', padding: '12px', fontSize: '13px' }}
-                            />
-                            <Area type="monotone" dataKey="wealth" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorWealth)" />
-                            <Area type="monotone" dataKey="invested" stroke="#CBD5E1" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />
-                          </AreaChart>
-                        </ResponsiveContainer>
+                {(() => {
+                  const chapter =
+                    activeLesson.chapters[Math.min(activeChapterIdx, activeLesson.chapters.length - 1)];
+                  return (
+                    <div className="jomi-row" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'stretch', backgroundColor: '#ffffff' }}>
+                      <div className="jomi-between">
+                        <h4 className="jomi-display jomi-title-md">
+                          {isEng ? chapter.titleEng : chapter.titleBm}
+                        </h4>
+                        {chapter.metricBadge && (
+                          <span className="jomi-pill-gain">{chapter.metricBadge}</span>
+                        )}
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 justify-center mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> Total Wealth
-                          </div>
-                          <span className="text-xl font-black text-blue-600">RM {finalWealth.toLocaleString()}</span>
-                        </div>
-                        <div className="hidden sm:block w-px bg-gray-300"></div>
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">
-                            <span className="w-2 h-2 rounded-full bg-gray-400"></span> Cash Invested
-                          </div>
-                          <span className="text-xl font-black text-gray-600">RM {finalInvested.toLocaleString()}</span>
-                        </div>
-                        <div className="hidden sm:block w-px bg-gray-300"></div>
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-2 text-xs font-bold text-green-600 uppercase tracking-wide mb-1">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span> Net Profit
-                          </div>
-                          <span className="text-xl font-black text-green-600">+ RM {(finalWealth - finalInvested).toLocaleString()}</span>
-                        </div>
+                      <p className="jomi-text-sm" style={{ fontWeight: 600 }}>
+                        {isEng ? chapter.summaryEng : chapter.summaryBm}
+                      </p>
+                      <div className="jomi-between" style={{ paddingTop: '0.25rem' }}>
+                        <button
+                          type="button"
+                          className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                          disabled={activeChapterIdx === 0}
+                          onClick={() => setActiveChapterIdx((prev) => Math.max(0, prev - 1))}
+                        >
+                          <ChevronLeft size={14} />
+                          <span>{isEng ? 'Prev Chapter' : 'Bab Sebelum'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                          disabled={activeChapterIdx >= activeLesson.chapters!.length - 1}
+                          onClick={() =>
+                            setActiveChapterIdx((prev) =>
+                              Math.min(activeLesson.chapters!.length - 1, prev + 1)
+                            )
+                          }
+                        >
+                          <span>{isEng ? 'Next Chapter' : 'Bab Seterusnya'}</span>
+                          <ChevronRight size={14} />
+                        </button>
                       </div>
                     </div>
+                  );
+                })()}
+              </div>
+            )}
 
-                    {/* Controls */}
-                    <div className="lg:col-span-4 p-6 md:p-8 bg-gray-50/50 space-y-8 flex flex-col justify-center">
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          <Label className="text-sm font-bold text-gray-700">Monthly Investment</Label>
-                          <span className="text-blue-600 font-bold bg-blue-100 px-2 py-1 rounded text-xs">RM {monthlyInvest}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="100"
-                          max="5000"
-                          step="100"
-                          value={monthlyInvest}
-                          onChange={(e) => setMonthlyInvest(parseInt(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-700 transition-colors"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          <Label className="text-sm font-bold text-gray-700">Risk Profile</Label>
-                          <span className={`font-bold px-2 py-1 rounded text-xs ${riskLevel > 7 ? 'text-red-700 bg-red-100' : riskLevel > 4 ? 'text-yellow-700 bg-yellow-100' : 'text-green-700 bg-green-100'}`}>
-                            {riskLevel}/10
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min="1"
-                          max="10"
-                          step="1"
-                          value={riskLevel}
-                          onChange={(e) => setRiskLevel(parseInt(e.target.value))}
-                          className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${riskLevel > 7 ? 'accent-red-500' : riskLevel > 4 ? 'accent-yellow-500' : 'accent-green-500'} transition-all`}
-                        />
-                        <div className="mt-3 p-3 rounded-lg bg-white border border-gray-200 text-xs text-gray-500 leading-relaxed shadow-sm">
-                          {riskLevel <= 3 ? "🛡️ Conservative: Gov Bonds & Blue Chips (Est. 4-6% p.a)" :
-                            riskLevel <= 7 ? "⚖️ Balanced: Mixed Equity & Bonds (Est. 6-9% p.a)" :
-                              "🚀 Aggressive: Growth Stocks & Tech (Est. 9-12% p.a)"}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                        <div>
-                          <Label className="font-bold text-sm cursor-pointer" onClick={() => setInflationAdjusted(!inflationAdjusted)}>Inflation Adjusted</Label>
-                          <p className="text-[10px] text-gray-400">Real purchasing power (3%)</p>
-                        </div>
-                        <Switch checked={inflationAdjusted} onCheckedChange={setInflationAdjusted} />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-
-          </TabsContent>
-
-          {/* Existing Tabs Content - Unchanged */}
-          <TabsContent value="articles" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {articles.map((article, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge variant="secondary">{article.category}</Badge>
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
-                        <Clock size={14} />
-                        {article.readTime}
-                      </div>
-                    </div>
-                    <CardTitle className="text-xl">
-                      {language === 'ENG' ? article.titleEng : article.titleBm}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4">
-                      {language === 'ENG' ? article.descEng : article.descBm}
-                    </p>
-                    <Button variant="outline" className="w-full">
-                      <BookOpen className="mr-2" size={16} />
-                      {t.readMore}
-                    </Button>
-                  </CardContent>
-                </Card>
+            {/* Study Notes */}
+            <div className="jomi-card-soft jomi-stack-sm">
+              {(isEng ? activeLesson.bodyEng : activeLesson.bodyBm).map((para, idx) => (
+                <p key={idx} className="jomi-text-sm" style={{ fontWeight: 600, lineHeight: 1.55 }}>
+                  {para}
+                </p>
               ))}
             </div>
-          </TabsContent>
 
-          <TabsContent value="tutorials" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {tutorials.map((tutorial, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
-                  <div className="relative aspect-video bg-gray-200">
-                    <ImageWithFallback
-                      src={index % 2 === 0
-                        ? "https://images.unsplash.com/photo-1579226905180-636b76d96082?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdG9jayUyMHRyYWRpbmclMjBkYXRhfGVufDF8fHx8MTc2MTkwMDk2N3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                        : "https://images.unsplash.com/photo-1668092547893-6402c0387885?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMGVkdWNhdGlvbiUyMGxlYXJuaW5nfGVufDF8fHx8MTc2MTgyMDI5M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+            {/* Key Rule / Formula Callout */}
+            <div className="jomi-card-gold jomi-stack-xs" style={{ padding: '0.9rem 1.05rem' }}>
+              <div className="jomi-cluster" style={{ color: 'var(--jomi-gold-ink)', fontWeight: 800, fontSize: '0.78rem', textTransform: 'uppercase' }}>
+                <Lightbulb size={15} color="#b45309" />
+                <span>{isEng ? 'Key Formula / Rule of Thumb' : 'Formula / Peraturan Utama'}</span>
+              </div>
+              <p className="jomi-text-sm" style={{ fontWeight: 700, color: 'var(--jomi-ink)' }}>
+                {isEng ? activeLesson.keyRuleEng : activeLesson.keyRuleBm}
+              </p>
+            </div>
+
+            {/* Real Bursa Example + Inspect Ticker CTA */}
+            <div className="jomi-row" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'stretch', gap: '0.5rem' }}>
+              <div className="jomi-between">
+                <span className="jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#0f766e' }}>
+                  {isEng ? 'Real Bursa Malaysia Example' : 'Contoh Sebenar Bursa Malaysia'}
+                </span>
+                {activeLesson.relatedTicker && setSelectedStock && (
+                  <button
+                    type="button"
+                    className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                    onClick={() => {
+                      const target = stocks.find((s) => s.ticker === activeLesson.relatedTicker);
+                      if (target) {
+                        setSelectedStock(target);
+                        setActiveLesson(null);
+                        navigateTo('stock-details');
                       }
-                      alt="Tutorial thumbnail"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                        <Play className="text-green-600 ml-1" size={28} fill="currentColor" />
-                      </div>
-                    </div>
-                  </div>
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant={tutorial.level === 'Beginner' ? 'secondary' : 'default'}>{tutorial.level}</Badge>
-                    </div>
-                    <CardTitle className="text-xl">
-                      {language === 'ENG' ? tutorial.titleEng : tutorial.titleBm}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4">
-                      {language === 'ENG' ? tutorial.descEng : tutorial.descBm}
-                    </p>
-                    <Button className="w-full bg-green-600 hover:bg-green-700">
-                      <Play className="mr-2" size={16} />
-                      {t.watchNow}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                    }}
+                  >
+                    <span>
+                      {isEng
+                        ? `Inspect ${activeLesson.relatedTicker}`
+                        : `Lihat ${activeLesson.relatedTicker}`}
+                    </span>
+                    <ArrowRight size={13} />
+                  </button>
+                )}
+              </div>
+              <p className="jomi-text-sm" style={{ fontWeight: 600 }}>
+                {isEng ? activeLesson.bursaExampleEng : activeLesson.bursaExampleBm}
+              </p>
             </div>
-          </TabsContent>
-        </Tabs>
-      </main>
+
+            {/* 3-Question Comprehension Check */}
+            <div className="jomi-stack-md">
+              <h4 className="jomi-display jomi-title-md jomi-cluster">
+                <Award size={18} color="#b45309" />
+                <span>{isEng ? 'Quick Knowledge Check (3 Questions)' : 'Ujian Kefahaman Pantas (3 Soalan)'}</span>
+              </h4>
+
+              {activeLesson.quiz.map((q, qIdx) => {
+                const opts = isEng ? q.optionsEng : q.optionsBm;
+                return (
+                  <div key={qIdx} className="jomi-stack-xs">
+                    <p style={{ fontWeight: 800, fontSize: '0.9rem' }}>
+                      {qIdx + 1}. {isEng ? q.questionEng : q.questionBm}
+                    </p>
+                    <div className="jomi-stack-xs">
+                      {opts.map((opt, oIdx) => {
+                        const chosen = quizAnswers[qIdx] === oIdx;
+                        const isCorrect = q.correctIndex === oIdx;
+                        let borderColor = chosen ? 'var(--jomi-emerald)' : 'var(--jomi-border)';
+                        let bg = chosen ? 'var(--jomi-emerald-soft)' : '#ffffff';
+                        if (quizSubmitted) {
+                          if (isCorrect) {
+                            borderColor = '#10b981';
+                            bg = '#ecfdf5';
+                          } else if (chosen && !isCorrect) {
+                            borderColor = '#ef4444';
+                            bg = '#fef2f2';
+                          }
+                        }
+                        return (
+                          <button
+                            key={oIdx}
+                            type="button"
+                            onClick={() => {
+                              setQuizSubmitted(false);
+                              setQuizAnswers((prev) => ({ ...prev, [qIdx]: oIdx }));
+                            }}
+                            style={{
+                              width: '100%',
+                              textAlign: 'left',
+                              padding: '0.65rem 0.9rem',
+                              borderRadius: '0.8rem',
+                              border: `2px solid ${borderColor}`,
+                              backgroundColor: bg,
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {quizSubmitted && (
+                      <div className="jomi-card-soft" style={{ padding: '0.65rem 0.85rem' }}>
+                        <p className="jomi-text-xs" style={{ fontWeight: 700, color: '#065f46' }}>
+                          {isEng ? q.explanationEng : q.explanationBm}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {quizSubmitted && (
+                <div
+                  className={
+                    activeLesson.quiz.every((q, idx) => quizAnswers[idx] === q.correctIndex)
+                      ? 'jomi-card-soft'
+                      : 'jomi-card-gold'
+                  }
+                  style={{ padding: '0.8rem 1rem' }}
+                >
+                  <p style={{ fontWeight: 800, fontSize: '0.88rem' }}>
+                    {activeLesson.quiz.every((q, idx) => quizAnswers[idx] === q.correctIndex)
+                      ? isEng
+                        ? 'Perfect score! Lesson completed.'
+                        : 'Markah penuh! Pelajaran selesai.'
+                      : isEng
+                        ? 'Almost there — review the highlighted green answers and explanations, then try again!'
+                        : 'Hampir berjaya — semak jawapan hijau serta penerangan, dan cuba lagi!'}
+                  </p>
+                </div>
+              )}
+
+              <div className="jomi-between">
+                <button type="button" className="jomi-btn jomi-btn-outline" onClick={() => setActiveLesson(null)}>
+                  {isEng ? 'Close' : 'Tutup'}
+                </button>
+                <button
+                  type="button"
+                  disabled={Object.keys(quizAnswers).length < activeLesson.quiz.length}
+                  className="jomi-btn jomi-btn-primary"
+                  onClick={handleQuizSubmit}
+                >
+                  {isEng ? 'Submit Answers' : 'Hantar Jawapan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

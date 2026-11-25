@@ -1,9 +1,5 @@
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, ShieldCheck, Sparkles, Trophy, ArrowRight } from 'lucide-react';
 import type { Screen } from '../App';
 
 interface LoginScreenProps {
@@ -23,116 +19,203 @@ export function LoginScreen({ navigateTo, language, toggleLanguage }: LoginScree
   const texts = {
     ENG: {
       appName: 'JomINVEST',
-      tagline: 'Start Your Investment Journey',
-      loginTitle: 'Welcome Back',
-      loginDesc: 'Enter your credentials to access your account',
-      registerTitle: 'Create Account',
-      registerDesc: 'Join thousands of smart investors',
-      email: 'Email',
+      badge: 'Bursa Malaysia Practice Sandbox',
+      heroTitle: 'Learn Investing the Fun, Risk-Free Way.',
+      heroDesc: 'Practice buying real Bursa Malaysia stocks with virtual cash, unlock XP milestones, and decode annual reports with AI.',
+      feat1: 'Simulated RM portfolio with zero real-money risk',
+      feat2: 'Earn XP & level up as you master P/E, dividends & risk',
+      feat3: 'AI-powered stock insights & JomRingkas report scanner',
+      loginTitle: 'Welcome Back!',
+      loginDesc: 'Sign in to continue your investing streak',
+      registerTitle: 'Create Free Account',
+      registerDesc: 'Join thousands of Malaysian student investors',
+      email: 'Email Address',
       password: 'Password',
       confirmPassword: 'Confirm Password',
-      loginButton: 'Login',
-      registerButton: 'Register',
-      noAccount: "Don't have an account?",
-      hasAccount: "Already have an account?",
-      registerLink: 'Register',
-      loginLink: 'Login',
+      loginButton: 'Continue to JomINVEST',
+      registerButton: 'Start Investing Journey',
+      noAccount: "New to JomINVEST?",
+      hasAccount: 'Already have an account?',
+      registerLink: 'Create an account',
+      loginLink: 'Sign in instead',
     },
     BM: {
       appName: 'JomINVEST',
-      tagline: 'Mulakan Perjalanan Pelaburan Anda',
-      loginTitle: 'Selamat Kembali',
-      loginDesc: 'Masukkan kelayakan anda untuk mengakses akaun',
-      registerTitle: 'Buat Akaun',
-      registerDesc: 'Sertai beribu-ribu pelabur pintar',
-      email: 'E-mel',
+      badge: 'Kotak Pasir Latihan Bursa Malaysia',
+      heroTitle: 'Belajar Melabur Dengan Cara Seronok & Tanpa Risiko.',
+      heroDesc: 'Berlatih membeli saham sebenar Bursa Malaysia dengan tunai maya, kumpul XP, dan fahami laporan tahunan dengan AI.',
+      feat1: 'Portfolio simulasi RM tanpa risiko wang sebenar',
+      feat2: 'Kumpul XP & naik tahap sambil kuasai P/E, dividen & risiko',
+      feat3: 'Wawasan saham AI & pengimbas laporan JomRingkas',
+      loginTitle: 'Selamat Kembali!',
+      loginDesc: 'Log masuk untuk sambung perjalanan pelaburan anda',
+      registerTitle: 'Buat Akaun Percuma',
+      registerDesc: 'Sertai ribuan pelabur pelajar Malaysia',
+      email: 'Alamat E-mel',
       password: 'Kata Laluan',
       confirmPassword: 'Sahkan Kata Laluan',
-      loginButton: 'Log Masuk',
-      registerButton: 'Daftar',
-      noAccount: "Tidak mempunyai akaun?",
-      hasAccount: "Sudah mempunyai akaun?",
-      registerLink: 'Daftar',
-      loginLink: 'Log Masuk',
-    }
+      loginButton: 'Teruskan ke JomINVEST',
+      registerButton: 'Mulakan Perjalanan Pelaburan',
+      noAccount: 'Baru di JomINVEST?',
+      hasAccount: 'Sudah mempunyai akaun?',
+      registerLink: 'Daftar akaun',
+      loginLink: 'Log masuk',
+    },
   };
 
   const t = texts[language];
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 to-blue-50">
-      {/* Language Toggle */}
-      <button
-        onClick={toggleLanguage}
-        className="absolute top-4 right-4 px-3 py-1 text-sm bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
-      >
-        ENG / BM
-      </button>
-
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2 text-green-600">
-            <TrendingUp size={32} strokeWidth={2.5} />
-            <h1 className="text-3xl text-green-600">{t.appName}</h1>
+    <div className="jomi-auth-page">
+      {/* Top Bar */}
+      <div className="jomi-between" style={{ maxWidth: '960px', width: '100%', margin: '0 auto' }}>
+        <div className="jomi-cluster">
+          <div className="jomi-brand-mark" aria-hidden="true">
+            <TrendingUp size={22} strokeWidth={2.6} />
           </div>
-          <p className="text-sm text-gray-600">{t.tagline}</p>
-        </CardHeader>
+          <span className="jomi-display" style={{ fontSize: '1.4rem', fontWeight: 700 }}>
+            {t.appName}
+          </span>
+        </div>
 
-        <CardContent>
-          <CardTitle className="mb-2">{isLogin ? t.loginTitle : t.registerTitle}</CardTitle>
-          <CardDescription className="mb-6">{isLogin ? t.loginDesc : t.registerDesc}</CardDescription>
+        <button type="button" onClick={toggleLanguage} className="jomi-btn jomi-btn-outline jomi-btn-sm">
+          {language === 'ENG' ? 'ENG / BM' : 'BM / ENG'}
+        </button>
+      </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t.email}</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder={language === 'ENG' ? 'your@email.com' : 'anda@email.com'}
-                required 
-              />
+      {/* Split Center Content */}
+      <div className="jomi-auth-center">
+        <div className="jomi-auth-split">
+          {/* Left Value Pitch */}
+          <div className="jomi-stack-md">
+            <span className="jomi-pill-gain" style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem' }}>
+              <Sparkles size={14} />
+              {t.badge}
+            </span>
+
+            <h1 className="jomi-display" style={{ fontSize: '2.35rem', fontWeight: 700, lineHeight: 1.15 }}>
+              {t.heroTitle}
+            </h1>
+
+            <p className="jomi-muted" style={{ fontSize: '1rem', fontWeight: 600 }}>
+              {t.heroDesc}
+            </p>
+
+            <div className="jomi-stack-sm" style={{ marginTop: '0.25rem' }}>
+              {[
+                { icon: ShieldCheck, text: t.feat1, bg: 'var(--jomi-emerald-soft)', border: 'var(--jomi-emerald-border)', color: '#047857' },
+                { icon: Trophy, text: t.feat2, bg: 'var(--jomi-gold-soft)', border: 'var(--jomi-gold-border)', color: '#b45309' },
+                { icon: Sparkles, text: t.feat3, bg: 'var(--jomi-emerald-soft)', border: 'var(--jomi-emerald-border)', color: '#0d9488' },
+              ].map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <div key={idx} className="jomi-cluster" style={{ gap: '0.75rem' }}>
+                    <div
+                      style={{
+                        width: '2.25rem',
+                        height: '2.25rem',
+                        borderRadius: '0.75rem',
+                        backgroundColor: item.bg,
+                        border: `1.5px solid ${item.border}`,
+                        color: item.color,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon size={17} />
+                    </div>
+                    <span style={{ fontSize: '0.92rem', fontWeight: 700 }}>{item.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Auth Card */}
+          <div className="jomi-card jomi-card-pad" style={{ padding: '1.85rem' }}>
+            <div className="jomi-stack-xs" style={{ marginBottom: '1.35rem' }}>
+              <h2 className="jomi-display jomi-title-lg">
+                {isLogin ? t.loginTitle : t.registerTitle}
+              </h2>
+              <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+                {isLogin ? t.loginDesc : t.registerDesc}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">{t.password}</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="••••••••"
-                required 
-              />
-            </div>
-
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
-                  placeholder="••••••••"
-                  required 
+            <form onSubmit={handleLogin} className="jomi-stack-md">
+              <div>
+                <label htmlFor="email" className="jomi-label">{t.email}</label>
+                <input
+                  id="email"
+                  type="email"
+                  className="jomi-input"
+                  placeholder={language === 'ENG' ? 'student@university.edu.my' : 'pelajar@universiti.edu.my'}
+                  required
                 />
               </div>
-            )}
 
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-              {isLogin ? t.loginButton : t.registerButton}
-            </Button>
-          </form>
-        </CardContent>
+              <div>
+                <label htmlFor="password" className="jomi-label">{t.password}</label>
+                <input
+                  id="password"
+                  type="password"
+                  className="jomi-input"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
 
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-gray-600">
-            {isLogin ? t.noAccount : t.hasAccount}{' '}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-green-600 hover:underline"
+              {!isLogin && (
+                <div>
+                  <label htmlFor="confirm-password" className="jomi-label">{t.confirmPassword}</label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    className="jomi-input"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+              )}
+
+              <button type="submit" className="jomi-btn jomi-btn-primary jomi-btn-lg jomi-btn-full">
+                <span>{isLogin ? t.loginButton : t.registerButton}</span>
+                <ArrowRight size={18} />
+              </button>
+            </form>
+
+            <div
+              style={{
+                marginTop: '1.35rem',
+                paddingTop: '1.1rem',
+                borderTop: '1.5px solid var(--jomi-border)',
+                textAlign: 'center',
+              }}
+              className="jomi-text-sm jomi-muted"
             >
-              {isLogin ? t.registerLink : t.loginLink}
-            </button>
-          </p>
-        </CardFooter>
-      </Card>
+              <span style={{ fontWeight: 600 }}>{isLogin ? t.noAccount : t.hasAccount} </span>
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--jomi-primary)',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                }}
+              >
+                {isLogin ? t.registerLink : t.loginLink}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

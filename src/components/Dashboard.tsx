@@ -1,12 +1,24 @@
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Input } from './ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { TrendingUp, TrendingDown, Search, Lightbulb, BookOpen, User, Sparkles, Plus } from 'lucide-react';
-import { ChatbotModal } from './ChatbotModal';
+import {
+  TrendingUp,
+  TrendingDown,
+  Search,
+  Lightbulb,
+  BookOpen,
+  Sparkles,
+  Plus,
+  ArrowUpRight,
+  Compass,
+  Award,
+  ShieldCheck,
+  CheckCircle2,
+  Circle,
+  RefreshCw,
+} from 'lucide-react';
 import type { Screen, PortfolioItem } from '../App';
-import { StockData, stocks } from '../data/stocks';
+import type { StockData } from '../data/stocks';
+import { StockBadge, MiniSparkline } from './StockVisuals';
+import { formatRMFromSen, priceToSen } from '../lib/simulator';
 
 interface DashboardProps {
   navigateTo: (screen: Screen) => void;
@@ -14,408 +26,712 @@ interface DashboardProps {
   language: 'ENG' | 'BM';
   setSelectedStock: (stock: StockData) => void;
   portfolio: PortfolioItem[];
+  cashSen: number;
   userXP: number;
   userLevel: number;
   watchlist: StockData[];
+  stocks: StockData[];
+  learnedCount: number;
+  completedLessonsCount: number;
+  onSyncQuotes?: () => void;
+  isSyncing?: boolean;
 }
 
-export function Dashboard({ navigateTo, userProfile, language, setSelectedStock, portfolio, userXP, userLevel, watchlist }: DashboardProps) {
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+export function Dashboard({
+  navigateTo,
+  userProfile,
+  language,
+  setSelectedStock,
+  portfolio,
+  cashSen,
+  userXP,
+  userLevel,
+  watchlist,
+  stocks,
+  learnedCount,
+  completedLessonsCount,
+  onSyncQuotes,
+  isSyncing = false,
+}: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [moversTab, setMoversTab] = useState<'gainers' | 'losers'>('gainers');
+  const [shariahOnly, setShariahOnly] = useState(false);
 
   const texts = {
     ENG: {
       welcome: 'Welcome back, Tan!',
-      profile: 'Your Investor Profile',
-      portfolio: 'My Simulated Portfolio',
+      profile: 'Investor Persona:',
+      totalEquity: 'Total Account Equity (Cash + Stocks)',
       topPicks: 'Top AI Picks for You',
-      searchPlaceholder: 'Search Bursa Malaysia stocks...',
-      viewDetails: 'View Details',
-      education: 'Educational Hub',
-      exploreMore: 'Explore',
+      allStocks: 'Bursa Malaysia Directory',
+      searchPlaceholder: 'Search Bursa Malaysia stocks by name, ticker, or 4-digit code...',
+      viewDetails: 'Trade / View',
+      viewPortfolio: 'Open Portfolio',
+      aiAdvisor: 'AI Advisor',
+      education: 'Learn & AI Lab',
+      educationDesc: 'Scan all 20 reports & take XP quizzes',
+      exploreMore: 'Open Hub',
       marketToday: 'Bursa Market Today',
       topGainers: 'Top Gainers',
       topLosers: 'Top Losers',
       myWatchlist: 'My Watchlist',
-      addToWatchlist: 'Add to Watchlist',
+      addToWatchlist: 'Manage Watchlist',
       searchResults: 'Search Results',
-      noResults: 'No stocks found.',
-      portfolioValue: 'Total Value',
-      portfolioCount: 'Stocks Held',
+      noResults: 'No matching stocks found.',
+      portfolioCount: 'Positions',
+      cashChip: 'Cash',
+      investedChip: 'Holdings',
+      shariahAll: 'All Counters',
+      shariahFilter: 'Shariah Only',
+      shariahTag: 'Shariah',
+      questsTitle: 'Student Quests',
+      quest1: 'Execute your first simulated trade',
+      quest2: 'Tap 2 financial terms in Stock Details',
+      quest3: 'Pass 1 lesson quiz in Learn Hub',
+      syncBtn: 'Sync KLSE',
     },
     BM: {
       welcome: 'Selamat kembali, Tan!',
-      profile: 'Profil Pelabur Anda',
-      portfolio: 'Portfolio Simulasi Saya',
+      profile: 'Persona Pelabur:',
+      totalEquity: 'Jumlah Ekuiti Akaun (Tunai + Saham)',
       topPicks: 'Pilihan Teratas AI Untuk Anda',
-      searchPlaceholder: 'Cari saham Bursa Malaysia...',
-      viewDetails: 'Lihat Butiran',
-      education: 'Hab Pendidikan',
-      exploreMore: 'Terokai',
+      allStocks: 'Direktori Bursa Malaysia',
+      searchPlaceholder: 'Cari saham Bursa Malaysia mengikut nama atau kod...',
+      viewDetails: 'Dagang / Lihat',
+      viewPortfolio: 'Buka Portfolio',
+      aiAdvisor: 'Penasihat AI',
+      education: 'Makmal Ilmu & AI',
+      educationDesc: 'Imbas 20 laporan & jawab kuiz XP',
+      exploreMore: 'Buka Hab',
       marketToday: 'Bursa Hari Ini',
       topGainers: 'Penaik Teratas',
       topLosers: 'Penurun Teratas',
       myWatchlist: 'Senarai Pantau Saya',
-      addToWatchlist: 'Tambah ke Senarai Pantau',
+      addToWatchlist: 'Urus Senarai Pantau',
       searchResults: 'Keputusan Carian',
       noResults: 'Tiada saham ditemui.',
-      portfolioValue: 'Jumlah Nilai',
-      portfolioCount: 'Pegangan Saham',
-    }
+      portfolioCount: 'Pegangan',
+      cashChip: 'Tunai',
+      investedChip: 'Saham',
+      shariahAll: 'Semua Saham',
+      shariahFilter: 'Patuh Syariah',
+      shariahTag: 'Syariah',
+      questsTitle: 'Misi Pelajar',
+      quest1: 'Buat dagangan simulasi pertama',
+      quest2: 'Ketik 2 istilah dalam Butiran Saham',
+      quest3: 'Lulus 1 kuiz dalam Hab Ilmu',
+      syncBtn: 'Segar KLSE',
+    },
   };
 
   const t = texts[language];
 
-  // Derived Data
+  const basePool = shariahOnly ? stocks.filter((s) => s.shariahCompliant) : stocks;
+
   const filteredStocks = searchQuery
-    ? stocks.filter(s =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.ticker.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    ? basePool.filter(
+        (s) =>
+          s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          s.klseCode.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     : [];
 
-  const topPicks = stocks.filter(s => ['TENAGA', 'MAYBANK', 'PBBANK', 'CIMB'].includes(s.ticker));
-  const topGainers = [...stocks].sort((a, b) => parseFloat(b.change) - parseFloat(a.change)).slice(0, 5);
-  const topLosers = [...stocks].sort((a, b) => parseFloat(a.change) - parseFloat(b.change)).slice(0, 5);
+  const topPicks = basePool
+    .filter((s) => ['TENAGA', 'MAYBANK', 'PBBANK', 'CIMB', 'GAMUDA', 'IHH'].includes(s.ticker))
+    .slice(0, 4);
+  const topGainers = [...stocks].sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent)).slice(0, 5);
+  const topLosers = [...stocks].sort((a, b) => parseFloat(a.changePercent) - parseFloat(b.changePercent)).slice(0, 5);
 
-  // Calculate Portfolio
-  const portfolioValue = portfolio.reduce((acc, item) => acc + (parseFloat(item.stock.price) * item.quantity), 0).toFixed(2);
+  const holdingsSen = portfolio.reduce(
+    (acc, item) => acc + priceToSen(item.stock.price) * item.quantity,
+    0
+  );
+  const costBasisSen = portfolio.reduce(
+    (acc, item) => acc + priceToSen(item.averagePrice) * item.quantity,
+    0
+  );
+  const totalEquitySen = cashSen + holdingsSen;
+  const pnlSen = holdingsSen - costBasisSen;
 
   const handleStockClick = (stock: StockData) => {
     setSelectedStock(stock);
     navigateTo('stock-details');
   };
 
-  const renderSparkline = (data: number[]) => {
-    if (!data || data.length === 0) return null;
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-    const width = 80;
-    const height = 30;
-
-    const points = data.map((value, index) => {
-      const x = (index / (data.length - 1)) * width;
-      const y = height - ((value - min) / range) * height;
-      return `${x},${y}`;
-    }).join(' ');
-
-    return (
-      <svg width={width} height={height} className="inline-block">
-        <polyline
-          points={points}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="text-green-600"
-        />
-      </svg>
-    );
-  };
+  const quests = [
+    { label: t.quest1, done: portfolio.length > 0 || cashSen !== 1_000_000 },
+    { label: t.quest2, done: learnedCount >= 2 },
+    { label: t.quest3, done: completedLessonsCount >= 1 },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-green-600">
-            <TrendingUp size={28} strokeWidth={2.5} />
-            <h1 className="text-2xl">JomINVEST</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigateTo('profile')}>
-              <User />
-            </Button>
+    <div className="jomi-stack-lg">
+      {/* Greeting + Persona + Sync Strip */}
+      <div className="jomi-between">
+        <div className="jomi-stack-xs">
+          <h2 className="jomi-display jomi-title-xl">{t.welcome}</h2>
+          <div className="jomi-cluster jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>
+            <span>{t.profile}</span>
+            <span className="jomi-pill-gain">
+              <Compass size={12} />
+              {userProfile || 'Jom-Explorer (Aggressive)'}
+            </span>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Welcome Section */}
-            <div>
-              <h2 className="text-2xl mb-2">{t.welcome}</h2>
-              <p className="text-gray-600">
-                {t.profile}: <span className="text-green-600">{userProfile || 'Jom-Explorer (Aggressive)'}</span>
-              </p>
-            </div>
-
-            {/* XP Card REMOVED */}
-
-            {/* Portfolio Card */}
-            <Card
-              className="bg-gradient-to-br from-green-600 to-green-700 text-white cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigateTo('portfolio')}
+        <div className="jomi-cluster">
+          <div className="jomi-tabs-bar">
+            <button
+              type="button"
+              onClick={() => setShariahOnly(false)}
+              className={`jomi-tab-btn ${!shariahOnly ? 'jomi-tab-btn-active' : ''}`}
             >
-              <CardHeader>
-                <CardTitle className="text-white">{t.portfolio}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="text-4xl">RM {portfolioValue}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-100 text-sm">{portfolio.length} {t.portfolioCount}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <Input
-                placeholder={t.searchPlaceholder}
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {/* Search Results or Dashboard Content */}
-            {searchQuery ? (
-              <div>
-                <h3 className="text-xl mb-4">{t.searchResults}</h3>
-                {filteredStocks.length > 0 ? (
-                  <div className="grid gap-4">
-                    {filteredStocks.map((stock) => (
-                      <Card
-                        key={stock.id}
-                        className="cursor-pointer hover:shadow-md"
-                        onClick={() => handleStockClick(stock)}
-                      >
-                        <CardContent className="p-4 flex items-center justify-between">
-                          <div>
-                            <h4 className="font-bold">{stock.name}</h4>
-                            <p className="text-sm text-gray-500">{stock.ticker}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium">RM {stock.price}</p>
-                            <p className={`text-sm ${stock.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                              {stock.changePercent}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">{t.noResults}</p>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* Top AI Picks Section */}
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Lightbulb className="text-green-600" size={24} />
-                    <h3 className="text-xl">{t.topPicks}</h3>
-                  </div>
-
-                  <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
-                    {topPicks.map((stock) => (
-                      <Card
-                        key={stock.id}
-                        className="min-w-[280px] snap-start cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => handleStockClick(stock)}
-                      >
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <CardTitle className="text-lg">{stock.name}</CardTitle>
-                              <p className="text-sm text-gray-500">{stock.ticker}</p>
-                            </div>
-                            <Lightbulb className="text-yellow-500" size={20} />
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-end justify-between">
-                            <div>
-                              <div className="text-2xl">RM {stock.price}</div>
-                              <div className={`text-sm ${stock.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                                {stock.changePercent}
-                              </div>
-                            </div>
-                            <Button size="sm" variant="outline">
-                              {t.viewDetails}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-
-                {/* All Bursa Stocks Section */}
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="text-green-600" size={24} />
-                    <h3 className="text-xl">All Bursa Stocks</h3>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {stocks.map((stock) => (
-                      <Card
-                        key={stock.id}
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => handleStockClick(stock)}
-                      >
-                        <CardContent className="p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-600 text-xs">
-                              {stock.ticker.slice(0, 3)}
-                            </div>
-                            <div>
-                              <h4 className="font-bold text-sm">{stock.name}</h4>
-                              <p className="text-xs text-gray-500">{stock.ticker}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-sm">RM {stock.price}</p>
-                            <div className={`flex items-center justify-end gap-1 text-xs ${stock.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                              {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                              {stock.changePercent}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-
-              </>
-            )}
+              {t.shariahAll}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShariahOnly(true)}
+              className={`jomi-tab-btn ${shariahOnly ? 'jomi-tab-btn-active' : ''}`}
+            >
+              <ShieldCheck size={14} color="#047857" />
+              <span>{t.shariahFilter}</span>
+            </button>
           </div>
 
-          {/* Right Column - Market Movers & Watchlist */}
-          <div className="space-y-8">
-            {/* Educational Hub - Prominent Placement */}
-            <Card
-              className="bg-blue-50 border-blue-200 cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigateTo('educational-hub')}
+          {onSyncQuotes && (
+            <button
+              type="button"
+              onClick={onSyncQuotes}
+              disabled={isSyncing}
+              className="jomi-btn jomi-btn-outline jomi-btn-sm"
             >
-              <CardContent className="py-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-600 text-white p-3 rounded-full">
-                      <BookOpen size={24} />
+              <RefreshCw size={14} />
+              <span>{t.syncBtn}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main 2-Column Bento Grid */}
+      <div className="jomi-bento-main">
+        {/* Left Column */}
+        <div className="jomi-stack-lg">
+          {/* Account Equity Hero Banner */}
+          <div
+            className="jomi-hero jomi-stack-md"
+            onClick={() => navigateTo('portfolio')}
+            role="button"
+            tabIndex={0}
+            style={{ cursor: 'pointer' }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigateTo('portfolio');
+              }
+            }}
+          >
+            <div className="jomi-between" style={{ alignItems: 'flex-start' }}>
+              <div className="jomi-stack-xs">
+                <p className="jomi-hero-label">{t.totalEquity}</p>
+                <div className="jomi-display jomi-nums" style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.1 }}>
+                  RM {formatRMFromSen(totalEquitySen)}
+                </div>
+              </div>
+
+              <div className="jomi-cluster">
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-gold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateTo('portfolio');
+                  }}
+                >
+                  <span>{t.viewPortfolio}</span>
+                  <ArrowUpRight size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="jomi-btn jomi-btn-outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateTo('ai-recommendation');
+                  }}
+                >
+                  <Sparkles size={15} color="#0d9488" />
+                  <span>{t.aiAdvisor}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Stat Chips inside Hero */}
+            <div className="jomi-cluster" style={{ gap: '0.6rem', paddingTop: '0.25rem' }}>
+              <div
+                className="jomi-nums"
+                style={{
+                  padding: '0.35rem 0.8rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                }}
+              >
+                {t.cashChip}: RM {formatRMFromSen(cashSen)}
+              </div>
+              <div
+                className="jomi-nums"
+                style={{
+                  padding: '0.35rem 0.8rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                }}
+              >
+                {t.investedChip}: RM {formatRMFromSen(holdingsSen)} ({portfolio.length})
+              </div>
+              <div
+                className="jomi-nums"
+                style={{
+                  padding: '0.35rem 0.8rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: 'rgba(15, 41, 38, 0.28)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                }}
+              >
+                <Award size={13} color="#fcd34d" />
+                <span>Lv.{userLevel} ({userXP} XP)</span>
+              </div>
+              {portfolio.length > 0 && (
+                <div
+                  className="jomi-nums"
+                  style={{
+                    padding: '0.35rem 0.8rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: pnlSen >= 0 ? 'rgba(236, 253, 245, 0.22)' : 'rgba(254, 242, 242, 0.22)',
+                    border: '1px solid rgba(255,255,255,0.28)',
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
+                  }}
+                >
+                  {pnlSen >= 0 ? '+' : ''}RM {formatRMFromSen(pnlSen)} P&amp;L
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="jomi-search-wrap">
+            <Search className="jomi-search-icon" size={19} aria-hidden="true" />
+            <input
+              type="text"
+              placeholder={t.searchPlaceholder}
+              className="jomi-search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label={t.searchPlaceholder}
+            />
+          </div>
+
+          {/* Search Results OR Top AI Picks + Bursa Directory */}
+          {searchQuery ? (
+            <div className="jomi-stack-md">
+              <h3 className="jomi-display jomi-title-lg">{t.searchResults}</h3>
+              {filteredStocks.length > 0 ? (
+                <div className="jomi-grid-2">
+                  {filteredStocks.map((stock) => (
+                    <div
+                      key={stock.id}
+                      className="jomi-card jomi-card-interactive jomi-card-pad jomi-between"
+                      style={{ flexWrap: 'nowrap', gap: '0.75rem' }}
+                      onClick={() => handleStockClick(stock)}
+                    >
+                      <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
+                        <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
+                        <div style={{ minWidth: 0 }}>
+                          <h4 className="jomi-title-md">{stock.name}</h4>
+                          <div className="jomi-cluster" style={{ gap: '0.35rem', marginTop: '2px' }}>
+                            <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{stock.ticker}</span>
+                            {stock.shariahCompliant && <span className="jomi-pill-shariah">{t.shariahTag}</span>}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }} className="jomi-stack-xs">
+                        <p className="jomi-nums" style={{ fontWeight: 800, fontSize: '0.95rem', whiteSpace: 'nowrap' }}>RM {stock.price}</p>
+                        <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
+                          {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                          {stock.changePercent}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold">{t.education}</h3>
-                      <p className="text-sm text-gray-600">
-                        {language === 'ENG' ? 'Master investing basics' : 'Kuasai asas pelaburan'}
+                  ))}
+                </div>
+              ) : (
+                <div className="jomi-card jomi-card-pad jomi-muted" style={{ textAlign: 'center', fontWeight: 700 }}>
+                  {t.noResults}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Top AI Picks — Uniform 2-Row Cards */}
+              <section className="jomi-stack-md">
+                <div className="jomi-cluster">
+                  <div
+                    style={{
+                      width: '2.1rem',
+                      height: '2.1rem',
+                      borderRadius: '0.7rem',
+                      backgroundColor: 'var(--jomi-gold-soft)',
+                      border: '2px solid var(--jomi-gold-border)',
+                      boxShadow: '0 2px 0 0 var(--jomi-gold-border)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Lightbulb size={17} color="#b45309" />
+                  </div>
+                  <h3 className="jomi-display jomi-title-lg">{t.topPicks}</h3>
+                </div>
+
+                <div className="jomi-grid-2">
+                  {topPicks.map((stock) => (
+                    <div
+                      key={stock.id}
+                      className="jomi-card jomi-card-interactive jomi-card-pad"
+                      style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.15rem' }}
+                      onClick={() => handleStockClick(stock)}
+                    >
+                      <div className="jomi-between" style={{ alignItems: 'flex-start', flexWrap: 'nowrap', gap: '0.75rem' }}>
+                        <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0, alignItems: 'flex-start' }}>
+                          <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
+                          <div style={{ minWidth: 0 }}>
+                            <div className="jomi-display" style={{ fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
+                              {stock.ticker}
+                            </div>
+                            <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600, marginTop: '2px', lineHeight: 1.3 }}>
+                              {stock.name}
+                            </p>
+                            <div className="jomi-cluster" style={{ gap: '0.35rem', marginTop: '0.4rem' }}>
+                              <span className="jomi-pill-sector">{stock.sector}</span>
+                              {stock.shariahCompliant && <span className="jomi-pill-shariah">{t.shariahTag}</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
+                          {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                          {stock.changePercent}
+                        </span>
+                      </div>
+
+                      <div className="jomi-stack-sm" style={{ paddingTop: '0.65rem', borderTop: '1.5px solid var(--jomi-canvas)' }}>
+                        <div className="jomi-between" style={{ flexWrap: 'nowrap' }}>
+                          <span className="jomi-display jomi-nums" style={{ fontSize: '1.5rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                            RM {stock.price}
+                          </span>
+                          <MiniSparkline
+                            data={stock.sparkline}
+                            isPositive={stock.isPositive}
+                            width={88}
+                            height={30}
+                            idSuffix={`pick-${stock.id}`}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="jomi-btn jomi-btn-primary jomi-btn-sm jomi-btn-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStockClick(stock);
+                          }}
+                        >
+                          {t.viewDetails}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Bursa Directory */}
+              <section className="jomi-stack-md">
+                <div className="jomi-cluster">
+                  <div
+                    style={{
+                      width: '2.1rem',
+                      height: '2.1rem',
+                      borderRadius: '0.7rem',
+                      backgroundColor: 'var(--jomi-emerald-soft)',
+                      border: '2px solid var(--jomi-emerald-border)',
+                      boxShadow: '0 2px 0 0 var(--jomi-emerald-border)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <TrendingUp size={17} color="#047857" />
+                  </div>
+                  <h3 className="jomi-display jomi-title-lg">
+                    {t.allStocks} ({basePool.length})
+                  </h3>
+                </div>
+
+                <div className="jomi-grid-2">
+                  {basePool.map((stock) => (
+                    <div
+                      key={stock.id}
+                      className="jomi-card jomi-card-interactive"
+                      style={{ padding: '0.95rem 1.1rem' }}
+                      onClick={() => handleStockClick(stock)}
+                    >
+                      <div className="jomi-between" style={{ flexWrap: 'nowrap', gap: '0.75rem' }}>
+                        <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
+                          <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
+                          <div style={{ minWidth: 0 }}>
+                            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.25 }}>
+                              {stock.name}
+                            </h4>
+                            <div className="jomi-cluster" style={{ gap: '0.35rem', marginTop: '3px' }}>
+                              <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                                {stock.ticker} · {stock.klseCode.replace('.KL', '')}
+                              </span>
+                              {stock.shariahCompliant && <span className="jomi-pill-shariah">{t.shariahTag}</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right', flexShrink: 0 }} className="jomi-stack-xs">
+                          <p className="jomi-nums" style={{ fontSize: '0.92rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                            RM {stock.price}
+                          </p>
+                          <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
+                            {stock.isPositive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                            {stock.changePercent}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+        </div>
+
+        {/* Right Column */}
+        <div className="jomi-stack-lg">
+          {/* Student Quests Tracker */}
+          <div className="jomi-card jomi-card-pad jomi-stack-sm">
+            <div className="jomi-between">
+              <h3 className="jomi-display jomi-title-md">{t.questsTitle}</h3>
+              <span className="jomi-pill-neutral jomi-nums">
+                {quests.filter((q) => q.done).length} / {quests.length}
+              </span>
+            </div>
+            <div className="jomi-stack-xs">
+              {quests.map((q, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.55rem',
+                    padding: '0.55rem 0.7rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: q.done ? 'var(--jomi-emerald-soft)' : 'var(--jomi-canvas)',
+                    border: `1.5px solid ${q.done ? 'var(--jomi-emerald-border)' : 'var(--jomi-border)'}`,
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {q.done ? <CheckCircle2 size={16} color="#047857" /> : <Circle size={16} color="#94a3b8" />}
+                  <span style={{ textDecoration: q.done ? 'line-through' : 'none', opacity: q.done ? 0.8 : 1 }}>
+                    {q.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Educational Hub Quick Card */}
+          <div
+            className="jomi-card-gold jomi-card-interactive"
+            onClick={() => navigateTo('educational-hub')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigateTo('educational-hub');
+              }
+            }}
+          >
+            <div className="jomi-between">
+              <div className="jomi-cluster" style={{ flexWrap: 'nowrap' }}>
+                <div
+                  style={{
+                    width: '2.85rem',
+                    height: '2.85rem',
+                    borderRadius: '0.875rem',
+                    backgroundColor: 'var(--jomi-gold)',
+                    color: 'var(--jomi-ink)',
+                    boxShadow: '0 3px 0 0 var(--jomi-gold-dark)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <BookOpen size={21} />
+                </div>
+                <div>
+                  <h3 className="jomi-display jomi-title-md">{t.education}</h3>
+                  <p className="jomi-text-xs" style={{ color: 'var(--jomi-gold-ink)', fontWeight: 700 }}>
+                    {t.educationDesc}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="jomi-btn jomi-btn-gold jomi-btn-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('educational-hub');
+                }}
+              >
+                {t.exploreMore}
+              </button>
+            </div>
+          </div>
+
+          {/* Market Movers Card */}
+          <div className="jomi-card jomi-card-pad jomi-stack-md">
+            <div className="jomi-between">
+              <h3 className="jomi-display jomi-title-md jomi-cluster" style={{ gap: '0.5rem' }}>
+                <TrendingUp size={18} color="#0d9488" />
+                <span>{t.marketToday}</span>
+              </h3>
+            </div>
+
+            <div className="jomi-tabs-bar" style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+              <button
+                type="button"
+                onClick={() => setMoversTab('gainers')}
+                className={`jomi-tab-btn ${moversTab === 'gainers' ? 'jomi-tab-btn-active' : ''}`}
+                style={{ justifyContent: 'center' }}
+              >
+                {t.topGainers}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMoversTab('losers')}
+                className={`jomi-tab-btn ${moversTab === 'losers' ? 'jomi-tab-btn-active' : ''}`}
+                style={{ justifyContent: 'center' }}
+              >
+                {t.topLosers}
+              </button>
+            </div>
+
+            <div className="jomi-stack-xs">
+              {(moversTab === 'gainers' ? topGainers : topLosers).map((stock) => (
+                <div
+                  key={stock.id}
+                  className="jomi-row"
+                  style={{ flexWrap: 'nowrap' }}
+                  onClick={() => handleStockClick(stock)}
+                >
+                  <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
+                    <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
+                    <div style={{ minWidth: 0 }}>
+                      <p className="jomi-display" style={{ fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.2 }}>
+                        {stock.ticker}
+                      </p>
+                      <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600, lineHeight: 1.25 }}>
+                        {stock.name}
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline">{t.exploreMore}</Button>
+                  <span className={`jomi-nums ${stock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
+                    {stock.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    {stock.changePercent}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          </div>
 
-            {/* Market Movers */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="text-green-600" size={20} />
-                  {t.marketToday}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="gainers">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="gainers">{t.topGainers}</TabsTrigger>
-                    <TabsTrigger value="losers">{t.topLosers}</TabsTrigger>
-                  </TabsList>
+          {/* Watchlist Preview Card */}
+          <div className="jomi-card jomi-card-pad jomi-stack-md">
+            <h3 className="jomi-display jomi-title-md">{t.myWatchlist}</h3>
 
-                  <TabsContent value="gainers" className="space-y-3 mt-4">
-                    {topGainers.map((stock) => (
-                      <div
-                        key={stock.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
-                        onClick={() => handleStockClick(stock)}
-                      >
-                        <div>
-                          <p className="text-sm font-medium">{stock.name}</p>
-                          <p className="text-xs text-gray-500">{stock.ticker}</p>
-                        </div>
-                        <div className="flex items-center gap-1 text-green-600">
-                          <TrendingUp size={16} />
-                          <span className="text-sm">{stock.changePercent}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </TabsContent>
-
-                  <TabsContent value="losers" className="space-y-3 mt-4">
-                    {topLosers.map((stock) => (
-                      <div
-                        key={stock.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
-                        onClick={() => handleStockClick(stock)}
-                      >
-                        <div>
-                          <p className="text-sm font-medium">{stock.name}</p>
-                          <p className="text-xs text-gray-500">{stock.ticker}</p>
-                        </div>
-                        <div className="flex items-center gap-1 text-red-600">
-                          <TrendingDown size={16} />
-                          <span className="text-sm">{stock.changePercent}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            {/* My Watchlist - Filtered from real stocks for demo */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t.myWatchlist}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {watchlist.slice(0, 3).map((stock) => (
-                  <div key={stock.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onClick={() => { setSelectedStock(stock); navigateTo('stock-details'); }}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white text-xs">
-                        {stock.ticker.slice(0, 3)}
-                      </div>
-                      <div>
-                        <p className="text-sm">{stock.name}</p>
-                        <p className="text-xs text-gray-500">{stock.ticker}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {renderSparkline(stock.sparkline)}
-                      <p className="text-sm">{stock.price}</p>
+            <div className="jomi-stack-xs">
+              {watchlist.slice(0, 4).map((stock) => (
+                <div
+                  key={stock.id}
+                  className="jomi-row"
+                  style={{ flexWrap: 'nowrap' }}
+                  onClick={() => handleStockClick(stock)}
+                >
+                  <div className="jomi-cluster" style={{ flexWrap: 'nowrap', minWidth: 0 }}>
+                    <StockBadge ticker={stock.ticker} sector={stock.sector} size="sm" />
+                    <div style={{ minWidth: 0 }}>
+                      <p className="jomi-display" style={{ fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.2 }}>
+                        {stock.ticker}
+                      </p>
+                      <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 600, lineHeight: 1.25 }}>
+                        {stock.sector}
+                      </p>
                     </div>
                   </div>
-                ))}
-                <Button variant="outline" className="w-full" onClick={() => navigateTo('watchlist')}>
-                  <Plus size={16} className="mr-2" />
-                  {t.addToWatchlist}
-                </Button>
-              </CardContent>
-            </Card>
+                  <div className="jomi-cluster" style={{ flexWrap: 'nowrap', flexShrink: 0, gap: '0.6rem' }}>
+                    <MiniSparkline
+                      data={stock.sparkline}
+                      isPositive={stock.isPositive}
+                      width={56}
+                      height={22}
+                      idSuffix={`wl-${stock.id}`}
+                    />
+                    <div style={{ textAlign: 'right' }}>
+                      <p className="jomi-nums" style={{ fontSize: '0.86rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                        RM {stock.price}
+                      </p>
+                      <p
+                        className="jomi-nums"
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          color: stock.isPositive ? '#047857' : '#b91c1c',
+                        }}
+                      >
+                        {stock.changePercent}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="jomi-btn jomi-btn-outline jomi-btn-full"
+              onClick={() => navigateTo('watchlist')}
+            >
+              <Plus size={16} />
+              <span>{t.addToWatchlist}</span>
+            </button>
           </div>
         </div>
-      </main>
-
-      {/* Floating Action Button for Chatbot */}
-      <button
-        onClick={() => setIsChatbotOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-20"
-      >
-        <Sparkles size={24} />
-      </button>
-
-      {/* Chatbot Modal */}
-      <ChatbotModal
-        isOpen={isChatbotOpen}
-        onClose={() => setIsChatbotOpen(false)}
-        language={language}
-      />
+      </div>
     </div>
   );
 }

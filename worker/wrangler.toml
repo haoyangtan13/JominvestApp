@@ -1,0 +1,10 @@
+name = "jominvest-api"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+
+[vars]
+# Optional: restrict CORS to your deployed frontend origin (defaults to "*" when "*")
+ALLOWED_ORIGIN = "*"
+
+# Secrets (DO NOT commit real keys here; set via CLI):
+#   npx wrangler secret put GEMINI_API_KEY

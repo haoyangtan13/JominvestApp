@@ -1,188 +1,357 @@
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { ArrowLeft, TrendingUp, CheckCircle2, Sparkles } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  TrendingUp,
+  TrendingDown,
+  CheckCircle2,
+  Sparkles,
+  ArrowUpRight,
+  RefreshCw,
+  Loader2,
+  ExternalLink,
+  AlertTriangle,
+  Newspaper,
+} from 'lucide-react';
 import type { Screen } from '../App';
+import { StockData, stocks as baselineStocks } from '../data/stocks';
+import { StockBadge } from './StockVisuals';
+import {
+  computeStockTechnicals,
+  fetchSpotlightAnalysis,
+  safeExternalHref,
+  type SpotlightAnalysisResult,
+} from '../services/aiService';
 
 interface AIRecommendationProps {
   navigateTo: (screen: Screen) => void;
   userProfile: string;
   language: 'ENG' | 'BM';
+  stocks?: StockData[];
+  cashRM?: string;
+  portfolioSummary?: string;
+  setSelectedStock?: (stock: StockData) => void;
+  addToPortfolio?: (stock: StockData, quantity: number) => void;
 }
 
-export function AIRecommendation({ navigateTo, userProfile, language }: AIRecommendationProps) {
+function rankStocksForPersona(catalog: StockData[], userProfile: string): StockData[] {
+  const lower = (userProfile || '').toLowerCase();
+  const isConservative = lower.includes('conservative') || lower.includes('guardian') || lower.includes('dividend');
+  const isBalanced = lower.includes('balanced') || lower.includes('builder');
+
+  const scored = catalog.map((s) => {
+    const div = parseFloat(String(s.dividendYield).replace('%', '')) || 0;
+    const pe = parseFloat(s.peRatio) || 20;
+    const chg = parseFloat(String(s.changePercent).replace('%', '')) || 0;
+    const ret30 = parseFloat(String(computeStockTechnicals(s).return30dPct).replace('%', '')) || 0;
+
+    let score = 0;
+    if (isConservative) {
+      score = div * 4 + (pe > 0 && pe <= 16 ? 12 : 0) + (s.shariahCompliant ? 3 : 0);
+    } else if (isBalanced) {
+      score = div * 2.5 + ret30 * 1.2 + (pe > 0 && pe <= 22 ? 8 : 0) + (s.shariahCompliant ? 4 : 0);
+    } else {
+      // Aggressive / Jom-Explorer: 30D momentum + daily strength + reasonable scale
+      score = ret30 * 2.2 + chg * 2 + div * 0.8 + (s.isPositive ? 4 : 0);
+    }
+    return { stock: s, score };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((item) => item.stock);
+}
+
+export function AIRecommendation({
+  navigateTo,
+  userProfile,
+  language,
+  stocks = baselineStocks,
+  cashRM = '10,000.00',
+  portfolioSummary = '0 positions',
+  setSelectedStock,
+  addToPortfolio,
+}: AIRecommendationProps) {
+  const topCandidates = useMemo(
+    () => rankStocksForPersona(stocks.length ? stocks : baselineStocks, userProfile),
+    [stocks, userProfile]
+  );
+
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const featuredStock = topCandidates[selectedIdx] || topCandidates[0] || baselineStocks[0];
+
+  const [spotlight, setSpotlight] = useState<SpotlightAnalysisResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadSpotlight = useCallback(
+    async (target: StockData) => {
+      if (!target) return;
+      setIsLoading(true);
+      const res = await fetchSpotlightAnalysis({
+        stock: target,
+        userProfile,
+        cashRM,
+        portfolioSummary,
+        language,
+      });
+      setSpotlight(res);
+      setIsLoading(false);
+    },
+    [userProfile, cashRM, portfolioSummary, language]
+  );
+
+  useEffect(() => {
+    void loadSpotlight(featuredStock);
+  }, [featuredStock, loadSpotlight]);
+
+  const technicals = useMemo(() => computeStockTechnicals(featuredStock), [featuredStock]);
+
   const texts = {
     ENG: {
-      back: 'Back to Dashboard',
+      title: 'JomINVEST AI Spotlight',
+      subtitle: 'Live persona-matched Bursa Malaysia case studies powered by JomAI & real news',
       currentPrice: 'Current Price',
       change24h: '24h Change',
-      aiAnalysis: 'JomINVEST AI Analysis',
-      whyRecommend: 'Why JomINVEST AI Recommends This:',
-      reason1: 'Strong Fundamentals',
-      reason1desc: 'Consistent revenue growth and healthy profit margins',
-      reason2: 'Positive Market Sentiment',
-      reason2desc: 'Increasing institutional interest and positive analyst ratings',
-      reason3: 'Fits Your Profile',
-      reason3desc: `Matches your ${userProfile || 'Jom-Explorer (Aggressive)'} investment style`,
-      addToPortfolio: 'Add to Simulated Portfolio',
-      viewDetails: 'View Full Stock Details',
-      keyMetrics: 'Key Metrics',
+      ret30d: '30D Return',
+      aiAnalysis: 'Live AI Thesis & Catalysts',
+      refresh: 'Refresh AI Thesis',
+      catalystTitle: 'News & Sector Catalyst',
+      watchpointTitle: 'Key Risk Watchpoint',
+      recentNews: 'Related Bursa Headlines',
+      addToPortfolio: 'Quick Buy 1 Unit (+50 XP)',
+      viewDetails: 'Open Full Stock Analysis',
+      keyMetrics: 'Snapshot Metrics',
       pe: 'P/E Ratio',
       dividend: 'Dividend Yield',
       marketCap: 'Market Cap',
+      disclaimer: 'Educational case study matched to your sandbox persona — not licensed financial advice.',
     },
     BM: {
-      back: 'Kembali ke Dashboard',
+      title: 'Sorotan AI JomINVEST',
+      subtitle: 'Kajian kes Bursa Malaysia mengikut persona anda dikuasakan oleh JomAI & berita langsung',
       currentPrice: 'Harga Semasa',
       change24h: 'Perubahan 24j',
-      aiAnalysis: 'Analisis AI JomINVEST',
-      whyRecommend: 'Mengapa AI JomINVEST Mengesyorkan Ini:',
-      reason1: 'Asas Yang Kukuh',
-      reason1desc: 'Pertumbuhan pendapatan konsisten dan margin keuntungan sihat',
-      reason2: 'Sentimen Pasaran Positif',
-      reason2desc: 'Minat institusi meningkat dan penilaian penganalisis positif',
-      reason3: 'Sesuai Dengan Profil Anda',
-      reason3desc: `Sepadan dengan gaya pelaburan ${userProfile || 'Jom-Explorer (Agresif)'} anda`,
-      addToPortfolio: 'Tambah ke Portfolio Simulasi',
-      viewDetails: 'Lihat Butiran Saham Penuh',
-      keyMetrics: 'Metrik Utama',
+      ret30d: 'Pulangan 30H',
+      aiAnalysis: 'Tesis & Pemangkin AI Langsung',
+      refresh: 'Segar Tesis AI',
+      catalystTitle: 'Pemangkin Berita & Sektor',
+      watchpointTitle: 'Risiko Utama Untuk Dipantau',
+      recentNews: 'Tajuk Berita Bursa Berkaitan',
+      addToPortfolio: 'Beli Pantas 1 Unit (+50 XP)',
+      viewDetails: 'Buka Analisis Saham Penuh',
+      keyMetrics: 'Metrik Ringkas',
       pe: 'Nisbah P/E',
       dividend: 'Hasil Dividen',
       marketCap: 'Modal Pasaran',
-    }
+      disclaimer: 'Kajian kes pendidikan mengikut persona simulasi anda — bukan nasihat kewangan berlesen.',
+    },
   };
 
   const t = texts[language];
 
+  const handleOpenDetails = () => {
+    if (setSelectedStock) setSelectedStock(featuredStock);
+    navigateTo('stock-details');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={() => navigateTo('dashboard')}>
-            <ArrowLeft className="mr-2" size={16} />
-            {t.back}
-          </Button>
+    <div className="jomi-stack-lg">
+      {/* Page Title + Top 3 Persona Match Switcher */}
+      <div className="jomi-between">
+        <div className="jomi-stack-xs">
+          <h2 className="jomi-display jomi-title-xl">{t.title}</h2>
+          <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{t.subtitle}</p>
         </div>
-      </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        {/* Stock Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center text-white text-xl">
-                  TNB
-                </div>
-                <div>
-                  <CardTitle className="text-2xl">Tenaga Nasional Berhad</CardTitle>
-                  <p className="text-gray-500">TENAGA · Bursa Malaysia</p>
-                </div>
-              </div>
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                <Sparkles size={14} className="mr-1" />
-                AI Pick
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">{t.currentPrice}</p>
-                <p className="text-3xl">RM 17.50</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">{t.change24h}</p>
-                <p className="text-2xl text-green-600 flex items-center gap-2">
-                  +2.4%
-                  <TrendingUp size={20} />
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* AI Analysis Section */}
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Sparkles className="text-green-600" size={24} />
-              <CardTitle className="text-green-900">{t.aiAnalysis}</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <h3 className="text-lg">{t.whyRecommend}</h3>
-            
-            <div className="space-y-3">
-              <div className="flex gap-3 bg-white p-4 rounded-lg">
-                <CheckCircle2 className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                <div>
-                  <h4 className="text-green-900 mb-1">{t.reason1}</h4>
-                  <p className="text-sm text-gray-600">{t.reason1desc}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 bg-white p-4 rounded-lg">
-                <CheckCircle2 className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                <div>
-                  <h4 className="text-green-900 mb-1">{t.reason2}</h4>
-                  <p className="text-sm text-gray-600">{t.reason2desc}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 bg-white p-4 rounded-lg">
-                <CheckCircle2 className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                <div>
-                  <h4 className="text-green-900 mb-1">{t.reason3}</h4>
-                  <p className="text-sm text-gray-600">{t.reason3desc}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Key Metrics */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.keyMetrics}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">{t.pe}</p>
-                <p className="text-2xl">14.2</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">{t.dividend}</p>
-                <p className="text-2xl">3.5%</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">{t.marketCap}</p>
-                <p className="text-2xl">RM 98B</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <Button 
-            className="flex-1 bg-green-600 hover:bg-green-700"
-            size="lg"
-          >
-            {t.addToPortfolio}
-          </Button>
-          <Button 
-            variant="outline" 
-            className="flex-1"
-            size="lg"
-            onClick={() => navigateTo('stock-details')}
-          >
-            {t.viewDetails}
-          </Button>
+        <div className="jomi-tabs-bar">
+          {topCandidates.map((cand, idx) => (
+            <button
+              key={cand.id}
+              type="button"
+              onClick={() => setSelectedIdx(idx)}
+              className={`jomi-tab-btn ${selectedIdx === idx ? 'jomi-tab-btn-active' : ''}`}
+            >
+              #{idx + 1} {cand.ticker}
+            </button>
+          ))}
         </div>
-      </main>
+      </div>
+
+      {/* Featured Stock Spotlight Card */}
+      <div className="jomi-hero jomi-stack-md">
+        <div className="jomi-between" style={{ alignItems: 'flex-start' }}>
+          <div className="jomi-cluster" style={{ gap: '1rem' }}>
+            <StockBadge ticker={featuredStock.ticker} sector={featuredStock.sector} size="lg" />
+            <div>
+              <h3 className="jomi-display" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                {featuredStock.name}
+              </h3>
+              <p style={{ color: '#ccfbf1', fontSize: '0.85rem', fontWeight: 700 }}>
+                {featuredStock.ticker} · {featuredStock.klseCode} · {featuredStock.sector}
+              </p>
+            </div>
+          </div>
+
+          <span className="jomi-pill-neutral">
+            <Sparkles size={13} />
+            {spotlight?.source === 'live-ai' ? 'Live AI Match' : 'Persona Match'}
+          </span>
+        </div>
+
+        {spotlight?.headline && (
+          <p style={{ color: '#ecfdf5', fontSize: '0.92rem', fontWeight: 700 }}>
+            {spotlight.headline}
+          </p>
+        )}
+
+        <div className="jomi-grid-3" style={{ paddingTop: '0.35rem' }}>
+          <div>
+            <p className="jomi-hero-label">{t.currentPrice}</p>
+            <p className="jomi-display jomi-nums" style={{ fontSize: '2.1rem', fontWeight: 700, marginTop: '0.2rem' }}>
+              RM {featuredStock.price}
+            </p>
+          </div>
+          <div>
+            <p className="jomi-hero-label">{t.change24h}</p>
+            <div style={{ marginTop: '0.45rem' }}>
+              <span className={`jomi-nums ${featuredStock.isPositive ? 'jomi-pill-gain' : 'jomi-pill-loss'}`}>
+                {featuredStock.isPositive ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                {featuredStock.changePercent}
+              </span>
+            </div>
+          </div>
+          <div>
+            <p className="jomi-hero-label">{t.ret30d}</p>
+            <div style={{ marginTop: '0.45rem' }}>
+              <span className="jomi-pill-neutral jomi-nums">{technicals.return30dPct}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Live AI Thesis & 3 Reasons */}
+      <div className="jomi-card jomi-card-pad jomi-stack-md">
+        <div className="jomi-between">
+          <h3 className="jomi-display jomi-title-lg jomi-cluster">
+            <Sparkles size={20} color="#0d9488" />
+            <span>{t.aiAnalysis}</span>
+          </h3>
+          <button
+            type="button"
+            className="jomi-btn jomi-btn-outline jomi-btn-sm"
+            onClick={() => void loadSpotlight(featuredStock)}
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+            <span>{t.refresh}</span>
+          </button>
+        </div>
+
+        {isLoading && !spotlight ? (
+          <div className="jomi-card-soft jomi-cluster" style={{ justifyContent: 'center', padding: '1.5rem' }}>
+            <Loader2 size={18} />
+            <span className="jomi-text-sm" style={{ fontWeight: 700 }}>
+              {language === 'ENG' ? 'Analyzing live headlines & persona fit...' : 'Menganalisis berita langsung & kesesuaian persona...'}
+            </span>
+          </div>
+        ) : spotlight ? (
+          <div className="jomi-stack-md">
+            <div className="jomi-grid-3">
+              {spotlight.reasons.map((r, idx) => (
+                <div key={idx} className="jomi-card-soft jomi-stack-xs">
+                  <div className="jomi-cluster" style={{ color: '#047857', fontWeight: 800 }}>
+                    <CheckCircle2 size={18} />
+                    <h4 className="jomi-display" style={{ fontSize: '1rem', fontWeight: 700 }}>{r.title}</h4>
+                  </div>
+                  <p className="jomi-text-sm jomi-muted" style={{ fontWeight: 600 }}>{r.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="jomi-grid-2">
+              <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', flexDirection: 'column', gap: '0.35rem' }}>
+                <span className="jomi-cluster jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>
+                  <Newspaper size={14} />
+                  {t.catalystTitle}
+                </span>
+                <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{spotlight.catalystNote}</p>
+              </div>
+              <div className="jomi-row" style={{ cursor: 'default', alignItems: 'flex-start', flexDirection: 'column', gap: '0.35rem', backgroundColor: 'var(--jomi-coral-soft)', borderColor: 'var(--jomi-coral-border)' }}>
+                <span className="jomi-cluster jomi-text-xs" style={{ fontWeight: 800, textTransform: 'uppercase', color: '#b91c1c' }}>
+                  <AlertTriangle size={14} />
+                  {t.watchpointTitle}
+                </span>
+                <p className="jomi-text-sm" style={{ fontWeight: 600 }}>{spotlight.watchpoint}</p>
+              </div>
+            </div>
+
+            {spotlight.headlines.length > 0 && (
+              <div className="jomi-stack-xs">
+                <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 800, textTransform: 'uppercase' }}>{t.recentNews}</p>
+                <div className="jomi-grid-2">
+                  {spotlight.headlines.map((h, i) => (
+                    <a
+                      key={i}
+                      href={safeExternalHref(h.link)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="jomi-row"
+                      style={{ textDecoration: 'none', color: 'inherit', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}
+                    >
+                      <div className="jomi-stack-xs">
+                        <p className="jomi-text-xs" style={{ fontWeight: 700 }}>{h.title}</p>
+                        <span className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{h.source} · {h.timeAgo}</span>
+                      </div>
+                      <ExternalLink size={14} color="#0d9488" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>{t.disclaimer}</p>
+      </div>
+
+      {/* Snapshot Metrics */}
+      <div className="jomi-card jomi-card-pad jomi-stack-md">
+        <h3 className="jomi-display jomi-title-md">{t.keyMetrics}</h3>
+        <div className="jomi-grid-3">
+          <div className="jomi-row" style={{ cursor: 'default' }}>
+            <span className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>{t.pe}</span>
+            <span className="jomi-display jomi-nums" style={{ fontSize: '1.25rem', fontWeight: 700 }}>{featuredStock.peRatio}</span>
+          </div>
+          <div className="jomi-row" style={{ cursor: 'default' }}>
+            <span className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>{t.dividend}</span>
+            <span className="jomi-display jomi-nums" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#047857' }}>{featuredStock.dividendYield}</span>
+          </div>
+          <div className="jomi-row" style={{ cursor: 'default' }}>
+            <span className="jomi-text-sm jomi-muted" style={{ fontWeight: 700 }}>{t.marketCap}</span>
+            <span className="jomi-display jomi-nums" style={{ fontSize: '1.25rem', fontWeight: 700 }}>RM {featuredStock.marketCap}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="jomi-cluster">
+        {addToPortfolio && (
+          <button
+            type="button"
+            className="jomi-btn jomi-btn-primary jomi-btn-lg"
+            onClick={() => addToPortfolio(featuredStock, 1)}
+          >
+            <span>{t.addToPortfolio}</span>
+          </button>
+        )}
+        <button
+          type="button"
+          className="jomi-btn jomi-btn-outline jomi-btn-lg"
+          onClick={handleOpenDetails}
+        >
+          <span>{t.viewDetails}</span>
+          <ArrowUpRight size={17} />
+        </button>
+      </div>
     </div>
   );
 }

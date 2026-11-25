@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Card } from './ui/card';
 import { X, Send, Sparkles } from 'lucide-react';
+import { askJomAI } from '../services/aiService';
+import type { StockData } from '../data/stocks';
 
 interface ChatbotModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: 'ENG' | 'BM';
+  cashRM?: string;
+  portfolioSummary?: string;
+  userProfile?: string;
+  stocks?: StockData[];
 }
 
 interface Message {
@@ -18,150 +21,159 @@ interface Message {
 const initialMessages: Message[] = [
   {
     role: 'ai',
-    content: 'Hi Tan! How can I help you today?'
+    content: 'Hi Tan! Ask me about any of our 20 Bursa Malaysia stocks (e.g. MAYBANK, TENAGA, GAMUDA), Shariah counters, dividends, or your virtual cash!',
   },
-  {
-    role: 'user',
-    content: "What is Tenaga Nasional's P/E ratio?"
-  },
-  {
-    role: 'ai',
-    content: "Tenaga Nasional (TENAGA) has a P/E ratio of 14.2. This is a common metric to value a company. Would you like to learn more about P/E Ratios?"
-  }
 ];
 
-export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
+export function ChatbotModal({
+  isOpen,
+  onClose,
+  language,
+  cashRM = '10,000.00',
+  portfolioSummary = '0 positions',
+  userProfile = 'Jom-Explorer',
+  stocks,
+}: ChatbotModalProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [lastSource, setLastSource] = useState<'live-ai' | 'local-analyst' | null>(null);
 
   const texts = {
     ENG: {
-      title: 'JomAI Assistant',
-      placeholder: 'Ask JomAI...',
-      quickReplies: ['Analyze a stock', 'What is a dividend?', 'Contact Support'],
+      title: 'JomAI Coach',
+      subtitle: 'Live Bursa data, Malaysian news & multi-turn AI',
+      placeholder: 'Ask about Bursa news, MAYBANK vs PBBANK, or your cash...',
+      quickLabel: 'Quick Prompts:',
+      typing: 'JomAI is checking live market & news...',
+      quickReplies: ["Today's Bursa news", 'Analyze TENAGA', 'Compare MAYBANK vs PBBANK', 'Shariah stocks', 'My portfolio'],
     },
     BM: {
-      title: 'Pembantu JomAI',
-      placeholder: 'Tanya JomAI...',
-      quickReplies: ['Analisis saham', 'Apakah dividen?', 'Hubungi Sokongan'],
-    }
+      title: 'Jurulatih JomAI',
+      subtitle: 'Data Bursa langsung, berita Malaysia & AI berbilang pusingan',
+      placeholder: 'Tanya berita Bursa, MAYBANK vs PBBANK, atau baki anda...',
+      quickLabel: 'Soalan Pantas:',
+      typing: 'JomAI sedang menyemak pasaran & berita...',
+      quickReplies: ['Berita Bursa hari ini', 'Analisis TENAGA', 'Banding MAYBANK vs PBBANK', 'Saham Syariah', 'Portfolio saya'],
+    },
   };
 
   const t = texts[language];
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSendMessage = (text: string) => {
-    if (!text.trim()) return;
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim() || isTyping) return;
 
-    // Add User Message
-    const newUserMsg: Message = { role: 'user', content: text };
-    setMessages(prev => [...prev, newUserMsg]);
+    const clean = text.trim();
+    const recentHistory = messages.slice(-6);
+    setMessages((prev) => [...prev, { role: 'user', content: clean }]);
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI Delay & Reply
-    setTimeout(() => {
-      let aiResponse = "";
-      const lowerText = text.toLowerCase();
+    const { reply, source } = await askJomAI(clean, {
+      language,
+      cashRM,
+      portfolioSummary,
+      userProfile,
+      stocks,
+      history: recentHistory,
+    });
 
-      // Specific Logic for Quick Replies
-      if (lowerText.includes('analyze') || lowerText.includes('analisis')) {
-        aiResponse = language === 'ENG'
-          ? "To analyze a stock, you can use the 'JomRingkas' tool in the Educational Hub or visit the Stock Details page for deep insights."
-          : "Untuk menganalisis saham, anda boleh menggunakan alat 'JomRingkas' di Hab Pendidikan atau melawat halaman Maklumat Saham.";
-      }
-      else if (lowerText.includes('dividend') || lowerText.includes('dividen')) {
-        aiResponse = language === 'ENG'
-          ? "A dividend is a portion of a company's profit paid to shareholders. It is usually paid quarterly. High yield stocks are great for passive income!"
-          : "Dividen adalah sebahagian daripada keuntungan syarikat yang dibayar kepada pemegang saham. Ia biasanya dibayar setiap suku tahun.";
-      }
-      else if (lowerText.includes('support') || lowerText.includes('sokongan')) {
-        aiResponse = language === 'ENG'
-          ? "You can reach our support team at support@jominvest.com or call 1-800-JOM-INVEST. We are here to help!"
-          : "Anda boleh menghubungi pasukan sokongan kami di support@jominvest.com atau hubungi 1-800-JOM-INVEST. Kami sedia membantu!";
-      }
-      else {
-        // Fallback to random responses
-        const responses = [
-          "That's an interesting question! Based on my data, the market is bullish.",
-          "I recommend checking the 'JomRingkas' tool for a detailed report.",
-          "Diversification is key to reducing risk. Have you looked at the sector breakdown?",
-          "Tenaga Nasional is showing strong dividend potential this year.",
-          "I'm just a demo AI for now, but I'm learning fast! 🚀",
-          "Could you clarify that? I want to make sure I give you the best investment advice."
-        ];
-        aiResponse = responses[Math.floor(Math.random() * responses.length)];
-      }
-
-      const newAiMsg: Message = { role: 'ai', content: aiResponse };
-      setMessages(prev => [...prev, newAiMsg]);
-      setIsTyping(false);
-    }, 1500);
+    setLastSource(source);
+    setMessages((prev) => [...prev, { role: 'ai', content: reply }]);
+    setIsTyping(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSendMessage(inputValue);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void handleSendMessage(inputValue);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-6">
-      {/* Backdrop */}
+    <div className="jomi-modal-backdrop" onClick={onClose}>
       <div
-        className="absolute inset-0 bg-black/20"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <Card className="relative w-full max-w-md h-[600px] flex flex-col shadow-2xl">
+        className="jomi-chat-panel"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label={t.title}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-lg">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+        <div className="jomi-chat-header">
+          <div className="jomi-cluster">
+            <div
+              style={{
+                width: '2.25rem',
+                height: '2.25rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <Sparkles size={18} />
             </div>
-            <h3 className="text-lg">{t.title}</h3>
+            <div>
+              <div className="jomi-cluster" style={{ gap: '0.45rem' }}>
+                <h3 className="jomi-display" style={{ color: '#ffffff', fontSize: '1.05rem', fontWeight: 700 }}>
+                  {t.title}
+                </h3>
+                {lastSource && (
+                  <span
+                    style={{
+                      fontSize: '0.64rem',
+                      fontWeight: 800,
+                      padding: '0.15rem 0.45rem',
+                      borderRadius: '9999px',
+                      backgroundColor: lastSource === 'live-ai' ? 'rgba(255,255,255,0.22)' : 'rgba(15,41,38,0.35)',
+                      color: '#ffffff',
+                    }}
+                  >
+                    {lastSource === 'live-ai' ? 'Live AI' : 'Offline'}
+                  </span>
+                )}
+              </div>
+              <p style={{ color: '#ccfbf1', fontSize: '0.72rem', fontWeight: 600 }}>{t.subtitle}</p>
+            </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-white hover:bg-white/20 p-1 rounded-full transition-colors"
+            aria-label="Close"
+            className="jomi-btn jomi-btn-ghost jomi-btn-icon"
+            style={{ color: '#ffffff' }}
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }} className="jomi-stack-sm">
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              style={{
+                display: 'flex',
+                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              }}
             >
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${message.role === 'user'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
-                  }`}
-              >
-                <p className="text-sm">{message.content}</p>
+              <div className={message.role === 'user' ? 'jomi-chat-bubble-user' : 'jomi-chat-bubble-ai'}>
+                <p>{message.content}</p>
               </div>
             </div>
           ))}
           {isTyping && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-lg p-3 text-gray-500 text-xs italic">
-                JomAI is typing...
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div className="jomi-chat-bubble-ai jomi-muted" style={{ fontStyle: 'italic', fontSize: '0.8rem' }}>
+                {t.typing}
               </div>
             </div>
           )}
@@ -169,46 +181,55 @@ export function ChatbotModal({ isOpen, onClose, language }: ChatbotModalProps) {
         </div>
 
         {/* Quick Replies */}
-        <div className="px-4 pb-2">
-          <p className="text-xs text-gray-500 mb-2">
-            {language === 'ENG' ? 'Quick Replies:' : 'Balasan Pantas:'}
+        <div style={{ padding: '0.5rem 1rem 0.65rem', borderTop: '1.5px solid var(--jomi-border)', backgroundColor: '#fafdfc' }}>
+          <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700, marginBottom: '0.4rem' }}>
+            {t.quickLabel}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="jomi-cluster">
             {t.quickReplies.map((reply, index) => (
-              <Button
+              <button
                 key={index}
-                variant="outline"
-                size="sm"
-                className="text-xs hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition-colors"
-                onClick={() => handleSendMessage(reply)}
+                type="button"
+                className="jomi-btn jomi-btn-outline jomi-btn-sm"
+                onClick={() => void handleSendMessage(reply)}
               >
                 {reply}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t">
-          <div className="flex gap-2">
-            <Input
+        {/* Input */}
+        <div style={{ padding: '0.75rem 1rem 0.65rem', borderTop: '2px solid var(--jomi-border)' }} className="jomi-stack-xs">
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              maxLength={500}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isTyping ? "JomAI is typing..." : t.placeholder}
-              className="flex-1"
+              placeholder={isTyping ? t.typing : t.placeholder}
+              className="jomi-input"
               disabled={isTyping}
             />
-            <Button
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => handleSendMessage(inputValue)}
+            <button
+              type="button"
+              className="jomi-btn jomi-btn-primary jomi-btn-icon"
+              style={{ height: '2.85rem', width: '2.85rem' }}
+              onClick={() => void handleSendMessage(inputValue)}
               disabled={isTyping || !inputValue.trim()}
+              aria-label="Send"
             >
-              <Send size={18} />
-            </Button>
+              <Send size={17} />
+            </button>
           </div>
+          <p className="jomi-muted" style={{ fontSize: '0.68rem', fontWeight: 700, textAlign: 'center' }}>
+            {language === 'ENG'
+              ? 'Educational sandbox tutor only — not licensed financial advice.'
+              : 'Tutor simulasi pendidikan sahaja — bukan nasihat kewangan berlesen.'}
+          </p>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
