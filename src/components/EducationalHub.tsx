@@ -344,6 +344,11 @@ export function EducationalHub({
                         </div>
                       </div>
                     </div>
+                    <p className="jomi-text-xs jomi-muted" style={{ fontWeight: 700 }}>
+                      {language === 'ENG'
+                        ? 'Educational summary based on reported metrics — not a buy/sell recommendation.'
+                        : 'Ringkasan pendidikan berdasarkan metrik dilaporkan — bukan cadangan beli/jual.'}
+                    </p>
                   </div>
                 )}
               </div>

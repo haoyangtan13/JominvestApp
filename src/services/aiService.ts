@@ -92,6 +92,12 @@ export function buildLocalChatReply(message: string, ctx: ChatContext): string {
   const catalog = ctx.stocks || allStocks;
   const lower = message.toLowerCase();
 
+  if (/ignore\s+(all\s+)?(previous|prior)/i.test(message) || /system\s+prompt/i.test(message)) {
+    return ctx.language === 'ENG'
+      ? 'I am JomAI Coach, scoped strictly to Bursa Malaysia stock education and portfolio simulation. Ask me about any Bursa ticker, Shariah screening, or financial ratios!'
+      : 'Saya ialah Jurulatih JomAI untuk pendidikan saham Bursa Malaysia sahaja. Tanya saya tentang mana-mana kod saham Bursa, saringan Syariah, atau nisbah kewangan!';
+  }
+
   // Check if user mentioned any specific Bursa stock by ticker or name keyword
   const matched = catalog.find(
     (s) =>

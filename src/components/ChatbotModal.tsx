@@ -180,26 +180,34 @@ export function ChatbotModal({
         </div>
 
         {/* Input */}
-        <div style={{ padding: '0.85rem 1rem', borderTop: '2px solid var(--jomi-border)', display: 'flex', gap: '0.5rem' }}>
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isTyping ? t.typing : t.placeholder}
-            className="jomi-input"
-            disabled={isTyping}
-          />
-          <button
-            type="button"
-            className="jomi-btn jomi-btn-primary jomi-btn-icon"
-            style={{ height: '2.85rem', width: '2.85rem' }}
-            onClick={() => void handleSendMessage(inputValue)}
-            disabled={isTyping || !inputValue.trim()}
-            aria-label="Send"
-          >
-            <Send size={17} />
-          </button>
+        <div style={{ padding: '0.75rem 1rem 0.65rem', borderTop: '2px solid var(--jomi-border)' }} className="jomi-stack-xs">
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              maxLength={500}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isTyping ? t.typing : t.placeholder}
+              className="jomi-input"
+              disabled={isTyping}
+            />
+            <button
+              type="button"
+              className="jomi-btn jomi-btn-primary jomi-btn-icon"
+              style={{ height: '2.85rem', width: '2.85rem' }}
+              onClick={() => void handleSendMessage(inputValue)}
+              disabled={isTyping || !inputValue.trim()}
+              aria-label="Send"
+            >
+              <Send size={17} />
+            </button>
+          </div>
+          <p className="jomi-muted" style={{ fontSize: '0.68rem', fontWeight: 700, textAlign: 'center' }}>
+            {language === 'ENG'
+              ? 'Educational sandbox tutor only — not licensed financial advice.'
+              : 'Tutor simulasi pendidikan sahaja — bukan nasihat kewangan berlesen.'}
+          </p>
         </div>
       </div>
     </div>
